@@ -5,24 +5,33 @@ import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
+import { TasksManager } from '../models/tasksManager';
 
-import { IAnotherResourceModel, AnotherResourceManager } from '../models/anotherResourceManager';
+interface ITaskId {
+  jobId: string;
+  taskId: string;
+}
 
-type GetResourceHandler = RequestHandler<undefined, IAnotherResourceModel>;
+type CompleteWorkerTaskHandler = RequestHandler<ITaskId>;
 
 @injectable()
-export class AnotherResourceController {
+export class TasksController {
   private readonly createdResourceCounter: BoundCounter;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(AnotherResourceManager) private readonly manager: AnotherResourceManager,
+    @inject(TasksManager) private readonly manager: TasksManager,
     @inject(SERVICES.METER) private readonly meter: Meter
   ) {
     this.createdResourceCounter = meter.createCounter('created_resource');
   }
 
-  public getResource: GetResourceHandler = (req, res) => {
-    return res.status(httpStatus.OK).json(this.manager.getResource());
+  public completeWorkerTask: CompleteWorkerTaskHandler = async (req, res, next) => {
+    try {
+      await this.manager.taskComplete(req.params.jobId, req.params.taskId);
+      return res.sendStatus(httpStatus.OK);
+    } catch (err) {
+      next(err);
+    }
   };
 }

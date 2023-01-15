@@ -4,34 +4,80 @@ global:
   metrics: {}
   environment: {}
 
+rasterCommon:
+  useNodeAffinity: false
+  serviceUrls:
+    syncManager: http://localhost:8081
+    mapproxyApi: http://localhost:8082
+    catalogManager: http://localhost:8083
+    jobManager: http://localhost:8084
+  jobManagement:
+    jobDomain: RASTER
+    ingestion:
+      new: 
+        jobType: Ingestion_New
+        splitTilesTaskType: tilesSplitting
+        mergeTilesTaskType: tilesMerging
+      update: 
+        jobType: Ingestion_Update
+        mergeTilesTaskType: tilesMerging
+  storage:
+    tilesStorageProvider: "FS"
+    fs:
+      ingestionSourcePvc:
+        enabled: true
+        name: ingestion-source-pvc
+        subPath: ingestion-source
+  ca:
+    secretName: ''
+    path: '/usr/local/share/ca-certificates'
+    key: 'ca.crt'
+  ingestion:
+    watchDirectoryOptions:
+      directory: 'watch'
+
 enabled: true
 environment: development
 replicaCount: 1
 initialDelaySeconds: 60
 nodePort: 30030 #for minikube deployment only
 resetOnConfigChange: true
+imagePullPolicy: Always
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
   imagePullSecretName: 'my-registry-secret'
   flavor: openshift
 
-caSecretName: ''
-caPath: '/usr/local/share/ca-certificates'
-caKey: 'ca.crt'
-
 image:
-  repository: ts-server-boilerplate
+  repository: discrete-overseer-creator
   tag: 'latest'
 
+enableWMS: true
 env:
-  port: 8080
+  port: 80
   targetPort: 8080
   protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
+  tilingZoomGroups: '0-12,13,14,15,16,17,18,19,20,21,22,23'
+  shouldSync: true
+  layerSourceDir: '/layerSources'
+  displayNameDir: "\\layerSources"
+  validFileExtensions: 'tif,tiff,gpkg,jp2,jpc,j2k'
+  mapServerPublicDNS: 'http://mapproxy-dev-map-proxy-map-proxy-route-raster-dev.apps.v0h0bdx6.eastus.aroapp.io'
+  bboxSizeTiles: 10000
+  mergeBatchSize: 10000
+  tasksBatchSize: 100
+  httpRetry:
+    attempts: 5
+    delay: exponential
+    resetTimeout: true
+  linksTemplate:
+    mountPath: /usr/app/config
+    fileName: linkTemplates.template
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace
@@ -50,7 +96,7 @@ resources:
       memory: 128Mi
 
 route:
-  enabled: true
+  enabled: false
   path: /
   timeout:
     enabled: false # defaults to 30s by openshift
@@ -58,6 +104,7 @@ route:
 
 ingress:
   enabled: false
+  type: 'nginx-org' # supported values: 'nginx-org' | 'nginx-kubernetes'
   path: /
   host: 'localhost'
   cors:

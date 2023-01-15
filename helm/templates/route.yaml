@@ -1,6 +1,6 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
+{{- $chartName := include "discrete-overseer-creator.name" . -}}
+{{- $cloudProviderFlavor := include "discrete-overseer-creator.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -18,4 +18,5 @@ spec:
     name: {{ $releaseName }}-{{ $chartName }}
   tls:
     termination: edge
+    insecureEdgeTerminationPolicy: Redirect
 {{- end -}}

@@ -38,5 +38,57 @@
         }
       }
     }
+  },
+  "watchDirectory": "WATCH_DIRECTORY",
+  "layerSourceDir": "LAYER_SOURCE_DIR",
+  "mapServerCacheType": "MAP_SERVER_CACHE_TYPE",
+  "displayNameDir": "DISPLAY_NAME_DIR",
+  "validFileExtensions": "VALID_FILE_EXTENSIONS",
+  "jobManagerURL": "JOB_MANAGER_URL",
+  "syncServiceURL": "SYNC_SERVICE_URL",
+  "mapPublishingServiceURL": "MAP_PUBLISHING_SERVICE_URL",
+  "publicMapServerURL": "PUBLIC_MAP_SERVER_URL",
+  "catalogPublishingServiceURL": "CATALOG_PUBLISHING_SERVICE_URL",
+  "tiling": {
+    "zoomGroups": "TILING_ZOOM_GROUPS"
+  },
+  "httpRetry": {
+    "attempts": {
+      "__name": "HTTP_RETRY_ATTEMPTS",
+      "__format": "number"
+    },
+    "delay": "HTTP_RETRY_DELAY",
+    "shouldResetTimeout": {
+      "__name": "HTTP_RETRY_RESET_TIMEOUT",
+      "__format": "boolean"
+    }
+  },
+  "shouldSync": {
+    "__name": "SHOULD_SYNC",
+    "__format": "boolean"
+  },
+  "linkTemplatesPath": "LINKS_TEMPLATE_PATH",
+  "jobDomain": "JOB_DOMAIN",
+  "ingestionNewJobType": "INGESTION_NEW_JOB_TYPE",
+  "ingestionUpdateJobType": "INGESTION_UPDATE_JOB_TYPE",
+  "ingestionTaskType": {
+    "tileMergeTask": "INGESTION_MERGE_TASK_TYPE",
+    "tileSplitTask": "INGESTION_SPLIT_TILES_TASK_TYPE"
+  },
+  "ingestionMergeTiles": {
+    "mergeBatchSize": {
+      "__name": "MERGE_BATCH_SIZE",
+      "__format": "number"
+    }
+  },
+  "ingestionTilesSplittingTiles": {
+    "bboxSizeTiles": {
+      "__name": "BBOX_SIZE_TILES",
+      "__format": "number"
+    },
+    "tasksBatchSize": {
+      "__name": "TASKS_BATCH_SIZE",
+      "__format": "number"
+    }
   }
 }
