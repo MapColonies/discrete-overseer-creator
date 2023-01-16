@@ -28,6 +28,7 @@ module.exports = {
   setupFiles: ['<rootDir>/tests/configurations/jest.setup.ts'],
   preset: 'ts-jest',
   testEnvironment: 'node',
+  modulePathIgnorePatterns: ['<rootDir>/dist'],
   coverageThreshold: {
     global: {
       branches: 80,

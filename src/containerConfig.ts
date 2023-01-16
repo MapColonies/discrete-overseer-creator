@@ -8,7 +8,7 @@ import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { layersRouterFactory, LAYERS_ROUTER_SYMBOL } from './layers/routes/layersRouter';
-import { tasksRouterFactory, TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
+import { jobsRouterFactory, JOBS_ROUTER_SYMBOL } from './jobs/routes/jobsRouter';
 import { tocRouterFactory, TOC_ROUTER_SYMBOL } from './toc/routes/tocRouter';
 
 export interface RegisterOptions {
@@ -33,7 +33,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
-    { token: TASKS_ROUTER_SYMBOL, provider: { useFactory: tasksRouterFactory } },
+    { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
     { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },
     {
       token: 'onSignal',

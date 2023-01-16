@@ -7,7 +7,7 @@ import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { OperationStatus } from '../../common/enums';
 import { ITaskParameters } from '../interfaces';
-import { ITaskZoomRange } from '../../tasks/interfaces';
+import { ITaskZoomRange } from '../../jobs/interfaces';
 import { JobManagerClient } from '../../serviceClients/jobManagerClient';
 
 @injectable()

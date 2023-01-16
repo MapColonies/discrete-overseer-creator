@@ -1,6 +1,6 @@
 import { inject, singleton } from 'tsyringe';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
-import { ITaskZoomRange } from '../tasks/interfaces';
+import { ITaskZoomRange } from '../jobs/interfaces';
 import { SERVICES } from '../common/constants';
 import { IConfig } from '../common/interfaces';
 

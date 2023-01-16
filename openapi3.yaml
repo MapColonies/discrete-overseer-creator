@@ -49,12 +49,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-  /tasks/{jobId}/{taskId}/completed:
+  /jobs/{jobId}/{taskId}/completed:
     post:
-      operationId: completeTask
+      operationId: completeJob
       tags:
-        - tasks
-      summary: update overseer on completion of tiling task
+        - jobs
+      summary: update overseer on completion of a job
       parameters:
         - in: path
           name: jobId

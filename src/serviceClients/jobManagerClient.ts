@@ -6,7 +6,7 @@ import { IConfig, IMergeTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
 import { OperationStatus } from '../common/enums';
-import { ICompletedTasks, IGetTaskResponse } from '../tasks/interfaces';
+import { ICompletedTasks, IGetTaskResponse } from '../jobs/interfaces';
 
 interface ICreateTaskBody {
     description?: string;
@@ -166,7 +166,6 @@ export class JobManagerClient extends HttpClient {
   }
 
   public async findJobs(resourceId: string, productType: ProductType): Promise<IGetJobResponse[]> {
-    try {
       const getLayerUrl = `/jobs`;
       const res = await this.get<IGetJobResponse[]>(getLayerUrl, {
         resourceId: encodeURIComponent(resourceId),
@@ -177,25 +176,15 @@ export class JobManagerClient extends HttpClient {
         return [];
       }
       return res;
-    } catch (error) {
-      // console.log('asdfasdfsdffasfasdfasdfds 4444');
-      // throw error;
-      throw new Error(`error from blab: ${(error as Error).message}`);
-    }
   }
 
   public async findJobsByInternalId(internalId: string): Promise<IGetJobResponse[]> {
-    try {
       const getLayerUrl = `/jobs`;
       const res = await this.get<IGetJobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
       if (typeof res === 'string' || res.length === 0) {
         return [];
       }
       return res;
-    } catch (error) {
-      console.log('asdfasdfsdffasfasdfasdfds');
-      throw error;
-    }
   }
 
   public async abortJob(jobId: string): Promise<void> {

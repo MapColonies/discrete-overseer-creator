@@ -11,10 +11,9 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { LAYERS_ROUTER_SYMBOL } from './layers/routes/layersRouter';
-import { TASKS_ROUTER_SYMBOL } from './tasks/routes/tasksRouter';
+import { JOBS_ROUTER_SYMBOL } from './jobs/routes/jobsRouter';
 import { TOC_ROUTER_SYMBOL } from './toc/routes/tocRouter';
 import { makeInsensitive } from './utils/stringCapitalizationPermutations';
-
 
 @injectable()
 export class ServerBuilder {
@@ -24,7 +23,7 @@ export class ServerBuilder {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(LAYERS_ROUTER_SYMBOL) private readonly layersRouter: Router,
-    @inject(TASKS_ROUTER_SYMBOL) private readonly tasksRouter: Router,
+    @inject(JOBS_ROUTER_SYMBOL) private readonly jobsRouter: Router,
     @inject(TOC_ROUTER_SYMBOL) private readonly tocRouter: Router
   ) {
     this.serverInstance = express();
@@ -46,7 +45,7 @@ export class ServerBuilder {
 
   private buildRoutes(): void {
     this.serverInstance.use('/layers', this.layersRouter);
-    this.serverInstance.use('/tasks', this.tasksRouter);
+    this.serverInstance.use('/jobs', this.jobsRouter);
     this.serverInstance.use('/toc', this.tocRouter);
     this.buildDocsRoutes();
   }
