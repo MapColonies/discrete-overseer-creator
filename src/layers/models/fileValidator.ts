@@ -7,12 +7,9 @@ import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 
-
-
-
 @injectable()
 export class FileValidator {
-    private readonly sourceMount: string;
+  private readonly sourceMount: string;
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
   }

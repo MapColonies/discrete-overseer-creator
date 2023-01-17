@@ -15,7 +15,7 @@ describe('SQLClient', () => {
     clearMockConfig();
     initMockConfig();
 
-    sqlClient = new SQLiteClient(configMock, jsLogger({enabled: false}), 'test_gpkg', 'test_dir');
+    sqlClient = new SQLiteClient(configMock, jsLogger({ enabled: false }), 'test_gpkg', 'test_dir');
   });
 
   describe('getGrid', () => {

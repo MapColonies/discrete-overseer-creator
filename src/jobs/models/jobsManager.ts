@@ -57,7 +57,7 @@ export class JobsManager {
     } else if (
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
       job.type === this.ingestionNewJobType
-      ) {
+    ) {
       this.logger.info(`[TasksManager][taskComplete] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}.`);
       await this.handleNewIngestion(job, task);
     } else {

@@ -7,9 +7,9 @@ import { SERVICES } from '../common/constants';
 import { Grid } from '../layers/interfaces';
 
 interface IMatrixValues {
-    matrixWidth: number;
-    matrixHeight: number;
-  }
+  matrixWidth: number;
+  matrixHeight: number;
+}
 
 @injectable()
 export class SQLiteClient {

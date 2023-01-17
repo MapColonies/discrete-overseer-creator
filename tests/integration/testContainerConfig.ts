@@ -24,7 +24,7 @@ import { trace } from '@opentelemetry/api';
 import jsLogger from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
 import { SERVICES } from '../../src/common/constants';
-import { configMock, registerDefaultConfig, getMock, hasMock, } from '../mocks/config';
+import { configMock, getMock, hasMock, init as initConfig } from '../mocks/config';
 import { InjectionObject } from '../../src/common/dependencyRegistration';
 import { layersRouterFactory, LAYERS_ROUTER_SYMBOL } from '../../src/layers/routes/layersRouter';
 import { jobsRouterFactory, JOBS_ROUTER_SYMBOL } from '../../src/jobs/routes/jobsRouter';
@@ -37,7 +37,7 @@ import { MapPublisherClient } from '../../src/serviceClients/mapPublisher';
 import { CatalogClient } from '../../src/serviceClients/catalogClient';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
-  registerDefaultConfig();
+  initConfig();
   return [
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
@@ -45,9 +45,9 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
     { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
     { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },
-    { token: JobManagerClient , provider: { useValue: jobManagerClientMock }},
-    { token: MapPublisherClient , provider: { useValue: mapPublisherClientMock }},
-    { token: CatalogClient , provider: { useValue: catalogClientMock }},
+    { token: JobManagerClient, provider: { useValue: jobManagerClientMock } },
+    { token: MapPublisherClient, provider: { useValue: mapPublisherClientMock } },
+    { token: CatalogClient, provider: { useValue: catalogClientMock } },
   ];
 }
 const resetContainer = (clearInstances = true): void => {

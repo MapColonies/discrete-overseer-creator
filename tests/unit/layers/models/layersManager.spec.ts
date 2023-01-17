@@ -76,7 +76,7 @@ describe('LayersManager', () => {
     const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
     layersManager = new LayersManager(
       configMock,
-      jsLogger({enabled: false}),
+      jsLogger({ enabled: false }),
       zoomLevelCalculator,
       jobManagerClientMock,
       catalogClientMock,
@@ -111,7 +111,7 @@ describe('LayersManager', () => {
       const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
       layersManager = new LayersManager(
         configMock,
-        jsLogger({enabled: false}),
+        jsLogger({ enabled: false }),
         zoomLevelCalculator,
         jobManagerClientMock,
         catalogClientMock,

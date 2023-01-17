@@ -24,7 +24,11 @@ export class MergeTilesTasker {
   private readonly batchSize: number;
   private readonly mergeTaskBatchSize: number;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger, private readonly jobManagerClient: JobManagerClient) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    private readonly jobManagerClient: JobManagerClient
+  ) {
     this.batchSize = config.get('ingestionMergeTiles.mergeBatchSize');
     this.mergeTaskBatchSize = this.config.get<number>('ingestionMergeTiles.mergeBatchSize');
     this.tileRanger = new TileRanger();

@@ -15,7 +15,11 @@ export class SplitTilesTasker {
   private readonly bboxSizeTiles: number;
   private readonly tasksBatchSize: number;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger, private readonly jobManagerClient: JobManagerClient) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    private readonly jobManagerClient: JobManagerClient
+  ) {
     this.bboxSizeTiles = config.get<number>('ingestionTilesSplittingTiles.bboxSizeTiles');
     this.tasksBatchSize = config.get<number>('ingestionTilesSplittingTiles.tasksBatchSize');
   }

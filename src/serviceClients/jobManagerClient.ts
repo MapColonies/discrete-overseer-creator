@@ -9,69 +9,69 @@ import { OperationStatus } from '../common/enums';
 import { ICompletedTasks, IGetTaskResponse } from '../jobs/interfaces';
 
 interface ICreateTaskBody {
-    description?: string;
-    parameters: ITaskParameters | IMergeTaskParams;
-    reason?: string;
-    type?: string;
-    status?: OperationStatus;
-    attempts?: number;
-  }
-  
-  interface ICreateJobBody {
-    resourceId: string;
-    version: string;
-    parameters: Record<string, unknown>;
-    type: string;
-    percentage?: number;
-    description?: string;
-    status?: OperationStatus;
-    reason?: string;
-    tasks?: ICreateTaskBody[];
-    priority?: number;
-    internalId?: string;
-    producerName?: string;
-    productName?: string;
-    productType?: string;
-    expirationDate?: Date;
-    additionalIdentifiers?: string;
-    domain?: string;
-  }
-  
-  interface ICreateJobResponse {
-    id: string;
-    taskIds: string[];
-  }
-  
-  export interface IGetJobResponse {
-    id: string;
-    resourceId?: string;
-    version?: string;
-    description?: string;
-    parameters?: Record<string, unknown>;
-    reason?: string;
-    tasks?: IGetTaskResponse[];
-    created: Date;
-    updated: Date;
-    status?: OperationStatus;
-    type: string;
-    percentage?: number;
-    isCleaned: boolean;
-    priority: number;
-    internalId?: string;
-    producerName?: string;
-    productName?: string;
-    productType?: string;
-    taskCount: number;
-    completedTasks: number;
-    failedTasks: number;
-    expiredTasks: number;
-    pendingTasks: number;
-    inProgressTasks: number;
-    abortedTasks: number;
-    additionalIdentifiers?: string;
-    expirationDate?: Date;
-    domain: string;
-  }
+  description?: string;
+  parameters: ITaskParameters | IMergeTaskParams;
+  reason?: string;
+  type?: string;
+  status?: OperationStatus;
+  attempts?: number;
+}
+
+interface ICreateJobBody {
+  resourceId: string;
+  version: string;
+  parameters: Record<string, unknown>;
+  type: string;
+  percentage?: number;
+  description?: string;
+  status?: OperationStatus;
+  reason?: string;
+  tasks?: ICreateTaskBody[];
+  priority?: number;
+  internalId?: string;
+  producerName?: string;
+  productName?: string;
+  productType?: string;
+  expirationDate?: Date;
+  additionalIdentifiers?: string;
+  domain?: string;
+}
+
+interface ICreateJobResponse {
+  id: string;
+  taskIds: string[];
+}
+
+export interface IGetJobResponse {
+  id: string;
+  resourceId?: string;
+  version?: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+  reason?: string;
+  tasks?: IGetTaskResponse[];
+  created: Date;
+  updated: Date;
+  status?: OperationStatus;
+  type: string;
+  percentage?: number;
+  isCleaned: boolean;
+  priority: number;
+  internalId?: string;
+  producerName?: string;
+  productName?: string;
+  productType?: string;
+  taskCount: number;
+  completedTasks: number;
+  failedTasks: number;
+  expiredTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
+  abortedTasks: number;
+  additionalIdentifiers?: string;
+  expirationDate?: Date;
+  domain: string;
+}
 
 @injectable()
 export class JobManagerClient extends HttpClient {
@@ -166,25 +166,25 @@ export class JobManagerClient extends HttpClient {
   }
 
   public async findJobs(resourceId: string, productType: ProductType): Promise<IGetJobResponse[]> {
-      const getLayerUrl = `/jobs`;
-      const res = await this.get<IGetJobResponse[]>(getLayerUrl, {
-        resourceId: encodeURIComponent(resourceId),
-        productType: encodeURIComponent(productType),
-        shouldReturnTasks: false,
-      });
-      if (typeof res === 'string' || res.length === 0) {
-        return [];
-      }
-      return res;
+    const getLayerUrl = `/jobs`;
+    const res = await this.get<IGetJobResponse[]>(getLayerUrl, {
+      resourceId: encodeURIComponent(resourceId),
+      productType: encodeURIComponent(productType),
+      shouldReturnTasks: false,
+    });
+    if (typeof res === 'string' || res.length === 0) {
+      return [];
+    }
+    return res;
   }
 
   public async findJobsByInternalId(internalId: string): Promise<IGetJobResponse[]> {
-      const getLayerUrl = `/jobs`;
-      const res = await this.get<IGetJobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
-      if (typeof res === 'string' || res.length === 0) {
-        return [];
-      }
-      return res;
+    const getLayerUrl = `/jobs`;
+    const res = await this.get<IGetJobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
+    if (typeof res === 'string' || res.length === 0) {
+      return [];
+    }
+    return res;
   }
 
   public async abortJob(jobId: string): Promise<void> {

@@ -69,7 +69,7 @@ describe('SplitTilesTasker', () => {
 
   describe('createSplitTilesTasks', () => {
     it('split the tasks based on configuration', async function () {
-      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({enabled: false}), jobManagerClientMock);
+      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
       generateTasksParametersSpy = jest.spyOn(SplitTilesTasker.prototype, 'generateTasksParameters');
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -104,7 +104,7 @@ describe('SplitTilesTasker', () => {
         { minZoom: 5, maxZoom: 8 },
         { minZoom: 2, maxZoom: 2 },
       ];
-      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({enabled: false}), jobManagerClientMock);
+      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
 
       const gen = splitTilesTasker.generateTasksParameters(testData, layerRelativePath, zoomRanges);
       const params = [];

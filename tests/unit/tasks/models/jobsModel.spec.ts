@@ -28,7 +28,7 @@ describe('JobsManager', () => {
     initMockConfig();
     jobsManager = new JobsManager(
       configMock,
-      jsLogger({enabled: false}),
+      jsLogger({ enabled: false }),
       syncClientMock,
       jobManagerClientMock,
       mapPublisherClientMock,

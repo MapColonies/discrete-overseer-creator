@@ -1,6 +1,6 @@
 import { IRasterCatalogUpsertRequestBody, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { ITileRange } from '@map-colonies/mc-utils';
-import { GeoJSON } from 'geojson'
+import { GeoJSON } from 'geojson';
 import { BBox } from '@turf/helpers';
 import { Grid, IBBox } from '../layers/interfaces';
 

@@ -1,6 +1,5 @@
 import { LayerMetadata, ProductType, TileOutputFormat, Transparency } from '@map-colonies/mc-model-types';
 import httpStatusCodes from 'http-status-codes';
-import { container } from 'tsyringe';
 import _ from 'lodash';
 import { GeoJSON } from 'geojson';
 import { FeatureCollection, LineString } from '@turf/turf';
@@ -10,7 +9,7 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { findJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
 import { catalogExistsMock, getHighestLayerVersionMock } from '../../mocks/clients/catalogClient';
-import { setValue, clear as clearConfig, configMock } from '../../mocks/config';
+import { setValue, init as initMockConfig, clear as clearConfig, configMock } from '../../mocks/config';
 import { OperationStatus } from '../../../src/common/enums';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
@@ -159,13 +158,13 @@ const validLine: LineString = {
 
 describe('layers', function () {
   let requestSender: LayersRequestSender;
-  
+
   beforeEach(function () {
-    setValue('tiling.zoomGroups', '0,1,2,3,4');
+    console.warn = jest.fn();
+    setValue('tiling.zoomGroups', '0,1,2,3,4,5,6,7,8,9,10');
     setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
     setValue('layerSourceDir', 'tests/mocks');
     setValue('watchDirectory', 'watch');
-    console.warn = jest.fn();
 
     const app = getApp({
       override: [...getContainerConfig()],
@@ -183,7 +182,9 @@ describe('layers', function () {
   describe('Happy Path', function () {
     it('should return 200 status code', async function () {
       findJobsMock.mockResolvedValue([]);
+
       const response = await requestSender.createLayer(validTestData);
+
       expect(response).toSatisfyApiSpec();
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
@@ -198,7 +199,9 @@ describe('layers', function () {
       findJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: transparencyOpaqueMetadata };
+
       const response = await requestSender.createLayer(testData);
+
       expect(response).toSatisfyApiSpec();
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
@@ -235,14 +238,15 @@ describe('layers', function () {
       findJobsMock.mockResolvedValue([]);
       const productVersionMetadata = { ...validTestData.metadata, productVersion: '3', transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: productVersionMetadata };
+
       const response = await requestSender.createLayer(testData);
+
       expect(response).toSatisfyApiSpec();
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(createLayerJobMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -277,7 +281,9 @@ describe('layers', function () {
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
       const higherVersionMetadata = { ...validTestData.metadata, productVersion: '3.0' };
       const validHigherVersionRecord = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: higherVersionMetadata };
+
       const response = await requestSender.createLayer(validHigherVersionRecord);
+
       expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.OK);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
@@ -295,8 +301,8 @@ describe('layers', function () {
       testData.metadata.footprint = validMultiPolygon as GeoJSON;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.OK);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
@@ -311,7 +317,9 @@ describe('layers', function () {
       let exrtraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
       exrtraFieldTestMetaData = { ...exrtraFieldTestMetaData };
       const extraTestData = { ...validTestData, metadata: exrtraFieldTestMetaData };
+
       const response = await requestSender.createLayer(extraTestData);
+
       expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.OK);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -349,8 +357,8 @@ describe('layers', function () {
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: transparencyOpaqueMetadata };
-
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();
@@ -391,8 +399,8 @@ describe('layers', function () {
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
       const transparencyTransparentMetadata = { ...validTestData.metadata, transparency: Transparency.TRANSPARENT };
       const testData = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: transparencyTransparentMetadata };
-
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();
@@ -458,7 +466,6 @@ describe('layers', function () {
     it('should return 400 status code for invalid Test Data', async function () {
       const response = await requestSender.createLayer(invalidTestData);
       expect(response).toSatisfyApiSpec();
-
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -471,9 +478,10 @@ describe('layers', function () {
     it('should return 400 status code for missing originDirectory value', async function () {
       findJobsMock.mockResolvedValue([]);
       const invalidTestData = { ...validTestData, originDirectory: '' };
-      const response = await requestSender.createLayer(invalidTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(invalidTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -486,9 +494,10 @@ describe('layers', function () {
     it('should return 400 status code for originDirectory equal to watchDir', async function () {
       findJobsMock.mockResolvedValue([]);
       const invalidTestData = { ...validTestData, originDirectory: 'watch' };
-      const response = await requestSender.createLayer(invalidTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(invalidTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -504,9 +513,10 @@ describe('layers', function () {
       const invalidTestData = { ...validTestData, metadata: invalidTestMetaDataHasLowerVersion };
       getHighestLayerVersionMock.mockResolvedValue(2.0);
       findJobsMock.mockResolvedValue([]);
-      const response = await requestSender.createLayer(invalidTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(invalidTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -522,9 +532,10 @@ describe('layers', function () {
       const invalidTestData = { ...validTestData, metadata: invalidTestMetaDataHasLowerVersion };
       getHighestLayerVersionMock.mockResolvedValue(1.0);
       findJobsMock.mockResolvedValue([]);
-      const response = await requestSender.createLayer(invalidTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(invalidTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.CONFLICT);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -562,9 +573,10 @@ describe('layers', function () {
       const invalidTestMetaDataProductType = { ...validTestData.metadata };
       invalidTestMetaDataProductType.productType = ProductType.PHOTO_REALISTIC_3D;
       const invalidTestDataForProductType = { ...validTestData, metadata: invalidTestMetaDataProductType };
-      const response = await requestSender.createLayer(invalidTestDataForProductType);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(invalidTestDataForProductType);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -579,8 +591,8 @@ describe('layers', function () {
       testData.metadata.footprint = invalidPolygon as GeoJSON;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -595,8 +607,8 @@ describe('layers', function () {
       testData.metadata.footprint = invalidMultiPolygon as GeoJSON;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -613,8 +625,8 @@ describe('layers', function () {
       polygonParts.features[1].geometry = invalidMultiPolygon;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -631,8 +643,8 @@ describe('layers', function () {
       polygonParts.features[1].geometry = invalidPolygon;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -649,8 +661,8 @@ describe('layers', function () {
       polygonParts.features[1].geometry = validLine;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -665,8 +677,8 @@ describe('layers', function () {
       testData.metadata.footprint = validLine;
 
       const response = await requestSender.createLayer(testData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(findJobsMock).toHaveBeenCalledTimes(0);
@@ -684,8 +696,8 @@ describe('layers', function () {
       findJobsMock.mockResolvedValue(jobs);
 
       const response = await requestSender.createLayer(validTestData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.CONFLICT);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
@@ -699,8 +711,8 @@ describe('layers', function () {
       findJobsMock.mockRejectedValue(new Error('db fail test'));
 
       const response = await requestSender.createLayer(validTestData);
-      expect(response).toSatisfyApiSpec();
 
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.INTERNAL_SERVER_ERROR);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
@@ -713,9 +725,10 @@ describe('layers', function () {
     it('should return 409 status code when layer exists in map server', async function () {
       findJobsMock.mockResolvedValue([]);
       mapExistsMock.mockResolvedValue(true);
-      const response = await requestSender.createLayer(validTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.CONFLICT);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);
@@ -728,9 +741,10 @@ describe('layers', function () {
     it('should return 409 status code when layer exists in catalog', async function () {
       findJobsMock.mockResolvedValue([]);
       catalogExistsMock.mockResolvedValue(true);
-      const response = await requestSender.createLayer(validTestData);
-      expect(response).toSatisfyApiSpec();
 
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.CONFLICT);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findJobsMock).toHaveBeenCalledTimes(1);

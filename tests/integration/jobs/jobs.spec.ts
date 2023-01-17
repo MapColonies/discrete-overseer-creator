@@ -4,9 +4,8 @@ import { getJobStatusMock, getTaskMock } from '../../mocks/clients/jobManagerCli
 import { publishLayerMock } from '../../mocks/clients/mapPublisherClient';
 import { publishToCatalogMock } from '../../mocks/clients/catalogClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
-import { setValue, clear as clearConfig } from '../../mocks/config';
+import { setValue, init as initMockConfig, clear as clearConfig } from '../../mocks/config';
 import { JobsRequestSender } from './helpers/requestSender';
-
 
 const jobId = 'c3e8d0c6-6663-49e5-9257-323674161725';
 const taskId = '517059cc-f60b-4542-8a41-fdd163358d74';
@@ -22,8 +21,9 @@ describe('jobs', function () {
       override: [...getContainerConfig()],
       useChild: false,
     });
-    setValue('ingestionNewJobType', ingestionNewJobType);
+    setValue('ingestionNewJobType', 'SDFSDFSDF');
     setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
+    initMockConfig();
     requestSender = new JobsRequestSender(app);
   });
   afterEach(function () {

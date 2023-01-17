@@ -11,7 +11,7 @@ jest.mock('better-sqlite3');
 describe('FileValidator', () => {
   beforeEach(function () {
     container.register(SERVICES.CONFIG, { useValue: configMock });
-    container.register(SERVICES.LOGGER, { useValue: jsLogger({enabled: false}) });
+    container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });
     jest.resetAllMocks();
     jest.clearAllMocks();
     jest.restoreAllMocks();
@@ -25,7 +25,7 @@ describe('FileValidator', () => {
       getGpkgIndexFn.mockReturnValue(undefined);
       setValue({ layerSourceDir: 'tests/mocks' });
       const testData: string[] = ['unindexed.gpkg'];
-      const fileValidator = new FileValidator(configMock, jsLogger({enabled: false}));
+      const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }));
 
       const action = () => fileValidator.validateGpkgIndex(testData, 'files');
       expect(action).toThrow(BadRequestError);
@@ -38,7 +38,7 @@ describe('FileValidator', () => {
     getGpkgIndexFn.mockReturnValue({});
     setValue({ layerSourceDir: 'tests/mocks' });
     const testData: string[] = ['indexed.gpkg'];
-    const fileValidator = new FileValidator(configMock, jsLogger({enabled: false}));
+    const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }));
 
     const action = () => fileValidator.validateGpkgIndex(testData, 'files');
     expect(action).not.toThrow();

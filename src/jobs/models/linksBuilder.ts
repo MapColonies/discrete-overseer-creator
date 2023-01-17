@@ -13,7 +13,7 @@ export interface ILinkBuilderData {
 @injectable()
 export class LinkBuilder {
   private readonly compiledTemplate: HandlebarsTemplateDelegate;
-  
+
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, filesManager: FilesManager) {
     const templatePath = this.config.get<string>('linkTemplatesPath');
     const template = filesManager.readFileSync(templatePath, { encoding: 'utf8' });
