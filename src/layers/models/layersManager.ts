@@ -59,7 +59,9 @@ export class LayersManager {
     if (convertedData.id !== undefined) {
       throw new BadRequestError(`Received invalid layer id: ${convertedData.id}`);
     }
-
+    if (data.metadata.ingestionDate !== undefined) {
+      throw new BadRequestError(`received invalid field ingestionDate`);
+    }
     await this.validateFiles(data);
     await this.validateJobNotRunning(productId, productType);
 

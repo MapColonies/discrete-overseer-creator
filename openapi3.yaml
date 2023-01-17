@@ -215,7 +215,6 @@ components:
           srsName: 'string'
           producerName: 'string'
           creationDate: '2022-10-25T10:44:42.787Z'
-          ingestionDate: '2022-10-25T10:44:42.787Z'
           sourceDateStart: '2022-10-25T10:44:42.787Z'
           sourceDateEnd: '2022-10-25T10:44:42.787Z'
           maxResolutionDeg: 0.072

@@ -36,7 +36,6 @@ export const validTestImageMetadata: IFindResponseRecord = {
     srsName: 'wgs84',
     producerName: 'testProducer',
     creationDate: new Date('11/16/2017'),
-    ingestionDate: new Date('11/16/2017'),
     sourceDateEnd: new Date('11/16/2017'),
     sourceDateStart: new Date('11/16/2017'),
     layerPolygonParts: undefined,

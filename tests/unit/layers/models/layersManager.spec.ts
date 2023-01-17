@@ -46,7 +46,6 @@ const testImageMetadata = {
   },
   classification: '',
   creationDate: new Date('02/01/2020'),
-  ingestionDate: new Date('03/01/2020'),
   producerName: 'testProducer',
   productType: ProductType.ORTHOPHOTO_HISTORY,
   productSubType: undefined,

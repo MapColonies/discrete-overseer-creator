@@ -1,4 +1,3 @@
-import jsLogger from '@map-colonies/js-logger';
 import { ILinkBuilderData, LinkBuilder } from '../../../../src/jobs/models/linksBuilder';
 import { getMock as configGetMock, configMock, init as initMockConfig } from '../../../mocks/config';
 import { filesManagerMock } from '../../../mocks/filesManager';

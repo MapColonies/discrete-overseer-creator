@@ -9,7 +9,7 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { findJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
 import { catalogExistsMock, getHighestLayerVersionMock } from '../../mocks/clients/catalogClient';
-import { setValue, init as initMockConfig, clear as clearConfig, configMock } from '../../mocks/config';
+import { setValue, clear as clearConfig } from '../../mocks/config';
 import { OperationStatus } from '../../../src/common/enums';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
@@ -85,7 +85,6 @@ const validTestImageMetadata = {
   srsName: 'wgs84',
   producerName: 'testProducer',
   creationDate: new Date('11/16/2017'),
-  ingestionDate: new Date('11/16/2017'),
   sourceDateEnd: new Date('11/16/2017'),
   sourceDateStart: new Date('11/16/2017'),
   region: [],
@@ -221,7 +220,6 @@ describe('layers', function () {
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
-            ingestionDate: expect.anything(),
             creationDate: expect.anything(),
           },
         }),
@@ -260,7 +258,6 @@ describe('layers', function () {
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
-            ingestionDate: expect.anything(),
             creationDate: expect.anything(),
           },
         }),
@@ -339,7 +336,6 @@ describe('layers', function () {
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
-            ingestionDate: expect.anything(),
             creationDate: expect.anything(),
           },
         }),
@@ -381,7 +377,6 @@ describe('layers', function () {
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
-            ingestionDate: expect.anything(),
             creationDate: expect.anything(),
           },
         }),
@@ -422,7 +417,6 @@ describe('layers', function () {
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
-            ingestionDate: expect.anything(),
             creationDate: expect.anything(),
           },
         }),
