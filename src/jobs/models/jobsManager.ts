@@ -73,7 +73,7 @@ export class JobsManager {
 
   private async publishToCatalog(jobId: string, metadata: LayerMetadata, layerName: string): Promise<string> {
     try {
-      this.logger.info(`[TasksManager][publishToCatalog] layer ${metadata.productId as string} version ${metadata.productVersion as string}`);
+      this.logger.info(`[TasksManager][publishToCatalog] Layer ${metadata.productId as string} version ${metadata.productVersion as string}`);
       const linkData: ILinkBuilderData = {
         serverUrl: this.mapServerUrl,
         layerName: layerName,
@@ -94,7 +94,7 @@ export class JobsManager {
     const id = metadata.productId as string;
     const version = metadata.productVersion as string;
     try {
-      this.logger.info(`[TasksManager][publishToMappingServer] layer ${id} version ${version}`);
+      this.logger.info(`[TasksManager][publishToMappingServer] Layer ${id} version ${version}`);
 
       const publishReq: IPublishMapLayerRequest = {
         name: `${layerName}`,
@@ -148,14 +148,13 @@ export class JobsManager {
         job.metadata.productType as string
       );
 
-      this.logger.debug(
-        `Merging metadata of ${job.id}: ${JSON.stringify(job.metadata)} with metadata from catalog record ${
-          catalogRecord?.id as string
-        }: ${JSON.stringify(catalogRecord?.metadata)}`
-      );
       const mergedData = this.metadataMerger.merge(catalogRecord?.metadata as LayerMetadata, job.metadata);
-      this.logger.info(`Updating catalog record ${catalogRecord?.metadata.id as string} with new metadata`);
-      await this.catalogClient.update(catalogRecord?.metadata.id as string, mergedData);
+      this.logger.debug({
+        internalId: catalogRecord?.id,
+        metadata: job.metadata,
+        message: `Updating catalog record ${catalogRecord?.id as string} with new metadata`,
+      });
+      await this.catalogClient.update(catalogRecord?.id as string, mergedData);
 
       if (job.isSuccessful) {
         this.logger.info(`Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`);
@@ -172,7 +171,14 @@ export class JobsManager {
       job.status = OperationStatus.FAILED;
     } else if (job.isSuccessful) {
       const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
-      this.logger.info(`[TasksManager][handleNewIngestion] Layer name to be published to map serveris "${layerName}"`);
+
+      this.logger.debug({
+        productId: job.metadata.productId,
+        productType: job.metadata.productType,
+        version: job.metadata.productVersion,
+        message: `[TasksManager][handleNewIngestion] Publishing layer name: "${layerName}" in map services`,
+      });
+
       await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath);
       const catalogId = await this.publishToCatalog(job.id, job.metadata, layerName);
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -189,11 +195,16 @@ export class JobsManager {
             job.relativePath
           );
         } catch (err) {
-          this.logger.error(
-            `[TasksManager][handleNewIngestion] failed to trigger sync productId ${job.metadata.productId as string} productVersion ${
-              job.metadata.productVersion as string
-            }. error=${(err as Error).message}`
-          );
+          const message = `[TasksManager][handleNewIngestion] Failed to trigger sync productId ${job.metadata.productId as string} productVersion ${
+            job.metadata.productVersion as string
+          }. error=${(err as Error).message}`;
+
+          this.logger.error({
+            productId: job.metadata.productId,
+            productType: job.metadata.productType,
+            version: job.metadata.productVersion,
+            message: message,
+          });
         }
       }
     }

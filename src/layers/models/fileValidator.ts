@@ -60,7 +60,13 @@ export class FileValidator {
       const index = sqliteClient.getGpkgIndex();
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       if (!index) {
-        throw new BadRequestError(`Geopackage name: ${file} does not have a tiles index`);
+        const message = `Geopackage name: ${file} does not have a tiles index`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          message: message
+        })
+        throw new BadRequestError(message);
       }
     });
   }
