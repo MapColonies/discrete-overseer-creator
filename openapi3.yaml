@@ -17,9 +17,7 @@ paths:
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: './Schema/discreteIngestion/ingestionParams.yaml#/components/schemas/IngestionParams'
-                - $ref: '#/components/schemas/IngestionParams'
+              $ref: './Schema/discreteIngestion/ingestionParams.yaml#/components/schemas/IngestionParams'
             examples:
               createLayerExample:
                 $ref: '#/components/examples/createLayerExample'
@@ -191,14 +189,7 @@ components:
         - UPDATE
         - REMOVE
     productType:
-      type: string
-      enum:
-        - Orthophoto
-        - OrthophotoHistory
-        - RasterMap
-        - RasterAid
-        - RasterVector
-      description: valid product types for ingestion
+      $ref: './Schema/updateLayerMetadata.yaml#/components/schemas/productType'
   examples:
     createLayerExample:
       value:
