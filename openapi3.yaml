@@ -158,14 +158,6 @@ components:
           type: string
       required:
         - message
-    IngestionParams:
-      type: object
-      properties:
-        metadata:
-          type: object
-          properties:
-            productType:
-              $ref: '#/components/schemas/productType'
     tocResponse:
       type: object
       properties:

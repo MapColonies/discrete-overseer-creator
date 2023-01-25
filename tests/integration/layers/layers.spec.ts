@@ -653,7 +653,7 @@ describe('layers', function () {
       testData.metadata.layerPolygonParts = _.cloneDeep(validLayerPolygonParts) as GeoJSON;
       const polygonParts = testData.metadata.layerPolygonParts as FeatureCollection;
       polygonParts.features[1].geometry = validLine;
-
+      
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GeoJSON } from 'geojson';
 import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { BadRequestError, ConflictError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError, HttpError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
@@ -52,7 +52,6 @@ export class LayersManager {
     const originDirectory = data.originDirectory;
     const files = data.fileNames;
     const polygon = data.metadata.footprint;
-
     this.validateGeoJsons(data.metadata);
     // polygon to bbox
     const extent = bbox(polygon as GeoJSON);
@@ -60,11 +59,11 @@ export class LayersManager {
       throw new BadRequestError(`Received invalid layer id: ${convertedData.id}`);
     }
     if (data.metadata.ingestionDate !== undefined) {
-      throw new BadRequestError(`received invalid field ingestionDate`);
+      throw new BadRequestError(`Received invalid field ingestionDate`);
     }
     await this.validateFiles(data);
     await this.validateJobNotRunning(productId, productType);
-
+    
     const jobType = await this.getJobType(data);
     const taskType = this.getTaskType(jobType, files, originDirectory);
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
@@ -72,7 +71,6 @@ export class LayersManager {
     this.validateCorrectProductVersion(data);
 
     this.logger.info(
-      'info',
       `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
         data.metadata.productId as string
       } productType: ${productType}`
@@ -88,7 +86,14 @@ export class LayersManager {
 
       await this.validateNotExistsInCatalog(productId, version, productType);
       if (existsInMapProxy) {
-        throw new ConflictError(`layer '${productId}-${productType}', is already exists on MapProxy`);
+        const message = `Failed to create new ingestion job for layer: '${productId}-${productType}', already exists on MapProxy`;
+        this.logger.error({
+          productId: productId,
+          productType: productType,
+          version: version,
+          message: message,
+        });
+        throw new ConflictError(message);
       }
 
       data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
@@ -103,7 +108,14 @@ export class LayersManager {
         await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
       }
 
-      this.logger.info(`Successfully created job & tasks for record id: ${id}`);
+      this.logger.debug({
+        productId: productId,
+        productType: productType,
+        version: version,
+        jobType: jobType,
+        taskType: taskType,
+        message: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+      });
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (jobType === JobAction.UPDATE) {
       const record = await this.catalog.findRecord(productId, undefined, productType);
@@ -111,7 +123,16 @@ export class LayersManager {
       const dispalyPath = record?.metadata.displayPath as string;
       const layerRelativePath = `${recordId}/${dispalyPath}`;
       if (!existsInMapProxy) {
-        throw new BadRequestError(`layer '${productId}-${productType}', is not exists on MapProxy`);
+        const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
+        this.logger.error({
+          productId: productId,
+          productType: productType,
+          jobType: jobType,
+          taskType: taskType,
+          version: version,
+          message: message,
+        });
+        throw new BadRequestError(message);
       }
       //todo - override data from record - on future should not be provided from new route for update
       this.logger.warn(
@@ -124,9 +145,18 @@ export class LayersManager {
 
       await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl);
 
-      this.logger.info(`Successfully created job & tasks for record id: ${recordId}`);
+      this.logger.debug({
+        productId: productId,
+        productType: productType,
+        version: version,
+        jobType: jobType,
+        taskType: taskType,
+        message: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+      });
     } else {
-      throw new BadRequestError('Unsupported job type');
+      const message = `Unsupported job type`;
+      this.logger.error({ message: message });
+      throw new BadRequestError(message);
     }
   }
 
@@ -145,13 +175,23 @@ export class LayersManager {
       return JobAction.UPDATE;
     }
     if (requestedLayerVersion === highestVersion) {
-      throw new ConflictError(
-        `layer id: ${productId} version: ${version} product type: ${productType} has already the same version (${highestVersion}) in catalog`
-      );
+      const message = `Layer id: ${productId} version: ${version} product type: ${productType} has already the same version (${highestVersion}) in catalog`;
+      this.logger.error({
+        productId: productId,
+        productType: productType,
+        version: version,
+        message: message,
+      });
+      throw new ConflictError(message);
     } else {
-      throw new BadRequestError(
-        `layer id: ${productId} version: ${version} product type: ${productType} has already higher version (${highestVersion}) in catalog`
-      );
+      const message = `Layer id: ${productId} version: ${version} product type: ${productType} has already higher version (${highestVersion}) in catalog`;
+      this.logger.error({
+        productId: productId,
+        productType: productType,
+        version: version,
+        message: message,
+      });
+      throw new BadRequestError(message);
     }
   }
 
@@ -175,7 +215,12 @@ export class LayersManager {
     } else if (validGpkgFiles) {
       return this.tileMergeTask;
     } else {
-      throw new BadRequestError(`Ingesion "Update" job type does not support Mixed/TIFF/TIF/J2k etc.. (GPKG support only)`);
+      const message = `Failed to create job type: ${jobType} - does not support Mixed/TIFF/TIF/J2k etc.. (GPKG support only)`;
+      this.logger.error({
+        jobType: jobType,
+        message: message,
+      });
+      throw new BadRequestError(message);
     }
   }
 
@@ -190,7 +235,7 @@ export class LayersManager {
     }
     const filesExists = await this.fileValidator.validateExists(data.originDirectory, data.fileNames);
     if (!filesExists) {
-      throw new BadRequestError('invalid files list, some files are missing');
+      throw new BadRequestError('Invalid files list, some files are missing');
     }
   }
 
@@ -200,19 +245,32 @@ export class LayersManager {
     return existsInMapServer;
   }
 
-  private async validateJobNotRunning(resourceId: string, productType: ProductType): Promise<void> {
-    const jobs = await this.db.findJobs(resourceId, productType);
+  private async validateJobNotRunning(productId: string, productType: ProductType): Promise<void> {
+    const jobs = await this.db.findJobs(productId, productType);
     jobs.forEach((job) => {
       if (job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) {
-        throw new ConflictError(`layer id: ${resourceId} product type: ${productType}, job is already running`);
+        const message = `Layer id: ${productId} product type: ${productType}, job is already running`;
+        this.logger.error({
+          productId: productId,
+          productType: productType,
+          message: message,
+        });
+        throw new ConflictError(message);
       }
     });
   }
 
-  private async validateNotExistsInCatalog(resourceId: string, version?: string, productType?: string): Promise<void> {
-    const existsInCatalog = await this.catalog.exists(resourceId, version, productType);
+  private async validateNotExistsInCatalog(productId: string, version?: string, productType?: string): Promise<void> {
+    const existsInCatalog = await this.catalog.exists(productId, version, productType);
     if (existsInCatalog) {
-      throw new ConflictError(`layer id: ${resourceId} version: ${version as string}, already exists in catalog`);
+      const message = `Layer id: ${productId} version: ${version as string}, already exists in catalog`;
+      this.logger.error({
+        productId: productId,
+        version: version,
+        productType: productType,
+        message: message,
+      });
+      throw new ConflictError(message);
     }
   }
 
@@ -235,10 +293,21 @@ export class LayersManager {
 
   private validateGeoJsons(metadata: LayerMetadata): void {
     const footprint = metadata.footprint as Geometry;
+    // TODO: consider split footprint type and footprint coordinates condition to prevent misundestand error log.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if ((footprint.type != 'Polygon' && footprint.type != 'MultiPolygon') || footprint.coordinates == undefined || !isValidGeoJson(footprint)) {
-      throw new BadRequestError(`received invalid footprint`);
+      const message = `Received invalid footprint: ${JSON.stringify(footprint)}`;
+      this.logger.error({
+        productId: metadata.productId,
+        productType: metadata.productType,
+        version: metadata.productVersion,
+        footprint: footprint,
+        message: message,
+      });
+      throw new BadRequestError(message);
     }
+    
+    // TODO: layerPolygonParts - still needed?
     if (metadata.layerPolygonParts != undefined) {
       const featureCollection = metadata.layerPolygonParts as FeatureCollection;
       try {
