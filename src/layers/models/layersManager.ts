@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GeoJSON } from 'geojson';
 import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { BadRequestError, ConflictError, HttpError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
@@ -63,7 +63,7 @@ export class LayersManager {
     }
     await this.validateFiles(data);
     await this.validateJobNotRunning(productId, productType);
-    
+
     const jobType = await this.getJobType(data);
     const taskType = this.getTaskType(jobType, files, originDirectory);
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
@@ -306,7 +306,7 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    
+
     // TODO: layerPolygonParts - still needed?
     if (metadata.layerPolygonParts != undefined) {
       const featureCollection = metadata.layerPolygonParts as FeatureCollection;

@@ -64,8 +64,8 @@ export class FileValidator {
         this.logger.error({
           originDirectory: originDirectory,
           fileName: file,
-          message: message
-        })
+          message: message,
+        });
         throw new BadRequestError(message);
       }
     });
