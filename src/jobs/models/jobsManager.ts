@@ -52,18 +52,32 @@ export class JobsManager {
     const job = await this.jobManager.getJobStatus(jobId);
     const task = await this.jobManager.getTask(jobId, taskId);
     if (job.type === this.ingestionUpdateJobType && task.type === this.ingestionTaskType.tileMergeTask) {
-      this.logger.info(`[TasksManager][taskComplete] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}.`);
+      const message = `[TasksManager][taskComplete] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}`;
+      this.logger.info({
+        jobId: jobId,
+        taskId: taskId,
+        message: message,
+      });
       await this.handleUpdateIngestion(job, task);
     } else if (
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
       job.type === this.ingestionNewJobType
     ) {
-      this.logger.info(`[TasksManager][taskComplete] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}.`);
+      const message = `[TasksManager][taskComplete] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}`;
+      this.logger.info({
+        jobId: jobId,
+        taskId: taskId,
+        message: message,
+      });
       await this.handleNewIngestion(job, task);
     } else {
-      throw new BadRequestError(
-        `[TasksManager][taskComplete] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported.`
-      );
+      const message =  `[TasksManager][taskComplete] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
+      this.logger.error({
+        jobId: jobId,
+        taskId: taskId,
+        message: message,
+      });
+      throw new BadRequestError(message);
     }
 
     if (job.status === OperationStatus.IN_PROGRESS) {
@@ -73,7 +87,12 @@ export class JobsManager {
 
   private async publishToCatalog(jobId: string, metadata: LayerMetadata, layerName: string): Promise<string> {
     try {
-      this.logger.info(`[TasksManager][publishToCatalog] Layer ${metadata.productId as string} version ${metadata.productVersion as string}`);
+      const message = `[TasksManager][publishToCatalog] Layer ${metadata.productId as string} version ${metadata.productVersion as string}`;
+      this.logger.info({
+        productId: metadata.productId,
+        productVersion: metadata.productVersion,
+        message: message,
+      });
       const linkData: ILinkBuilderData = {
         serverUrl: this.mapServerUrl,
         layerName: layerName,
@@ -85,16 +104,27 @@ export class JobsManager {
 
       return await this.catalogClient.publish(publishModel);
     } catch (err) {
+      const message =  'Failed to publish layer to catalog';
+      this.logger.error({
+        jobId: jobId,
+        message: message,
+      });
       await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to catalog');
       throw err;
     }
   }
 
   private async publishToMappingServer(jobId: string, metadata: LayerMetadata, layerName: string, relativePath: string): Promise<void> {
-    const id = metadata.productId as string;
-    const version = metadata.productVersion as string;
+    const productId = metadata.productId as string;
+    const productVersion = metadata.productVersion as string;
     try {
-      this.logger.info(`[TasksManager][publishToMappingServer] Layer ${id} version ${version}`);
+      const message = `[TasksManager][publishToMappingServer] Layer ${productId} version ${productVersion}`;
+      this.logger.info({
+        jobId: jobId,
+        productId: productId,
+        productVersion: productVersion,
+        message: message,
+      });
 
       const publishReq: IPublishMapLayerRequest = {
         name: `${layerName}`,
@@ -104,6 +134,13 @@ export class JobsManager {
       };
       await this.mapPublisher.publishLayer(publishReq);
     } catch (err) {
+      const message = 'Failed to publish layer to mapping server';
+      this.logger.error({
+        jobId: jobId,
+        productId: productId,
+        productVersion: productVersion,
+        message: message,
+      });
       await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to mapping server');
       throw err;
     }
@@ -128,9 +165,17 @@ export class JobsManager {
   }
 
   private async abortJobWithStatusFailed(jobId: string, reason?: string): Promise<void> {
-    this.logger.info(`Aborting job with ID ${jobId}`);
+    const abortMessage = `Aborting job with ID ${jobId}, reason: ${reason}`;
+    this.logger.info({
+      jobId: jobId,
+      message: abortMessage
+    });
     await this.jobManager.abortJob(jobId);
-    this.logger.info(`Updating job ${jobId} with status ${OperationStatus.FAILED}`);
+    const updateJobMessage = `Updating job ${jobId} with status ${OperationStatus.FAILED}`;
+    this.logger.info({
+      jobId: jobId,
+      message: updateJobMessage
+    });
     await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, reason);
   }
 
@@ -157,7 +202,11 @@ export class JobsManager {
       await this.catalogClient.update(catalogRecord?.id as string, mergedData);
 
       if (job.isSuccessful) {
-        this.logger.info(`Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`);
+        const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
+        this.logger.info({
+          jobId: job.id,
+          message: message,
+        });
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         await this.jobManager.updateJobStatus(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord?.id);
         job.status = OperationStatus.COMPLETED;

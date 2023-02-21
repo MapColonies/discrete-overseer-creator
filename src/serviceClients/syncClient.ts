@@ -32,7 +32,15 @@ export class SyncClient extends HttpClient {
     operation: OperationTypeEnum,
     layerRelativePath: string
   ): Promise<void> {
-    this.logger.info(`[SyncClient][triggerSync] resourceId=${resourceId}, version=${version}, productType=${productType}`);
+    const message = `[SyncClient][triggerSync] resourceId=${resourceId}, version=${version}, productType=${productType}`;
+    this.logger.info({
+      resourceId: resourceId,
+      resourceVersion: version,
+      productType: productType,
+      operation: operation,
+      layerRelativePath: layerRelativePath,
+      message: message,
+    });
     const createSyncRequest: ISyncClientRequest = {
       resourceId,
       version,

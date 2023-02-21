@@ -69,11 +69,15 @@ export class LayersManager {
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
 
     this.validateCorrectProductVersion(data);
-
-    this.logger.info(
-      `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
-        data.metadata.productId as string
-      } productType: ${productType}`
+    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
+      data.metadata.productId as string
+    } productType: ${productType}`
+    this.logger.info({
+      jobType: jobType,
+      taskType: taskType,
+      productId: data.metadata.productId,
+      message: message,
+    }
     );
 
     if (jobType === JobAction.NEW) {
@@ -135,11 +139,15 @@ export class LayersManager {
         throw new BadRequestError(message);
       }
       //todo - override data from record - on future should not be provided from new route for update
-      this.logger.warn(
-        `Update job - Transparency and TileOutputFormat will be override from catalog:
-         Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
-         TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`
-      );
+      const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
+      Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
+      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
+      this.logger.warn({
+        productId: productId,
+        productType: productType,
+        version: version,
+        message: message,
+      });
       data.metadata.transparency = record?.metadata.transparency;
       data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
 
@@ -334,7 +342,9 @@ export class LayersManager {
     let jobs: IGetJobResponse[];
     try {
       do {
-        this.logger.debug(`generating record id`);
+        this.logger.debug({
+          message: `generating record id`
+        });
         id = uuidv4();
         isExists = await this.catalog.existsByRecordId(id);
         jobs = await this.db.findJobsByInternalId(id);
@@ -346,11 +356,11 @@ export class LayersManager {
         displayPath: displayPath,
       };
 
-      this.logger.debug(`generated record id: ${recordIds.id}, display path: ${recordIds.displayPath}`);
+      this.logger.debug({ message: `generated record id: ${recordIds.id}, display path: ${recordIds.displayPath}` });
 
       return recordIds;
     } catch (err) {
-      this.logger.error(`failed to generate record id: ${(err as Error).message}`);
+      this.logger.error({ message: `failed to generate record id: ${(err as Error).message}` });
       throw err;
     }
   }

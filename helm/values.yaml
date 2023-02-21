@@ -67,7 +67,7 @@ env:
   layerSourceDir: '/layerSources'
   displayNameDir: "\\layerSources"
   validFileExtensions: 'tif,tiff,gpkg,jp2,jpc,j2k'
-  mapServerPublicDNS: 'http://mapproxy-dev-map-proxy-map-proxy-route-raster-dev.apps.v0h0bdx6.eastus.aroapp.io'
+  mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
   tasksBatchSize: 100
@@ -96,7 +96,7 @@ resources:
       memory: 128Mi
 
 route:
-  enabled: false
+  enabled: true
   path: /
   timeout:
     enabled: false # defaults to 30s by openshift

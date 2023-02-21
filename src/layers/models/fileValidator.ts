@@ -16,7 +16,11 @@ export class FileValidator {
 
   public validateSourceDirectory(srcDir: string): boolean {
     if (!srcDir) {
-      this.logger.info(`"originDirectory" is empty, files should be stored on specific directory`);
+      const message = `"originDirectory" is empty, files should be stored on specific directory`;
+      this.logger.info({
+        sourceDirectory: srcDir,
+        message: message,
+      });
       return false;
     } else {
       return true;
@@ -26,7 +30,11 @@ export class FileValidator {
   public validateNotWatchDir(srcDir: string): boolean {
     const watchDir = this.config.get('watchDirectory');
     if (srcDir === watchDir) {
-      this.logger.info(`"originDirectory" can't be with same name as watch directory (${watchDir})`);
+      const message = `"originDirectory" can't be with same name as watch directory (${watchDir})`;
+      this.logger.info({
+        sourceDirectory: srcDir,
+        message: message,
+      });
       return false;
     } else {
       return true;
