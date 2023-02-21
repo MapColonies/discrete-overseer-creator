@@ -37,13 +37,13 @@ export class SQLiteClient {
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       const message = `Failed to validate GPKG index: ${error}`;
-      this.logger.error({ 
-        message: message
-       })
+      this.logger.error({
+        message: message,
+      });
       throw new Error(message);
     } finally {
       this.logger.debug({
-        message: `Closing connection to GPKG in path ${this.fullPath}`
+        message: `Closing connection to GPKG in path ${this.fullPath}`,
       });
       if (db !== undefined) {
         db.close();
@@ -68,15 +68,14 @@ export class SQLiteClient {
       }
     } catch (error) {
       const message = `Failed to get grid type: ${error}`;
-      this.logger.error({ 
-        message: message
-       })
+      this.logger.error({
+        message: message,
+      });
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(message);
     } finally {
-
       this.logger.debug({
-        message: `Closing connection to GPKG in path ${this.fullPath}`
+        message: `Closing connection to GPKG in path ${this.fullPath}`,
       });
       if (db !== undefined) {
         db.close();
@@ -92,7 +91,7 @@ export class SQLiteClient {
           AND sql LIKE '%tile_row%';`;
 
     this.logger.debug({
-      message: `Executing query ${sql} on DB ${this.fullPath}`
+      message: `Executing query ${sql} on DB ${this.fullPath}`,
     });
     const indexCount = (db.prepare(sql).get() as { count: number }).count;
     return indexCount != 0;
@@ -101,13 +100,13 @@ export class SQLiteClient {
   private getGpkgUniqueConstraintIndex(db: SQLiteDB, tableName: string): boolean {
     let sql = `SELECT name FROM pragma_index_list('${tableName}') WHERE "unique" = 1 AND origin = 'u';`;
     this.logger.debug({
-      message: `Executing query ${sql} on DB ${this.fullPath}`
+      message: `Executing query ${sql} on DB ${this.fullPath}`,
     });
     const indexes = db.prepare(sql).all() as { name: string }[];
     for (const index of indexes) {
       sql = `SELECT name FROM pragma_index_info('${index.name}');`;
-      this.logger.debug({ 
-        message: `Executing query ${sql} on DB ${this.fullPath}`
+      this.logger.debug({
+        message: `Executing query ${sql} on DB ${this.fullPath}`,
       });
       const cols = (db.prepare(sql).all() as { name: string }[]).map((c) => c.name);
       if (cols.includes('tile_column') && cols.includes('tile_row') && cols.includes('zoom_level')) {
@@ -119,19 +118,19 @@ export class SQLiteClient {
 
   private getGpkgTableName(db: SQLiteDB): string {
     const sql = `SELECT table_name FROM "gpkg_contents";`;
-    this.logger.debug({ message: `Executing query ${sql} on DB ${this.fullPath}`});
+    this.logger.debug({ message: `Executing query ${sql} on DB ${this.fullPath}` });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const tableNames = db.prepare(sql).all() as { table_name: string }[];
     if (tableNames.length !== 1) {
       const message = 'invalid gpkg, should have single table name';
       this.logger.error({
         tableNames: tableNames,
-        message: message
-      })
+        message: message,
+      });
       throw new Error(message);
     }
     this.logger.debug({
-      message: `Extract table name: ${tableNames[0].table_name}`
+      message: `Extract table name: ${tableNames[0].table_name}`,
     });
     return tableNames[0].table_name;
   }

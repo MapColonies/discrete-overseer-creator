@@ -25,7 +25,6 @@ export class CatalogClient extends HttpClient {
       },
     };
     const res = await this.post<FindRecordResponse>('/records/find', req);
-
     return res.length > 0;
   }
 
@@ -46,7 +45,6 @@ export class CatalogClient extends HttpClient {
 
     // Get product information
     const res = await this.post<FindRecordResponse>('/records/find', req);
-
     // Check if product exists with given version
     if (res.length == 0) {
       return undefined;

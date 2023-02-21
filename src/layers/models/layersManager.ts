@@ -71,14 +71,13 @@ export class LayersManager {
     this.validateCorrectProductVersion(data);
     const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
       data.metadata.productId as string
-    } productType: ${productType}`
+    } productType: ${productType}`;
     this.logger.info({
       jobType: jobType,
       taskType: taskType,
       productId: data.metadata.productId,
       message: message,
-    }
-    );
+    });
 
     if (jobType === JobAction.NEW) {
       const recordIds = await this.generateRecordIds();
@@ -291,7 +290,7 @@ export class LayersManager {
     }
   }
 
-  /// validate productVersion will have decmal value
+  // validate productVersion will have decimal value
   private validateCorrectProductVersion(data: IngestionParams): void {
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     if (data.metadata.productVersion?.indexOf('.') === -1) {
@@ -315,7 +314,6 @@ export class LayersManager {
       throw new BadRequestError(message);
     }
 
-    // TODO: layerPolygonParts - still needed?
     if (metadata.layerPolygonParts != undefined) {
       const featureCollection = metadata.layerPolygonParts as FeatureCollection;
       try {
@@ -343,7 +341,7 @@ export class LayersManager {
     try {
       do {
         this.logger.debug({
-          message: `generating record id`
+          message: `generating record id`,
         });
         id = uuidv4();
         isExists = await this.catalog.existsByRecordId(id);

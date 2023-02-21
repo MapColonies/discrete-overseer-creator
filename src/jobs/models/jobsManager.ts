@@ -71,7 +71,7 @@ export class JobsManager {
       });
       await this.handleNewIngestion(job, task);
     } else {
-      const message =  `[TasksManager][taskComplete] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
+      const message = `[TasksManager][taskComplete] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
       this.logger.error({
         jobId: jobId,
         taskId: taskId,
@@ -104,7 +104,7 @@ export class JobsManager {
 
       return await this.catalogClient.publish(publishModel);
     } catch (err) {
-      const message =  'Failed to publish layer to catalog';
+      const message = 'Failed to publish layer to catalog';
       this.logger.error({
         jobId: jobId,
         message: message,
@@ -168,13 +168,13 @@ export class JobsManager {
     const abortMessage = `Aborting job with ID ${jobId}, reason: ${reason}`;
     this.logger.info({
       jobId: jobId,
-      message: abortMessage
+      message: abortMessage,
     });
     await this.jobManager.abortJob(jobId);
     const updateJobMessage = `Updating job ${jobId} with status ${OperationStatus.FAILED}`;
     this.logger.info({
       jobId: jobId,
-      message: updateJobMessage
+      message: updateJobMessage,
     });
     await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, reason);
   }
