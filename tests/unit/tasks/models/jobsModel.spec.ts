@@ -331,26 +331,6 @@ describe('JobsManager', () => {
         id: catalogRecordId,
         metadata: {},
       });
-      // tasksManager = new JobsManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
-      // tasksManager = new JobsManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
 
       await jobsManager.completeJob(jobId, taskId);
 
