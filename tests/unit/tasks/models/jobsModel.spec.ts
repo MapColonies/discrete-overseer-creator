@@ -85,17 +85,6 @@ describe('JobsManager', () => {
         type: tileSplitTask,
       });
 
-      // tasksManager = new TasksManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
-
       await jobsManager.completeJob(jobId, taskId);
 
       expect(getJobStatusMock).toHaveBeenCalledTimes(1);
@@ -129,17 +118,6 @@ describe('JobsManager', () => {
         type: tileSplitTask,
       });
 
-      // tasksManager = new TasksManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
-
       await jobsManager.completeJob(jobId, taskId);
 
       expect(getJobStatusMock).toHaveBeenCalledTimes(1);
@@ -172,17 +150,6 @@ describe('JobsManager', () => {
         type: tileMergeTask,
         status: OperationStatus.FAILED,
       });
-
-      // tasksManager = new TasksManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
 
       // eslint-disable-next-line @typescript-eslint/ban-types
       const tasksManagerWithHandlers = jobsManager as unknown as { handleUpdateIngestion: () => {}; handleNewIngestion: () => {} };
@@ -229,17 +196,6 @@ describe('JobsManager', () => {
         metadata: {},
       });
 
-      // tasksManager = new TasksManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
-
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobStatusMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
@@ -279,17 +235,6 @@ describe('JobsManager', () => {
         id: catalogRecordId,
         metadata: {},
       });
-
-      // tasksManager = new TasksManager(
-      //   logger,
-      //   configMock,
-      //   syncClientMock,
-      //   jobManagerClientMock,
-      //   mapPublisherClientMock,
-      //   catalogClientMock,
-      //   linkBuilderMock,
-      //   metadataMergerMock
-      // );
 
       await jobsManager.completeJob(jobId, taskId);
 
