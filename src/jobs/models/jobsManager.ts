@@ -165,7 +165,7 @@ export class JobsManager {
   }
 
   private async abortJobWithStatusFailed(jobId: string, reason?: string): Promise<void> {
-    const abortMessage = `Aborting job with ID ${jobId}, reason: ${reason}`;
+    const abortMessage = `Aborting job with ID ${jobId}, reason: ${reason as string}`;
     this.logger.info({
       jobId: jobId,
       message: abortMessage,

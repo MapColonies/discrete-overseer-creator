@@ -66,8 +66,8 @@ export class SQLiteClient {
       } else if (result === 1) {
         return Grid.ONE_ON_ONE;
       }
-    } catch (error) {
-      const message = `Failed to get grid type: ${error}`;
+    } catch (err) {
+      const message = `Failed to get grid type: ${(err as Error).message}`;
       this.logger.error({
         message: message,
       });
