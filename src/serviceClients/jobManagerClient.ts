@@ -2,76 +2,12 @@ import { Logger } from '@map-colonies/js-logger';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
 import { IngestionParams, ProductType } from '@map-colonies/mc-model-types';
+import { ICreateJobBody, ICreateJobResponse, IJobResponse } from '@map-colonies/mc-priority-queue';
 import { IConfig, IMergeTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
 import { OperationStatus } from '../common/enums';
 import { ICompletedTasks, IGetTaskResponse } from '../jobs/interfaces';
-
-interface ICreateTaskBody {
-  description?: string;
-  parameters: ITaskParameters | IMergeTaskParams;
-  reason?: string;
-  type?: string;
-  status?: OperationStatus;
-  attempts?: number;
-}
-
-interface ICreateJobBody {
-  resourceId: string;
-  version: string;
-  parameters: Record<string, unknown>;
-  type: string;
-  percentage?: number;
-  description?: string;
-  status?: OperationStatus;
-  reason?: string;
-  tasks?: ICreateTaskBody[];
-  priority?: number;
-  internalId?: string;
-  producerName?: string;
-  productName?: string;
-  productType?: string;
-  expirationDate?: Date;
-  additionalIdentifiers?: string;
-  domain?: string;
-}
-
-interface ICreateJobResponse {
-  id: string;
-  taskIds: string[];
-}
-
-export interface IGetJobResponse {
-  id: string;
-  resourceId?: string;
-  version?: string;
-  description?: string;
-  parameters?: Record<string, unknown>;
-  reason?: string;
-  tasks?: IGetTaskResponse[];
-  created: Date;
-  updated: Date;
-  status?: OperationStatus;
-  type: string;
-  percentage?: number;
-  isCleaned: boolean;
-  priority: number;
-  internalId?: string;
-  producerName?: string;
-  productName?: string;
-  productType?: string;
-  taskCount: number;
-  completedTasks: number;
-  failedTasks: number;
-  expiredTasks: number;
-  pendingTasks: number;
-  inProgressTasks: number;
-  abortedTasks: number;
-  additionalIdentifiers?: string;
-  expirationDate?: Date;
-  domain: string;
-}
 
 @injectable()
 export class JobManagerClient extends HttpClient {
@@ -93,7 +29,7 @@ export class JobManagerClient extends HttpClient {
     const resourceId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
     const createLayerTasksUrl = `/jobs`;
-    const createJobRequest: ICreateJobBody = {
+    const createJobRequest: CreateJobBody = {
       resourceId: resourceId,
       internalId: data.metadata.id as string,
       version: version,
@@ -132,7 +68,7 @@ export class JobManagerClient extends HttpClient {
     const query = {
       shouldReturnTasks: false,
     };
-    const res = await this.get<IGetJobResponse>(getJobUrl, query);
+    const res = await this.get<JobResponse>(getJobUrl, query);
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     const jobPercentage = Math.trunc((res.completedTasks / res.taskCount) * 100);
     return {
@@ -165,9 +101,9 @@ export class JobManagerClient extends HttpClient {
     });
   }
 
-  public async findJobs(resourceId: string, productType: ProductType): Promise<IGetJobResponse[]> {
+  public async findJobs(resourceId: string, productType: ProductType): Promise<JobResponse[]> {
     const getLayerUrl = `/jobs`;
-    const res = await this.get<IGetJobResponse[]>(getLayerUrl, {
+    const res = await this.get<JobResponse[]>(getLayerUrl, {
       resourceId: encodeURIComponent(resourceId),
       productType: encodeURIComponent(productType),
       shouldReturnTasks: false,
@@ -178,9 +114,9 @@ export class JobManagerClient extends HttpClient {
     return res;
   }
 
-  public async findJobsByInternalId(internalId: string): Promise<IGetJobResponse[]> {
+  public async findJobsByInternalId(internalId: string): Promise<JobResponse[]> {
     const getLayerUrl = `/jobs`;
-    const res = await this.get<IGetJobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
+    const res = await this.get<JobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
     if (typeof res === 'string' || res.length === 0) {
       return [];
     }
@@ -192,3 +128,6 @@ export class JobManagerClient extends HttpClient {
     await this.post(abortJobUrl);
   }
 }
+
+export type JobResponse = IJobResponse<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;
+export type CreateJobBody = ICreateJobBody<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;

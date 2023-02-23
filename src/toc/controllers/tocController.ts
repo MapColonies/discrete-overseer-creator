@@ -1,10 +1,6 @@
-import { Logger } from '@map-colonies/js-logger';
-import { Meter } from '@map-colonies/telemetry';
-import { BoundCounter } from '@opentelemetry/api-metrics';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
-import { SERVICES } from '../../common/constants';
 import { ITocParams, SchemaType } from '../interfaces';
 import { TocManager } from '../models/tocManager';
 
@@ -12,15 +8,7 @@ type GetTocHandler = RequestHandler<undefined, string, ITocParams>;
 
 @injectable()
 export class TocController {
-  private readonly createdResourceCounter: BoundCounter;
-
-  public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.METER) private readonly meter: Meter,
-    @inject(TocManager) private readonly manager: TocManager
-  ) {
-    this.createdResourceCounter = meter.createCounter('created_resource');
-  }
+  public constructor(@inject(TocManager) private readonly manager: TocManager) {}
 
   public getToc: GetTocHandler = async (req, res, next) => {
     try {

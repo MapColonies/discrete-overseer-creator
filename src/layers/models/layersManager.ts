@@ -13,7 +13,7 @@ import { JobAction, OperationStatus, TaskAction } from '../../common/enums';
 import { layerMetadataToPolygonParts } from '../../common/utils/polygonPartsBuilder';
 import { createBBoxString } from '../../utils/bbox';
 import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
-import { IGetJobResponse, JobManagerClient } from '../../serviceClients/jobManagerClient';
+import { JobResponse, JobManagerClient } from '../../serviceClients/jobManagerClient';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
@@ -137,7 +137,7 @@ export class LayersManager {
         });
         throw new BadRequestError(message);
       }
-      //todo - override data from record - on future should not be provided from new route for update
+
       const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
       TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
@@ -337,7 +337,7 @@ export class LayersManager {
   private async generateRecordIds(): Promise<IRecordIds> {
     let id: string;
     let isExists: boolean;
-    let jobs: IGetJobResponse[];
+    let jobs: JobResponse[];
     try {
       do {
         this.logger.debug({
