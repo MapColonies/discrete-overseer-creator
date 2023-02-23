@@ -149,19 +149,6 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       await layersManager.createLayer(testData, managerCallbackUrl);
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -192,18 +179,6 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -252,18 +227,6 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       await layersManager.createLayer(testData, managerCallbackUrl);
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -305,18 +268,6 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
       };
@@ -340,18 +291,6 @@ describe('LayersManager', () => {
       getHighestLayerVersionMock.mockResolvedValue(4.0);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -384,18 +323,6 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
       };
@@ -419,18 +346,6 @@ describe('LayersManager', () => {
       validateNotWatchDirMock.mockResolvedValue(true);
       findJobsMock.mockResolvedValue([{ status: OperationStatus.PENDING }]);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
       };
@@ -452,18 +367,6 @@ describe('LayersManager', () => {
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
       findJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS }]);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -500,18 +403,6 @@ describe('LayersManager', () => {
       validateNotWatchDirMock.mockResolvedValue(true);
       findJobsMock.mockResolvedValue([{ status: OperationStatus.COMPLETED }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -550,18 +441,6 @@ describe('LayersManager', () => {
       findJobsMock.mockResolvedValue([{ status: OperationStatus.FAILED }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
       };
@@ -584,18 +463,6 @@ describe('LayersManager', () => {
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
       findJobsMock.mockResolvedValue([]);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -620,18 +487,6 @@ describe('LayersManager', () => {
       validateNotWatchDirMock.mockResolvedValue(true);
       findJobsMock.mockResolvedValue([]);
 
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
-
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
       };
@@ -651,18 +506,6 @@ describe('LayersManager', () => {
       mapExistsMock.mockResolvedValue(false);
       catalogExistsMock.mockResolvedValue(false);
       fileValidatorValidateExistsMock.mockResolvedValue(false);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -691,19 +534,6 @@ describe('LayersManager', () => {
       findJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
-
-      // const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      // layersManager = new LayersManager(
-      //   configMock,
-      //   logger,
-      //   zoomLevelCalculator,
-      //   jobManagerClientMock,
-      //   catalogClientMock,
-      //   mapPublisherClientMock,
-      //   fileValidatorMock,
-      //   splitTilesTaskerMock,
-      //   mergeTilesTasker
-      // );
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 

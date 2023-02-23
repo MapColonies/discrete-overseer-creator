@@ -56,7 +56,7 @@ export class JobsManager {
       this.logger.info({
         jobId: jobId,
         taskId: taskId,
-        message: message,
+        msg: message,
       });
       await this.handleUpdateIngestion(job, task);
     } else if (
@@ -67,7 +67,7 @@ export class JobsManager {
       this.logger.info({
         jobId: jobId,
         taskId: taskId,
-        message: message,
+        msg: message,
       });
       await this.handleNewIngestion(job, task);
     } else {
@@ -75,7 +75,7 @@ export class JobsManager {
       this.logger.error({
         jobId: jobId,
         taskId: taskId,
-        message: message,
+        msg: message,
       });
       throw new BadRequestError(message);
     }
@@ -91,7 +91,7 @@ export class JobsManager {
       this.logger.info({
         productId: metadata.productId,
         productVersion: metadata.productVersion,
-        message: message,
+        msg: message,
       });
       const linkData: ILinkBuilderData = {
         serverUrl: this.mapServerUrl,
@@ -107,7 +107,7 @@ export class JobsManager {
       const message = 'Failed to publish layer to catalog';
       this.logger.error({
         jobId: jobId,
-        message: message,
+        msg: message,
       });
       await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to catalog');
       throw err;
@@ -123,7 +123,7 @@ export class JobsManager {
         jobId: jobId,
         productId: productId,
         productVersion: productVersion,
-        message: message,
+        msg: message,
       });
 
       const publishReq: IPublishMapLayerRequest = {
@@ -139,7 +139,7 @@ export class JobsManager {
         jobId: jobId,
         productId: productId,
         productVersion: productVersion,
-        message: message,
+        msg: message,
       });
       await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to mapping server');
       throw err;
@@ -168,13 +168,13 @@ export class JobsManager {
     const abortMessage = `Aborting job with ID ${jobId}, reason: ${reason as string}`;
     this.logger.info({
       jobId: jobId,
-      message: abortMessage,
+      msg: abortMessage,
     });
     await this.jobManager.abortJob(jobId);
     const updateJobMessage = `Updating job ${jobId} with status ${OperationStatus.FAILED}`;
     this.logger.info({
       jobId: jobId,
-      message: updateJobMessage,
+      msg: updateJobMessage,
     });
     await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, reason);
   }
@@ -197,7 +197,7 @@ export class JobsManager {
       this.logger.debug({
         internalId: catalogRecord?.id,
         metadata: job.metadata,
-        message: `Updating catalog record ${catalogRecord?.id as string} with new metadata`,
+        msg: `Updating catalog record ${catalogRecord?.id as string} with new metadata`,
       });
       await this.catalogClient.update(catalogRecord?.id as string, mergedData);
 
@@ -205,7 +205,7 @@ export class JobsManager {
         const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
         this.logger.info({
           jobId: job.id,
-          message: message,
+          msg: message,
         });
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         await this.jobManager.updateJobStatus(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord?.id);
@@ -225,7 +225,7 @@ export class JobsManager {
         productId: job.metadata.productId,
         productType: job.metadata.productType,
         version: job.metadata.productVersion,
-        message: `[TasksManager][handleNewIngestion] Publishing layer name: "${layerName}" in map services`,
+        msg: `[TasksManager][handleNewIngestion] Publishing layer name: "${layerName}" in map services`,
       });
 
       await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath);
@@ -252,7 +252,7 @@ export class JobsManager {
             productId: job.metadata.productId,
             productType: job.metadata.productType,
             version: job.metadata.productVersion,
-            message: message,
+            msg: message,
           });
         }
       }
