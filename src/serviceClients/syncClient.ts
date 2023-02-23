@@ -26,6 +26,7 @@ export class SyncClient extends HttpClient {
   }
 
   public async triggerSync(
+    jobId: string,
     resourceId: string,
     version: string,
     productType: ProductType,
@@ -34,12 +35,13 @@ export class SyncClient extends HttpClient {
   ): Promise<void> {
     const message = `[SyncClient][triggerSync] resourceId=${resourceId}, version=${version}, productType=${productType}`;
     this.logger.info({
+      jobId: jobId,
       resourceId: resourceId,
       resourceVersion: version,
       productType: productType,
       operation: operation,
       layerRelativePath: layerRelativePath,
-      message: message,
+      msg: message,
     });
     const createSyncRequest: ISyncClientRequest = {
       resourceId,

@@ -76,7 +76,7 @@ export class LayersManager {
       jobType: jobType,
       taskType: taskType,
       productId: data.metadata.productId,
-      message: message,
+      msg: message,
     });
 
     if (jobType === JobAction.NEW) {
@@ -94,7 +94,7 @@ export class LayersManager {
           productId: productId,
           productType: productType,
           version: version,
-          message: message,
+          msg: message,
         });
         throw new ConflictError(message);
       }
@@ -117,7 +117,7 @@ export class LayersManager {
         version: version,
         jobType: jobType,
         taskType: taskType,
-        message: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+        msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
       });
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (jobType === JobAction.UPDATE) {
@@ -133,7 +133,7 @@ export class LayersManager {
           jobType: jobType,
           taskType: taskType,
           version: version,
-          message: message,
+          msg: message,
         });
         throw new BadRequestError(message);
       }
@@ -145,7 +145,7 @@ export class LayersManager {
         productId: productId,
         productType: productType,
         version: version,
-        message: message,
+        msg: message,
       });
       data.metadata.transparency = record?.metadata.transparency;
       data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
@@ -158,11 +158,11 @@ export class LayersManager {
         version: version,
         jobType: jobType,
         taskType: taskType,
-        message: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+        msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
       });
     } else {
       const message = `Unsupported job type`;
-      this.logger.error({ message: message });
+      this.logger.error({ msg: message });
       throw new BadRequestError(message);
     }
   }
@@ -187,7 +187,7 @@ export class LayersManager {
         productId: productId,
         productType: productType,
         version: version,
-        message: message,
+        msg: message,
       });
       throw new ConflictError(message);
     } else {
@@ -196,7 +196,7 @@ export class LayersManager {
         productId: productId,
         productType: productType,
         version: version,
-        message: message,
+        msg: message,
       });
       throw new BadRequestError(message);
     }
@@ -225,7 +225,7 @@ export class LayersManager {
       const message = `Failed to create job type: ${jobType} - does not support Mixed/TIFF/TIF/J2k etc.. (GPKG support only)`;
       this.logger.error({
         jobType: jobType,
-        message: message,
+        msg: message,
       });
       throw new BadRequestError(message);
     }
@@ -260,7 +260,7 @@ export class LayersManager {
         this.logger.error({
           productId: productId,
           productType: productType,
-          message: message,
+          msg: message,
         });
         throw new ConflictError(message);
       }
@@ -275,7 +275,7 @@ export class LayersManager {
         productId: productId,
         version: version,
         productType: productType,
-        message: message,
+        msg: message,
       });
       throw new ConflictError(message);
     }
@@ -309,7 +309,7 @@ export class LayersManager {
         productType: metadata.productType,
         version: metadata.productVersion,
         footprint: footprint,
-        message: message,
+        msg: message,
       });
       throw new BadRequestError(message);
     }
@@ -341,7 +341,7 @@ export class LayersManager {
     try {
       do {
         this.logger.debug({
-          message: `generating record id`,
+          msg: `generating record id`,
         });
         id = uuidv4();
         isExists = await this.catalog.existsByRecordId(id);
@@ -354,11 +354,11 @@ export class LayersManager {
         displayPath: displayPath,
       };
 
-      this.logger.debug({ message: `generated record id: ${recordIds.id}, display path: ${recordIds.displayPath}` });
+      this.logger.debug({ msg: `generated record id: ${recordIds.id}, display path: ${recordIds.displayPath}` });
 
       return recordIds;
     } catch (err) {
-      this.logger.error({ message: `failed to generate record id: ${(err as Error).message}` });
+      this.logger.error({ msg: `failed to generate record id: ${(err as Error).message}` });
       throw err;
     }
   }

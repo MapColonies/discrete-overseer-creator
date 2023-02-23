@@ -19,7 +19,7 @@ export class FileValidator {
       const message = `"originDirectory" is empty, files should be stored on specific directory`;
       this.logger.info({
         sourceDirectory: srcDir,
-        message: message,
+        msg: message,
       });
       return false;
     } else {
@@ -33,7 +33,7 @@ export class FileValidator {
       const message = `"originDirectory" can't be with same name as watch directory (${watchDir})`;
       this.logger.info({
         sourceDirectory: srcDir,
-        message: message,
+        msg: message,
       });
       return false;
     } else {
@@ -72,7 +72,7 @@ export class FileValidator {
         this.logger.error({
           originDirectory: originDirectory,
           fileName: file,
-          message: message,
+          msg: message,
         });
         throw new BadRequestError(message);
       }

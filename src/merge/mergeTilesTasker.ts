@@ -60,10 +60,10 @@ export class MergeTilesTasker {
         yield task;
       } catch (err) {
         const error = err as Error;
-        const message = `failed to calculate overlaps: ${error.message}, failing footprints: ${JSON.stringify(subGroupFootprints)}`;
+        const message = `failed to calculate overlaps, error: ${error.message}, failing footprints: ${JSON.stringify(subGroupFootprints)}`;
         this.logger.error({
           subGroupFootprints: subGroupFootprints,
-          message: message,
+          msg: message,
         });
         throw err;
       }

@@ -89,6 +89,7 @@ export class JobsManager {
     try {
       const message = `[TasksManager][publishToCatalog] Layer ${metadata.productId as string} version ${metadata.productVersion as string}`;
       this.logger.info({
+        jobId: jobId,
         productId: metadata.productId,
         productVersion: metadata.productVersion,
         msg: message,
@@ -104,7 +105,7 @@ export class JobsManager {
 
       return await this.catalogClient.publish(publishModel);
     } catch (err) {
-      const message = 'Failed to publish layer to catalog';
+      const message = `Failed to publish layer to catalog, error: ${(err as Error).message}`;
       this.logger.error({
         jobId: jobId,
         msg: message,
@@ -134,7 +135,7 @@ export class JobsManager {
       };
       await this.mapPublisher.publishLayer(publishReq);
     } catch (err) {
-      const message = 'Failed to publish layer to mapping server';
+      const message = `Failed to publish layer to mapping server, error: ${(err as Error).message}}`;
       this.logger.error({
         jobId: jobId,
         productId: productId,
@@ -237,6 +238,7 @@ export class JobsManager {
       if (this.shouldSync) {
         try {
           await this.syncClient.triggerSync(
+            job.id,
             job.metadata.productId as string,
             job.metadata.productVersion as string,
             job.metadata.productType as ProductType,
