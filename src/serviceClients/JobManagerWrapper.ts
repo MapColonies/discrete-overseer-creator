@@ -1,20 +1,19 @@
 import { Logger } from '@map-colonies/js-logger';
-import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
 import { IngestionParams, ProductType } from '@map-colonies/mc-model-types';
-import { ICreateJobBody, ICreateJobResponse, IJobResponse } from '@map-colonies/mc-priority-queue';
+import { ICreateJobBody, ICreateJobResponse, IJobResponse, OperationStatus, ITaskResponse, JobManagerClient } from '@map-colonies/mc-priority-queue';
+import { NotFoundError } from '@map-colonies/error-types';
 import { IConfig, IMergeTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
-import { OperationStatus } from '../common/enums';
-import { ICompletedTasks, IGetTaskResponse } from '../jobs/interfaces';
+import { ICompletedJobs } from '../jobs/interfaces';
 
 @injectable()
-export class JobManagerClient extends HttpClient {
+export class JobManagerWrapper extends JobManagerClient {
   private readonly jobDomain: string;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, config.get<string>('jobManagerURL'), 'JobsManager', config.get<IHttpRetryConfig>('httpRetry'));
+    super(logger, '', '', config.get<string>('jobManagerURL'));
     this.jobDomain = config.get<string>('jobDomain');
   }
 
@@ -63,18 +62,17 @@ export class JobManagerClient extends HttpClient {
     await this.post(createTasksUrl, req);
   }
 
-  public async getJobStatus(jobId: string): Promise<ICompletedTasks> {
-    const getJobUrl = `/jobs/${jobId}`;
-    const query = {
-      shouldReturnTasks: false,
-    };
-    const res = await this.get<JobResponse>(getJobUrl, query);
+  public async getJobById(jobId: string): Promise<ICompletedJobs> {
+    const res = await this.getJob<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(jobId);
+    if (res === undefined) {
+      throw new NotFoundError(`job with ${jobId} is not exists`);
+    }
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     const jobPercentage = Math.trunc((res.completedTasks / res.taskCount) * 100);
     return {
       id: res.id,
       internalId: res.internalId as string,
-      status: res.status as OperationStatus,
+      status: res.status,
       isCompleted: res.completedTasks + res.failedTasks + res.expiredTasks + res.abortedTasks === res.taskCount,
       isSuccessful: res.completedTasks === res.taskCount,
       percentage: jobPercentage,
@@ -85,49 +83,35 @@ export class JobManagerClient extends HttpClient {
     };
   }
 
-  public async getTask(jobId: string, taskId: string): Promise<IGetTaskResponse> {
-    const getTaskUrl = `/jobs/${jobId}/tasks/${taskId}`;
-    const res = await this.get<IGetTaskResponse>(getTaskUrl);
+  public async getTaskById(jobId: string, taskId: string): Promise<TaskResponse> {
+    const res = await this.getTask<ITaskParameters>(jobId, taskId);
+    if (res === null) {
+      throw new NotFoundError(`taskId: ${taskId}, jobId: ${jobId} is not exists`);
+    }
     return res;
   }
 
-  public async updateJobStatus(jobId: string, status: OperationStatus, jobPercentage?: number, reason?: string, catalogId?: string): Promise<void> {
-    const updateTaskUrl = `/jobs/${jobId}`;
-    await this.put(updateTaskUrl, {
+  public async updateJobById(jobId: string, status: OperationStatus, jobPercentage?: number, reason?: string, catalogId?: string): Promise<void> {
+    const updateJobBody = {
       status: status,
       reason: reason,
       internalId: catalogId,
       percentage: jobPercentage,
-    });
+    };
+    await this.updateJob(jobId, updateJobBody);
   }
 
   public async findJobs(resourceId: string, productType: ProductType): Promise<JobResponse[]> {
-    const getLayerUrl = `/jobs`;
-    const res = await this.get<JobResponse[]>(getLayerUrl, {
-      resourceId: encodeURIComponent(resourceId),
-      productType: encodeURIComponent(productType),
-      shouldReturnTasks: false,
-    });
-    if (typeof res === 'string' || res.length === 0) {
-      return [];
-    }
+    const res = this.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(resourceId, productType);
     return res;
   }
 
   public async findJobsByInternalId(internalId: string): Promise<JobResponse[]> {
-    const getLayerUrl = `/jobs`;
-    const res = await this.get<JobResponse[]>(getLayerUrl, { internalId, shouldReturnTasks: false });
-    if (typeof res === 'string' || res.length === 0) {
-      return [];
-    }
+    const res = this.getJobByInternalId<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(internalId);
     return res;
-  }
-
-  public async abortJob(jobId: string): Promise<void> {
-    const abortJobUrl = `/tasks/abort/${jobId}`;
-    await this.post(abortJobUrl);
   }
 }
 
 export type JobResponse = IJobResponse<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;
+export type TaskResponse = ITaskResponse<ITaskParameters>;
 export type CreateJobBody = ICreateJobBody<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;

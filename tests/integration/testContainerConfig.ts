@@ -10,7 +10,7 @@ import { tocRouterFactory, TOC_ROUTER_SYMBOL } from '../../src/toc/routes/tocRou
 import { jobManagerClientMock } from '../mocks/clients/jobManagerClient';
 import { mapPublisherClientMock } from '../mocks/clients/mapPublisherClient';
 import { catalogClientMock } from '../mocks/clients/catalogClient';
-import { JobManagerClient } from '../../src/serviceClients/jobManagerClient';
+import { JobManagerWrapper } from '../../src/serviceClients/JobManagerWrapper';
 import { MapPublisherClient } from '../../src/serviceClients/mapPublisher';
 import { CatalogClient } from '../../src/serviceClients/catalogClient';
 
@@ -23,7 +23,7 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
     { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
     { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },
-    { token: JobManagerClient, provider: { useValue: jobManagerClientMock } },
+    { token: JobManagerWrapper, provider: { useValue: jobManagerClientMock } },
     { token: MapPublisherClient, provider: { useValue: mapPublisherClientMock } },
     { token: CatalogClient, provider: { useValue: catalogClientMock } },
   ];

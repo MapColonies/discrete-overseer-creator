@@ -1,6 +1,6 @@
 import httpStatusCodes from 'http-status-codes';
 import { getApp } from '../../../src/app';
-import { getJobStatusMock, getTaskMock } from '../../mocks/clients/jobManagerClient';
+import { getJobByIdMock, getTaskByIdMock } from '../../mocks/clients/jobManagerClient';
 import { publishLayerMock } from '../../mocks/clients/mapPublisherClient';
 import { publishToCatalogMock } from '../../mocks/clients/catalogClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
@@ -34,12 +34,12 @@ describe('jobs', function () {
 
   describe('Happy Path', function () {
     it('should return 200 status code when all completed', async function () {
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         isCompleted: true,
         type: ingestionNewJobType,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         type: tileSplitTask,
       });
 
@@ -50,12 +50,12 @@ describe('jobs', function () {
     });
 
     it('should return 200 status code when not all completed', async function () {
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         isCompleted: false,
         type: ingestionNewJobType,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         type: tileSplitTask,
       });
 
@@ -73,7 +73,7 @@ describe('jobs', function () {
   describe('Sad Path', function () {
     // All requests with status code 4XX-5XX
     it('should return 500 if failed to get completed zoom levels', async function () {
-      getJobStatusMock.mockImplementation(() => {
+      getJobByIdMock.mockImplementation(() => {
         throw new Error('test error');
       });
       const response = await requestSender.completeJob(jobId, taskId);

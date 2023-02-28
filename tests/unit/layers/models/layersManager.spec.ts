@@ -1,6 +1,7 @@
 import { IngestionParams, LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
 import { createLayerJobMock, findJobsMock, jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
 import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findRecordMock } from '../../../mocks/clients/catalogClient';
@@ -13,7 +14,7 @@ import {
   validateGpkgFilesMock,
   fileValidatorMock,
 } from '../../../mocks/fileValidator';
-import { JobAction, OperationStatus, TaskAction } from '../../../../src/common/enums';
+import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
 import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaskerMock } from '../../../mocks/splitTilesTasker';
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';

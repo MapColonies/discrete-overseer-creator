@@ -1,14 +1,14 @@
 import jsLogger from '@map-colonies/js-logger';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobsManager } from '../../../../src/jobs/models/jobsManager';
-import { jobManagerClientMock, getJobStatusMock, getTaskMock, abortJobMock, updateJobStatusMock } from '../../../mocks/clients/jobManagerClient';
+import { jobManagerClientMock, getJobByIdMock, getTaskByIdMock, abortJobMock, updateJobByIdMock } from '../../../mocks/clients/jobManagerClient';
 import { mapPublisherClientMock, publishLayerMock } from '../../../mocks/clients/mapPublisherClient';
 import { catalogClientMock, findRecordMock, publishToCatalogMock, updateMock } from '../../../mocks/clients/catalogClient';
 import { syncClientMock, triggerSyncMock } from '../../../mocks/clients/syncClient';
 import { configMock, init as initMockConfig, setValue } from '../../../mocks/config';
 import { linkBuilderMock } from '../../../mocks/linkBuilder';
 import { OperationTypeEnum } from '../../../../src/serviceClients/syncClient';
-import { OperationStatus } from '../../../../src/common/enums';
 import { mergeMock, metadataMergerMock } from '../../../mocks/metadataMerger';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../../../src/layers/interfaces';
 
@@ -71,7 +71,8 @@ describe('JobsManager', () => {
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
+        id: jobId,
         isCompleted: true,
         isSuccessful: true,
         metadata: rasterMapTestData,
@@ -79,7 +80,7 @@ describe('JobsManager', () => {
         type: ingestionNewJobType,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         id: taskId,
         jobId: jobId,
         type: tileSplitTask,
@@ -87,7 +88,7 @@ describe('JobsManager', () => {
 
       await jobsManager.completeJob(jobId, taskId);
 
-      expect(getJobStatusMock).toHaveBeenCalledTimes(1);
+      expect(getJobByIdMock).toHaveBeenCalledTimes(1);
       expect(publishToCatalogMock).toHaveBeenCalledTimes(1);
       expect(publishLayerMock).toHaveBeenCalledTimes(1);
 
@@ -100,7 +101,14 @@ describe('JobsManager', () => {
       const expectedPublishTocCatalogReq = { ...catalogReqData };
       expectedPublishTocCatalogReq.metadata.productType = ProductType.RASTER_MAP;
       expect(publishToCatalogMock).toHaveBeenCalledWith(expectedPublishTocCatalogReq);
-      expect(triggerSyncMock).toHaveBeenCalledWith('test', '1', ProductType.RASTER_MAP, OperationTypeEnum.ADD, mapPublishReqForRasterMap.tilesPath);
+      expect(triggerSyncMock).toHaveBeenCalledWith(
+        jobId,
+        'test',
+        '1',
+        ProductType.RASTER_MAP,
+        OperationTypeEnum.ADD,
+        mapPublishReqForRasterMap.tilesPath
+      );
     });
 
     it('do nothing if some tasks are not done', async function () {
@@ -109,18 +117,18 @@ describe('JobsManager', () => {
       setValue('ingestionNewJobType', ingestionNewJobType);
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         allCompleted: false,
         type: ingestionNewJobType,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         type: tileSplitTask,
       });
 
       await jobsManager.completeJob(jobId, taskId);
 
-      expect(getJobStatusMock).toHaveBeenCalledTimes(1);
+      expect(getJobByIdMock).toHaveBeenCalledTimes(1);
       expect(publishToCatalogMock).toHaveBeenCalledTimes(0);
       expect(publishLayerMock).toHaveBeenCalledTimes(0);
       expect(triggerSyncMock).toHaveBeenCalledTimes(0);
@@ -133,7 +141,7 @@ describe('JobsManager', () => {
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         id: jobId,
         completed: true,
         successful: true,
@@ -144,7 +152,7 @@ describe('JobsManager', () => {
         status: OperationStatus.IN_PROGRESS,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         id: taskId,
         jobId: jobId,
         type: tileMergeTask,
@@ -158,8 +166,8 @@ describe('JobsManager', () => {
       await jobsManager.completeJob(jobId, taskId);
 
       expect(abortJobMock).toHaveBeenCalledTimes(1);
-      expect(updateJobStatusMock).toHaveBeenCalledTimes(1);
-      expect(updateJobStatusMock).toHaveBeenCalledWith(jobId, OperationStatus.FAILED, undefined, `Failed to update ingestion`);
+      expect(updateJobByIdMock).toHaveBeenCalledTimes(1);
+      expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.FAILED, undefined, `Failed to update ingestion`);
       expect(handleUpdateIngestionSpy).toHaveBeenCalledTimes(1);
       expect(handleNewIngestionSpy).toHaveBeenCalledTimes(0);
     });
@@ -171,7 +179,7 @@ describe('JobsManager', () => {
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,
         isSuccessful: true,
@@ -183,7 +191,7 @@ describe('JobsManager', () => {
         status: OperationStatus.IN_PROGRESS,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         id: taskId,
         jobId: jobId,
         type: tileMergeTask,
@@ -198,7 +206,7 @@ describe('JobsManager', () => {
 
       await jobsManager.completeJob(jobId, taskId);
 
-      expect(updateJobStatusMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
+      expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
       expect(mergeMock).toHaveBeenCalledTimes(1);
       expect(updateMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
@@ -211,7 +219,7 @@ describe('JobsManager', () => {
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: false,
         isSuccessful: false,
@@ -223,7 +231,7 @@ describe('JobsManager', () => {
         status: OperationStatus.IN_PROGRESS,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         id: taskId,
         jobId: jobId,
         type: tileMergeTask,
@@ -238,8 +246,8 @@ describe('JobsManager', () => {
 
       await jobsManager.completeJob(jobId, taskId);
 
-      expect(updateJobStatusMock).toHaveBeenCalledTimes(1);
-      expect(updateJobStatusMock).toHaveBeenCalledWith(jobId, OperationStatus.FAILED, undefined, 'Failed to update ingestion');
+      expect(updateJobByIdMock).toHaveBeenCalledTimes(1);
+      expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.FAILED, undefined, 'Failed to update ingestion');
       expect(mergeMock).toHaveBeenCalledTimes(0);
       expect(updateMock).toHaveBeenCalledTimes(0);
       expect(findRecordMock).toHaveBeenCalledTimes(0);
@@ -252,7 +260,7 @@ describe('JobsManager', () => {
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
 
-      getJobStatusMock.mockReturnValue({
+      getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: false,
         isSuccessful: false,
@@ -264,7 +272,7 @@ describe('JobsManager', () => {
         status: OperationStatus.ABORTED,
       });
 
-      getTaskMock.mockReturnValue({
+      getTaskByIdMock.mockReturnValue({
         id: taskId,
         jobId: jobId,
         type: tileMergeTask,
@@ -279,7 +287,7 @@ describe('JobsManager', () => {
 
       await jobsManager.completeJob(jobId, taskId);
 
-      expect(updateJobStatusMock).toHaveBeenCalledTimes(0);
+      expect(updateJobByIdMock).toHaveBeenCalledTimes(0);
       expect(mergeMock).toHaveBeenCalledTimes(1);
       expect(updateMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);

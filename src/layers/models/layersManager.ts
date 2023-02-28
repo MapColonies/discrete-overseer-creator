@@ -6,14 +6,15 @@ import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IRecordIds } from '../../common/interfaces';
-import { JobAction, OperationStatus, TaskAction } from '../../common/enums';
+import { JobAction, TaskAction } from '../../common/enums';
 import { layerMetadataToPolygonParts } from '../../common/utils/polygonPartsBuilder';
 import { createBBoxString } from '../../utils/bbox';
 import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
-import { JobResponse, JobManagerClient } from '../../serviceClients/jobManagerClient';
+import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
@@ -32,7 +33,7 @@ export class LayersManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     private readonly zoomLevelCalculator: ZoomLevelCalculator,
-    private readonly db: JobManagerClient,
+    private readonly db: JobManagerWrapper,
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
     private readonly fileValidator: FileValidator,
@@ -79,6 +80,7 @@ export class LayersManager {
       msg: message,
     });
 
+    let jobId: string;
     if (jobType === JobAction.NEW) {
       const recordIds = await this.generateRecordIds();
       const id = recordIds.id;
@@ -105,13 +107,14 @@ export class LayersManager {
       const layerRelativePath = `${id}/${displayPath}`;
 
       if (taskType === TaskAction.MERGE_TILES) {
-        await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl, true);
+        jobId = await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl, true);
       } else {
         const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
-        await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
+        jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
       }
 
       this.logger.debug({
+        jobId: jobId,
         productId: productId,
         productType: productType,
         version: version,
@@ -138,21 +141,24 @@ export class LayersManager {
         throw new BadRequestError(message);
       }
 
+      data.metadata.transparency = record?.metadata.transparency;
+      data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
+
+      jobId = await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl);
+
       const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
       TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
       this.logger.warn({
+        jobId: jobId,
         productId: productId,
         productType: productType,
         version: version,
         msg: message,
       });
-      data.metadata.transparency = record?.metadata.transparency;
-      data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
-
-      await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl);
 
       this.logger.debug({
+        jobId: jobId,
         productId: productId,
         productType: productType,
         version: version,
@@ -162,7 +168,14 @@ export class LayersManager {
       });
     } else {
       const message = `Unsupported job type`;
-      this.logger.error({ msg: message });
+      this.logger.error({
+        productId: productId,
+        productType: productType,
+        version: version,
+        jobType: jobType,
+        taskType: jobType,
+        msg: message,
+      });
       throw new BadRequestError(message);
     }
   }
@@ -242,7 +255,13 @@ export class LayersManager {
     }
     const filesExists = await this.fileValidator.validateExists(data.originDirectory, data.fileNames);
     if (!filesExists) {
-      throw new BadRequestError('Invalid files list, some files are missing');
+      const message = `Invalid files list, some files are missing`;
+      this.logger.error({
+        fileNames: data.fileNames,
+        originDirectory: data.originDirectory,
+        msg: message,
+      });
+      throw new BadRequestError(message);
     }
   }
 
@@ -358,7 +377,10 @@ export class LayersManager {
 
       return recordIds;
     } catch (err) {
-      this.logger.error({ msg: `failed to generate record id: ${(err as Error).message}` });
+      this.logger.error({
+        msg: `failed to generate record id: ${(err as Error).message}`,
+        err: err,
+      });
       throw err;
     }
   }

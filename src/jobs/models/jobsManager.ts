@@ -2,17 +2,18 @@ import { BadRequestError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../../common/constants';
-import { MapServerCacheType, OperationStatus } from '../../common/enums';
+import { MapServerCacheType } from '../../common/enums';
 import { IConfig } from '../../common/interfaces';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../layers/interfaces';
 import { CatalogClient } from '../../serviceClients/catalogClient';
-import { JobManagerClient } from '../../serviceClients/jobManagerClient';
+import { JobManagerWrapper, TaskResponse } from '../../serviceClients/JobManagerWrapper';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { OperationTypeEnum, SyncClient } from '../../serviceClients/syncClient';
 import { MetadataMerger } from '../../update/metadataMerger';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
-import { ICompletedTasks, IGetTaskResponse } from '../interfaces';
+import { ICompletedJobs } from '../interfaces';
 import { ILinkBuilderData, LinkBuilder } from './linksBuilder';
 
 interface IngestionTaskTypes {
@@ -33,7 +34,7 @@ export class JobsManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SyncClient) private readonly syncClient: SyncClient,
-    private readonly jobManager: JobManagerClient,
+    private readonly jobManager: JobManagerWrapper,
     private readonly mapPublisher: MapPublisherClient,
     private readonly catalogClient: CatalogClient,
     private readonly linkBuilder: LinkBuilder,
@@ -49,10 +50,10 @@ export class JobsManager {
   }
 
   public async completeJob(jobId: string, taskId: string): Promise<void> {
-    const job = await this.jobManager.getJobStatus(jobId);
-    const task = await this.jobManager.getTask(jobId, taskId);
+    const job = await this.jobManager.getJobById(jobId);
+    const task = await this.jobManager.getTaskById(jobId, taskId);
     if (job.type === this.ingestionUpdateJobType && task.type === this.ingestionTaskType.tileMergeTask) {
-      const message = `[TasksManager][taskComplete] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}`;
+      const message = `[TasksManager][completeJob] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}`;
       this.logger.info({
         jobId: jobId,
         taskId: taskId,
@@ -63,7 +64,7 @@ export class JobsManager {
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
       job.type === this.ingestionNewJobType
     ) {
-      const message = `[TasksManager][taskComplete] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}`;
+      const message = `[TasksManager][completeJob] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}`;
       this.logger.info({
         jobId: jobId,
         taskId: taskId,
@@ -71,7 +72,7 @@ export class JobsManager {
       });
       await this.handleNewIngestion(job, task);
     } else {
-      const message = `[TasksManager][taskComplete] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
+      const message = `[TasksManager][completeJob] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
       this.logger.error({
         jobId: jobId,
         taskId: taskId,
@@ -81,7 +82,7 @@ export class JobsManager {
     }
 
     if (job.status === OperationStatus.IN_PROGRESS) {
-      await this.jobManager.updateJobStatus(job.id, OperationStatus.IN_PROGRESS, job.percentage);
+      await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
     }
   }
 
@@ -109,8 +110,9 @@ export class JobsManager {
       this.logger.error({
         jobId: jobId,
         msg: message,
+        err: err,
       });
-      await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to catalog');
+      await this.jobManager.updateJobById(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to catalog');
       throw err;
     }
   }
@@ -141,8 +143,9 @@ export class JobsManager {
         productId: productId,
         productVersion: productVersion,
         msg: message,
+        err: err,
       });
-      await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to mapping server');
+      await this.jobManager.updateJobById(jobId, OperationStatus.FAILED, undefined, 'Failed to publish layer to mapping server');
       throw err;
     }
   }
@@ -177,10 +180,10 @@ export class JobsManager {
       jobId: jobId,
       msg: updateJobMessage,
     });
-    await this.jobManager.updateJobStatus(jobId, OperationStatus.FAILED, undefined, reason);
+    await this.jobManager.updateJobById(jobId, OperationStatus.FAILED, undefined, reason);
   }
 
-  private async handleUpdateIngestion(job: ICompletedTasks, task: IGetTaskResponse): Promise<void> {
+  private async handleUpdateIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
     if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
       await this.abortJobWithStatusFailed(job.id, `Failed to update ingestion`);
       job.status = OperationStatus.FAILED;
@@ -209,13 +212,13 @@ export class JobsManager {
           msg: message,
         });
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        await this.jobManager.updateJobStatus(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord?.id);
+        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord?.id);
         job.status = OperationStatus.COMPLETED;
       }
     }
   }
 
-  private async handleNewIngestion(job: ICompletedTasks, task: IGetTaskResponse): Promise<void> {
+  private async handleNewIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
     if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
       await this.abortJobWithStatusFailed(job.id, `Failed to generate tiles`);
       job.status = OperationStatus.FAILED;
@@ -232,7 +235,7 @@ export class JobsManager {
       await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath);
       const catalogId = await this.publishToCatalog(job.id, job.metadata, layerName);
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      await this.jobManager.updateJobStatus(job.id, OperationStatus.COMPLETED, 100, undefined, catalogId);
+      await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogId);
       job.status = OperationStatus.COMPLETED;
 
       if (this.shouldSync) {

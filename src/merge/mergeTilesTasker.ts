@@ -12,11 +12,11 @@ import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types'
 import { difference, union, bbox as toBbox, bboxPolygon, Feature, Polygon, BBox } from '@turf/turf';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
 import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
 import { Grid } from '../layers/interfaces';
-import { OperationStatus } from '../common/enums';
-import { JobManagerClient } from '../serviceClients/jobManagerClient';
+import { JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
 
 @injectable()
 export class MergeTilesTasker {
@@ -27,7 +27,7 @@ export class MergeTilesTasker {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly jobManagerClient: JobManagerClient
+    private readonly jobManagerClient: JobManagerWrapper
   ) {
     this.batchSize = config.get('ingestionMergeTiles.mergeBatchSize');
     this.mergeTaskBatchSize = this.config.get<number>('ingestionMergeTiles.mergeBatchSize');
@@ -64,6 +64,7 @@ export class MergeTilesTasker {
         this.logger.error({
           subGroupFootprints: subGroupFootprints,
           msg: message,
+          err: err,
         });
         throw err;
       }
@@ -133,7 +134,7 @@ export class MergeTilesTasker {
     extent: BBox,
     managerCallbackUrl: string,
     isNew?: boolean
-  ): Promise<void> {
+  ): Promise<string> {
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
       const fileRelativePath = join(data.originDirectory, fileName);
       const footprint = data.metadata.footprint;
@@ -164,7 +165,7 @@ export class MergeTilesTasker {
           try {
             await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
           } catch (err) {
-            await this.jobManagerClient.updateJobStatus(jobId, OperationStatus.FAILED);
+            await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
             throw err;
           }
         }
@@ -173,17 +174,18 @@ export class MergeTilesTasker {
     }
     if (mergeTaskBatch.length !== 0) {
       if (jobId === undefined) {
-        await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
       } else {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
         } catch (err) {
           //TODO: properly handle errors
-          await this.jobManagerClient.updateJobStatus(jobId, OperationStatus.FAILED);
+          await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
           throw err;
         }
       }
     }
+    return jobId as string;
   }
 }

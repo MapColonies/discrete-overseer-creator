@@ -3,12 +3,12 @@ import { Polygon } from '@turf/helpers';
 import { IngestionParams } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
 import { TileRanger, tileToBbox } from '@map-colonies/mc-utils';
+import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
-import { OperationStatus } from '../../common/enums';
 import { ITaskParameters } from '../interfaces';
 import { ITaskZoomRange } from '../../jobs/interfaces';
-import { JobManagerClient } from '../../serviceClients/jobManagerClient';
+import { JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 
 @injectable()
 export class SplitTilesTasker {
@@ -18,7 +18,7 @@ export class SplitTilesTasker {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly jobManagerClient: JobManagerClient
+    private readonly jobManagerClient: JobManagerWrapper
   ) {
     this.bboxSizeTiles = config.get<number>('ingestionTilesSplittingTiles.bboxSizeTiles');
     this.tasksBatchSize = config.get<number>('ingestionTilesSplittingTiles.tasksBatchSize');
@@ -30,7 +30,7 @@ export class SplitTilesTasker {
     layerZoomRanges: ITaskZoomRange[],
     jobType: string,
     taskType: string
-  ): Promise<void> {
+  ): Promise<string> {
     const taskParams = this.generateTasksParameters(data, layerRelativePath, layerZoomRanges);
     let taskBatch: ITaskParameters[] = [];
     let jobId: string | undefined = undefined;
@@ -45,7 +45,7 @@ export class SplitTilesTasker {
             await this.jobManagerClient.createTasks(jobId, taskBatch, taskType);
           } catch (err) {
             //TODO: properly handle errors
-            await this.jobManagerClient.updateJobStatus(jobId, OperationStatus.FAILED);
+            await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
             throw err;
           }
         }
@@ -54,18 +54,19 @@ export class SplitTilesTasker {
     }
     if (taskBatch.length !== 0) {
       if (jobId === undefined) {
-        await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, taskBatch);
+        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, taskBatch);
       } else {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, taskBatch, taskType);
         } catch (err) {
           //TODO: properly handle errors
-          await this.jobManagerClient.updateJobStatus(jobId, OperationStatus.FAILED);
+          await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
           throw err;
         }
       }
     }
+    return jobId as string;
   }
 
   public *generateTasksParameters(data: IngestionParams, layerRelativePath: string, zoomRanges: ITaskZoomRange[]): Generator<ITaskParameters> {
