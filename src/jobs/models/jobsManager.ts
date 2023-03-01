@@ -254,6 +254,7 @@ export class JobsManager {
           }. error=${(err as Error).message}`;
 
           this.logger.error({
+            jobId: job.id,
             productId: job.metadata.productId,
             productType: job.metadata.productType,
             version: job.metadata.productVersion,
