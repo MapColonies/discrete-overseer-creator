@@ -6,9 +6,10 @@ import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { Metrics } from '@map-colonies/telemetry';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
-import { resourceNameRouterFactory, RESOURCE_NAME_ROUTER_SYMBOL } from './resourceName/routes/resourceNameRouter';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
-import { anotherResourceRouterFactory, ANOTHER_RESOURECE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
+import { layersRouterFactory, LAYERS_ROUTER_SYMBOL } from './layers/routes/layersRouter';
+import { jobsRouterFactory, JOBS_ROUTER_SYMBOL } from './jobs/routes/jobsRouter';
+import { tocRouterFactory, TOC_ROUTER_SYMBOL } from './toc/routes/tocRouter';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -31,8 +32,9 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METER, provider: { useValue: meter } },
-    { token: RESOURCE_NAME_ROUTER_SYMBOL, provider: { useFactory: resourceNameRouterFactory } },
-    { token: ANOTHER_RESOURECE_ROUTER_SYMBOL, provider: { useFactory: anotherResourceRouterFactory } },
+    { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
+    { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
+    { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },
     {
       token: 'onSignal',
       provider: {

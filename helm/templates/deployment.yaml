@@ -1,9 +1,9 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
-{{- $cloudProviderDockerRegistryUrl := include "ts-server-boilerplate.cloudProviderDockerRegistryUrl" . -}}
-{{- $cloudProviderImagePullSecretName := include "ts-server-boilerplate.cloudProviderImagePullSecretName" . -}}
-{{- $imageTag := include "ts-server-boilerplate.tag" . -}}
+{{- $chartName := include "discrete-overseer-creator.name" . -}}
+{{- $cloudProviderFlavor := include "discrete-overseer-creator.cloudProviderFlavor" . -}}
+{{- $cloudProviderDockerRegistryUrl := include "discrete-overseer-creator.cloudProviderDockerRegistryUrl" . -}}
+{{- $cloudProviderImagePullSecretName := include "discrete-overseer-creator.cloudProviderImagePullSecretName" . -}}
+{{- $imageTag := include "discrete-overseer-creator.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -12,9 +12,12 @@ metadata:
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
-    environment: {{ include "ts-server-boilerplate.environment" . }}
+    environment: {{ include "discrete-overseer-creator.environment" . }}
     release: {{ $releaseName }}
-    {{- include "ts-server-boilerplate.labels" . | nindent 4 }}
+    {{- if .Values.rasterCommon.useNodeAffinity }}
+    nodeAffinity: nodeAffinityPod
+    {{- end }}
+    {{- include "discrete-overseer-creator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -22,14 +25,20 @@ spec:
       app: {{ $chartName }}
       release: {{ $releaseName }}
       run: {{ $releaseName }}-{{ $chartName }}
-      {{- include "ts-server-boilerplate.selectorLabels" . | nindent 6 }}
+      {{- if .Values.rasterCommon.useNodeAffinity }}
+      nodeAffinity: nodeAffinityPod
+      {{- end }}
+      {{- include "discrete-overseer-creator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: {{ $chartName }}
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
-        {{- include "ts-server-boilerplate.selectorLabels" . | nindent 8 }}
+        {{- if .Values.rasterCommon.useNodeAffinity }}
+        nodeAffinity: nodeAffinityPod
+        {{- end }}
+        {{- include "discrete-overseer-creator.selectorLabels" . | nindent 8 }}
       {{- if .Values.resetOnConfigChange }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
@@ -45,19 +54,29 @@ spec:
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
+          {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.enabled }}
+            - name: ingestion-storage
+              mountPath: /layerSources
+              {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.subPath }}
+              subPath: {{ .Values.rasterCommon.storage.fs.ingestionSourcePvc.subPath }}
+              {{- end }}
+          {{- end }}
+            - name: link-templates
+              mountPath: {{ .Values.env.linksTemplate.mountPath }}/{{ .Values.env.linksTemplate.fileName }}
+              subPath: {{ .Values.env.linksTemplate.fileName }}
+            {{- if .Values.rasterCommon.ca.secretName }}
+            - mountPath: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
               name: root-ca
-              subPath: {{ quote .Values.caKey }}
+              subPath: {{ quote .Values.rasterCommon.ca.key }}
             {{- end }}
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
-            {{- if .Values.caSecretName }}
+            {{- if .Values.rasterCommon.ca.secretName }}
             - name: REQUESTS_CA_BUNDLE
-              value: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
+              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
             - name: NODE_EXTRA_CA_CERTS
-              value: {{ printf "[%s/%s]" .Values.caPath .Values.caKey | quote }}
+              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
             {{- end }}
           envFrom:
             - configMapRef:
@@ -75,10 +94,22 @@ spec:
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
       volumes:
-        {{- if .Values.caSecretName }}
+        {{- if .Values.rasterCommon.ca.secretName }}
         - name: root-ca
           secret:
-            secretName: {{ .Values.caSecretName }}
+            secretName: {{ .Values.rasterCommon.ca.secretName }}
         {{- end }}
+        {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.enabled }}
+        - name: ingestion-storage
+          persistentVolumeClaim:
+            claimName: {{ quote .Values.rasterCommon.storage.fs.ingestionSourcePvc.name }}
+        {{- end }}
+        - name: link-templates
+          configMap:
+            name: {{ $releaseName }}-{{ $chartName }}-configmap
+            items:
+              - key: LINK_TEMPLATE
+                path: {{ .Values.env.linksTemplate.fileName }}
 {{- end -}}

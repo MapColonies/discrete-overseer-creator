@@ -9,9 +9,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM node:16.14.2-alpine3.14 as production
-
-RUN apk add dumb-init
+FROM node:16.14.2-slim as production
 
 ENV NODE_ENV=production
 ENV SERVER_PORT=8080
@@ -29,4 +27,4 @@ COPY --chown=node:node ./config ./config
 
 USER node
 EXPOSE 8080
-CMD ["dumb-init", "node", "--max_old_space_size=512", "./index.js"]
+CMD ["node", "--max_old_space_size=512", "./index.js"]
