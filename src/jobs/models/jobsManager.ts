@@ -199,11 +199,11 @@ export class JobsManager {
 
       const mergedData = this.metadataMerger.merge(catalogRecord?.metadata as LayerMetadata, job.metadata);
       this.logger.debug({
-        internalId: catalogRecord?.id,
+        internalId: catalogRecord?.metadata.id,
         metadata: job.metadata,
-        msg: `Updating catalog record ${catalogRecord?.id as string} with new metadata`,
+        msg: `Updating catalog record ${catalogRecord?.metadata.id as string} with new metadata`,
       });
-      await this.catalogClient.update(catalogRecord?.id as string, mergedData);
+      await this.catalogClient.update(catalogRecord?.metadata.id as string, mergedData);
 
       if (job.isSuccessful) {
         const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
