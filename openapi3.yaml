@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: discrete-overseer-creator
   description: service that responsible for validating and ingesting discrete layers
-  version: 1.0.0
+  version: 4.1.1
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -17,31 +17,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './Schema/discreteIngestion/ingestionParams.yaml#/components/schemas/IngestionParams'
+              $ref: >-
+                ./Schema/discreteIngestion/ingestionParams.yaml#/components/schemas/IngestionParams
             examples:
               createLayerExample:
                 $ref: '#/components/examples/createLayerExample'
       responses:
-        200:
+        '200':
           description: OK
           content:
             text/plain:
               schema:
                 type: string
                 example: OK
-        400:
+        '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        409:
+        '409':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        500:
+        '500':
           description: Invalid request
           content:
             application/json:
@@ -69,26 +70,26 @@ paths:
           required: true
           description: task id
       responses:
-        200:
+        '200':
           description: OK
           content:
             text/plain:
               schema:
                 type: string
                 example: OK
-        400:
+        '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        404:
+        '404':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        500:
+        '500':
           description: Invalid request
           content:
             application/json:
@@ -120,7 +121,7 @@ paths:
                 - productId
                 - productVersion
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -129,19 +130,19 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/tocResponse'
-        400:
+        '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        404:
+        '404':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
-        500:
+        '500':
           description: Invalid request
           content:
             application/json:
@@ -167,7 +168,8 @@ components:
           $ref: '#/components/schemas/productType'
         metadata:
           oneOf:
-            - $ref: './Schema/updateLayerMetadata.yaml#/components/schemas/updateLayerMetadata'
+            - $ref: >-
+                ./Schema/updateLayerMetadata.yaml#/components/schemas/updateLayerMetadata
             - type: object
               properties:
                 productId:
@@ -181,36 +183,49 @@ components:
         - UPDATE
         - REMOVE
     productType:
-      $ref: './Schema/updateLayerMetadata.yaml#/components/schemas/productType'
+      $ref: ./Schema/updateLayerMetadata.yaml#/components/schemas/productType
   examples:
     createLayerExample:
       value:
         metadata:
-          type: 'RECORD_RASTER'
-          classification: 'string'
-          productId: 'string'
-          productName: 'string'
+          type: RECORD_RASTER
+          classification: string
+          productId: string
+          productName: string
           productVersion: '47.1'
-          productType: 'Orthophoto'
-          productSubType: 'string'
-          description: 'string'
-          srsId: 'string'
-          srsName: 'string'
-          producerName: 'string'
+          productType: Orthophoto
+          productSubType: string
+          description: string
+          srsId: string
+          srsName: string
+          producerName: string
           creationDate: '2022-10-25T10:44:42.787Z'
           sourceDateStart: '2022-10-25T10:44:42.787Z'
           sourceDateEnd: '2022-10-25T10:44:42.787Z'
           maxResolutionDeg: 0.072
           maxResolutionMeter: 8000
           minHorizontalAccuracyCE90: 4000
-          transparency: 'TRANSPARENT'
-          sensors: ['string']
-          region: ['string']
+          transparency: TRANSPARENT
+          sensors:
+            - string
+          region:
+            - string
           rms: 0
           scale: 100000000
           footprint:
-            type: 'Polygon'
-            coordinates: [[[-180, -90], [-180, 90], [180, 90], [180, -90], [-180, -90]]]
-          productBoundingBox: -180,-90,180,90
-        originDirectory: 'string'
-        fileNames: ['example.tif']
+            type: Polygon
+            coordinates:
+              - - - -180
+                  - -90
+                - - -180
+                  - 90
+                - - 180
+                  - 90
+                - - 180
+                  - -90
+                - - -180
+                  - -90
+          productBoundingBox: '-180,-90,180,90'
+        originDirectory: string
+        fileNames:
+          - example.tif
