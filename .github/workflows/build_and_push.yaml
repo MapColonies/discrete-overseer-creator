@@ -14,6 +14,6 @@ jobs:
         - name: Azure Pipelines Action
           uses: Azure/pipelines@v1
           with:
-            azure-devops-project-url: https://dev.azure.com/Libot-Mipui-Org/job-manager
+            azure-devops-project-url: https://dev.azure.com/Libot-Mipui-Org/discrete-overseer-creator
             azure-pipeline-name: 'build-and-push-to-ACR'
             azure-devops-token: ${{ secrets.AZURE_TOKEN_NEW }}
