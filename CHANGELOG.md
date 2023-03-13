@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.5](https://github.com/MapColonies/discrete-overseer-creator-new/compare/v4.1.0...v4.0.5) (2023-03-13)
+
+
+### Bug Fixes
+
+* job is now creating with internalId and send update with it ([#6](https://github.com/MapColonies/discrete-overseer-creator-new/issues/6)) ([649faa6](https://github.com/MapColonies/discrete-overseer-creator-new/commit/649faa63fd29fffb426139f75761fcc8bedd0451))
+
 ## 4.1.0 (2023-03-05)
 
 
