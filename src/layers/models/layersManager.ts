@@ -125,8 +125,10 @@ export class LayersManager {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (jobType === JobAction.UPDATE) {
       const record = await this.catalog.findRecord(productId, undefined, productType);
-      const recordId = record?.metadata.id as string;
-      const dispalyPath = record?.metadata.displayPath as string;
+      data.metadata.id = record?.metadata.id as string;
+      data.metadata.displayPath = record?.metadata.displayPath as string;
+      const recordId = data.metadata.id;
+      const dispalyPath = data.metadata.displayPath;
       const layerRelativePath = `${recordId}/${dispalyPath}`;
       if (!existsInMapProxy) {
         const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
