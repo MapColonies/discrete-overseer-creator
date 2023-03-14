@@ -24,5 +24,11 @@
     "description": "",
     "protocol": "WMTS",
     "url": "{{ "{{serverUrl}}" }}/wmts/1.0.0/WMTSCapabilities.xml"
+  },
+  {
+    "name": "{{ "{{layerName}}" }}",
+    "description": "",
+    "protocol": "WMTS_KVP",
+    "url": "{{ "{{serverUrl}}" }}/service?REQUEST=GetCapabilities&SERVICE=WMTS"
   }
 ]
