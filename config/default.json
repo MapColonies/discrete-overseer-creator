@@ -25,6 +25,7 @@
       }
     }
   },
+  "disableHttpClientLogs": false,
   "watchDirectory": "watch",
   "layerSourceDir": "/layerSources",
   "mapServerCacheType": "FS",

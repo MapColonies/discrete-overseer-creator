@@ -71,6 +71,7 @@ env:
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
   tasksBatchSize: 100
+  disableHttpClientLogs: false
   httpRetry:
     attempts: 5
     delay: exponential

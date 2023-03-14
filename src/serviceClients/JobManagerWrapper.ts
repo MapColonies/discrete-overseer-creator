@@ -1,8 +1,9 @@
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
-import { IngestionParams, ProductType } from '@map-colonies/mc-model-types';
+import { IngestionParams } from '@map-colonies/mc-model-types';
 import { ICreateJobBody, ICreateJobResponse, IJobResponse, OperationStatus, ITaskResponse, JobManagerClient } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
+import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { IConfig, IMergeTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
@@ -13,7 +14,14 @@ export class JobManagerWrapper extends JobManagerClient {
   private readonly jobDomain: string;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, '', '', config.get<string>('jobManagerURL'));
+    super(
+      logger,
+      '',
+      config.get<string>('jobManagerURL'),
+      config.get<IHttpRetryConfig>('httpRetry'),
+      'jobManagerClient',
+      config.get<boolean>('disableHttpClientLogs')
+    );
     this.jobDomain = config.get<string>('jobDomain');
   }
 
@@ -99,16 +107,6 @@ export class JobManagerWrapper extends JobManagerClient {
       percentage: jobPercentage,
     };
     await this.updateJob(jobId, updateJobBody);
-  }
-
-  public async findJobs(resourceId: string, productType: ProductType): Promise<JobResponse[]> {
-    const res = this.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(resourceId, productType);
-    return res;
-  }
-
-  public async findJobsByInternalId(internalId: string): Promise<JobResponse[]> {
-    const res = this.getJobByInternalId<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(internalId);
-    return res;
   }
 }
 
