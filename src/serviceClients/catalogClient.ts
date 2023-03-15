@@ -13,7 +13,13 @@ interface ICreateRecordResponse {
 @injectable()
 export class CatalogClient extends HttpClient {
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, config.get<string>('catalogPublishingServiceURL'), 'Catalog', config.get<IHttpRetryConfig>('httpRetry'));
+    super(
+      logger,
+      config.get<string>('catalogPublishingServiceURL'),
+      'CatalogClient',
+      config.get<IHttpRetryConfig>('httpRetry'),
+      config.get<boolean>('disableHttpClientLogs')
+    );
   }
 
   public async exists(productId: string, productVersion?: string, productType?: string): Promise<boolean> {

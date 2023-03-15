@@ -22,7 +22,13 @@ export enum OperationTypeEnum {
 @injectable()
 export class SyncClient extends HttpClient {
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, config.get<string>('syncServiceURL'), 'Synchronization', config.get<IHttpRetryConfig>('httpRetry'));
+    super(
+      logger,
+      config.get<string>('syncServiceURL'),
+      'Synchronization',
+      config.get<IHttpRetryConfig>('httpRetry'),
+      config.get<boolean>('disableHttpClientLogs')
+    );
   }
 
   public async triggerSync(

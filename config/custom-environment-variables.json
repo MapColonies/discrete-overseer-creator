@@ -39,6 +39,10 @@
       }
     }
   },
+  "disableHttpClientLogs": {
+    "__name": "DISABLE_HTTP_CLIENT_LOGS",
+    "__format": "boolean"
+  },
   "watchDirectory": "WATCH_DIRECTORY",
   "layerSourceDir": "LAYER_SOURCE_DIR",
   "mapServerCacheType": "MAP_SERVER_CACHE_TYPE",

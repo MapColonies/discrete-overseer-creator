@@ -5,9 +5,8 @@ const createTasksMock = jest.fn();
 const getJobByIdMock = jest.fn();
 const getTaskByIdMock = jest.fn();
 const updateJobByIdMock = jest.fn();
-const findJobsMock = jest.fn();
+const getJobsMock = jest.fn();
 const abortJobMock = jest.fn();
-const findJobsByInternalIdMock = jest.fn();
 
 const jobManagerClientMock = {
   createLayerJob: createLayerJobMock,
@@ -15,19 +14,8 @@ const jobManagerClientMock = {
   getJobById: getJobByIdMock,
   getTaskById: getTaskByIdMock,
   updateJobById: updateJobByIdMock,
-  findJobs: findJobsMock,
+  getJobs: getJobsMock,
   abortJob: abortJobMock,
-  findJobsByInternalId: findJobsByInternalIdMock,
 } as unknown as JobManagerWrapper;
 
-export {
-  createLayerJobMock,
-  createTasksMock,
-  updateJobByIdMock,
-  getJobByIdMock,
-  getTaskByIdMock,
-  findJobsMock,
-  abortJobMock,
-  findJobsByInternalIdMock,
-  jobManagerClientMock,
-};
+export { createLayerJobMock, createTasksMock, updateJobByIdMock, getJobByIdMock, getTaskByIdMock, getJobsMock, abortJobMock, jobManagerClientMock };

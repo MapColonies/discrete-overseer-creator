@@ -24,6 +24,7 @@ data:
   HTTP_RETRY_ATTEMPTS: {{ .Values.env.httpRetry.attempts | quote }}
   HTTP_RETRY_DELAY: {{ .Values.env.httpRetry.delay | quote }}
   HTTP_RETRY_RESET_TIMEOUT: {{ .Values.env.httpRetry.resetTimeout | quote }}
+  DISABLE_HTTP_CLIENT_LOGS: {{ .Values.env.disableHttpClientLogs | quote }}
   LINK_TEMPLATE: {{ tpl (.Files.Get "config/linkTemplates.template") . | quote }}
   LAYER_SOURCE_DIR: {{ .Values.env.layerSourceDir | quote }}
   SHOULD_SYNC: {{ .Values.env.shouldSync | quote }}

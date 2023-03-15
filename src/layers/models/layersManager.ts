@@ -6,10 +6,10 @@ import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
-import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
-import { IConfig, IRecordIds } from '../../common/interfaces';
+import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
 import { JobAction, TaskAction } from '../../common/enums';
 import { layerMetadataToPolygonParts } from '../../common/utils/polygonPartsBuilder';
 import { createBBoxString } from '../../utils/bbox';
@@ -19,7 +19,7 @@ import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
-import { Grid } from '../interfaces';
+import { Grid, ITaskParameters } from '../interfaces';
 import { FileValidator } from './fileValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
@@ -274,7 +274,13 @@ export class LayersManager {
   }
 
   private async validateJobNotRunning(productId: string, productType: ProductType): Promise<void> {
-    const jobs = await this.db.findJobs(productId, productType);
+    const findJobParameters: IFindJobsRequest = {
+      resourceId: productId,
+      productType,
+      isCleaned: false,
+      shouldReturnTasks: false,
+    };
+    const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
       if (job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) {
         const message = `Layer id: ${productId} product type: ${productType}, job is already running`;
@@ -366,7 +372,11 @@ export class LayersManager {
         });
         id = uuidv4();
         isExists = await this.catalog.existsByRecordId(id);
-        jobs = await this.db.findJobsByInternalId(id);
+        const findJobParameters: IFindJobsRequest = {
+          internalId: id,
+          shouldReturnTasks: false,
+        };
+        jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
       } while (isExists && jobs.length > 0);
 
       const displayPath = uuidv4();

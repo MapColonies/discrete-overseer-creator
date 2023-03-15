@@ -9,7 +9,13 @@ import { IPublishMapLayerRequest } from '../layers/interfaces';
 @injectable()
 export class MapPublisherClient extends HttpClient {
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
-    super(logger, config.get<string>('mapPublishingServiceURL'), 'LayerPublisher', config.get<IHttpRetryConfig>('httpRetry'));
+    super(
+      logger,
+      config.get<string>('mapPublishingServiceURL'),
+      'LayerPublisher',
+      config.get<IHttpRetryConfig>('httpRetry'),
+      config.get<boolean>('disableHttpClientLogs')
+    );
   }
 
   public async publishLayer(publishReq: IPublishMapLayerRequest): Promise<IPublishMapLayerRequest> {

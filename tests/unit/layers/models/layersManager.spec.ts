@@ -3,7 +3,7 @@ import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
-import { createLayerJobMock, findJobsMock, jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
+import { createLayerJobMock, getJobsMock, jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
 import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findRecordMock } from '../../../mocks/clients/catalogClient';
 import { mapPublisherClientMock, mapExistsMock } from '../../../mocks/clients/mapPublisherClient';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../../mocks/config';
@@ -104,7 +104,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
 
@@ -124,7 +124,7 @@ describe('LayersManager', () => {
       await layersManager.createLayer(testData, managerCallbackUrl);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(findJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(createSplitTilesTasksMock).toHaveBeenCalledTimes(1);
     });
 
@@ -145,7 +145,7 @@ describe('LayersManager', () => {
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
       mapExistsMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
@@ -154,7 +154,7 @@ describe('LayersManager', () => {
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(findJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
     });
@@ -176,7 +176,7 @@ describe('LayersManager', () => {
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
       mapExistsMock.mockResolvedValue(false);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
@@ -185,7 +185,7 @@ describe('LayersManager', () => {
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(findJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -223,7 +223,7 @@ describe('LayersManager', () => {
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
       mapExistsMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
@@ -232,7 +232,7 @@ describe('LayersManager', () => {
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(findJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
@@ -261,7 +261,7 @@ describe('LayersManager', () => {
       };
       getHighestLayerVersionMock.mockResolvedValue([1.0, 2.0]);
       mapExistsMock.mockResolvedValue(false);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
@@ -276,7 +276,7 @@ describe('LayersManager', () => {
       await expect(action).rejects.toThrow(BadRequestError);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(findJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
     });
 
     it('should throw Bad Request Error for "New" or "Update" job type if higher product version is already exists in catalog', async function () {
@@ -300,7 +300,7 @@ describe('LayersManager', () => {
       await expect(action).rejects.toThrow(BadRequestError);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
-      expect(findJobsMock).toHaveBeenCalledTimes(0);
+      expect(getJobsMock).toHaveBeenCalledTimes(0);
       expect(createSplitTilesTasksMock).toHaveBeenCalledTimes(0);
     });
 
@@ -319,7 +319,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       validateGpkgFilesMock.mockReturnValue(false);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
@@ -345,7 +345,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([{ status: OperationStatus.PENDING }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.PENDING }]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -367,7 +367,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS }]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -402,7 +402,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([{ status: OperationStatus.COMPLETED }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.COMPLETED }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
 
       const action = async () => {
@@ -439,7 +439,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([{ status: OperationStatus.FAILED }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.FAILED }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
 
       const action = async () => {
@@ -463,7 +463,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -486,7 +486,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -532,7 +532,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      findJobsMock.mockResolvedValue([]);
+      getJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
 
