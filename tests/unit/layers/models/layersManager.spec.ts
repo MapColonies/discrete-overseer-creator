@@ -20,6 +20,7 @@ import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaske
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
 import { Grid } from '../../../../src/layers/interfaces';
+import { gdalUtilitiesMock } from '../../../mocks/gdalUtilitiesMock';
 
 let layersManager: LayersManager;
 
@@ -83,7 +84,8 @@ describe('LayersManager', () => {
       mapPublisherClientMock,
       fileValidatorMock,
       splitTilesTaskerMock,
-      mergeTilesTasker
+      mergeTilesTasker,
+      gdalUtilitiesMock
     );
   });
 
@@ -118,7 +120,8 @@ describe('LayersManager', () => {
         mapPublisherClientMock,
         fileValidatorMock,
         splitTilesTaskerMock,
-        mergeTilesTasker
+        mergeTilesTasker,
+        gdalUtilitiesMock
       );
 
       await layersManager.createLayer(testData, managerCallbackUrl);

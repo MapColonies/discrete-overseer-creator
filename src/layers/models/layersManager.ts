@@ -20,6 +20,7 @@ import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
+import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { FileValidator } from './fileValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
@@ -38,7 +39,8 @@ export class LayersManager {
     private readonly mapPublisher: MapPublisherClient,
     private readonly fileValidator: FileValidator,
     private readonly splitTilesTasker: SplitTilesTasker,
-    private readonly mergeTilesTasker: MergeTilesTasker
+    private readonly mergeTilesTasker: MergeTilesTasker,
+    private readonly gdalUtilities: GdalUtilities
   ) {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
@@ -54,6 +56,7 @@ export class LayersManager {
     const files = data.fileNames;
     const polygon = data.metadata.footprint;
     this.validateGeoJsons(data.metadata);
+
     // polygon to bbox
     const extent = bbox(polygon as GeoJSON);
     if (convertedData.id !== undefined) {
@@ -247,24 +250,27 @@ export class LayersManager {
   }
 
   private async validateFiles(data: IngestionParams): Promise<void> {
-    const originDirectoryExists = this.fileValidator.validateSourceDirectory(data.originDirectory);
+    const fileNames = data.fileNames;
+    const originDirectory = data.originDirectory;
+    const originDirectoryExists = this.fileValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
       throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
     }
-    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(data.originDirectory);
+    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(originDirectory);
     if (!originDirectoryNotWatch) {
       throw new BadRequestError(`"originDirectory" can't be with same name as watch directory`);
     }
-    const filesExists = await this.fileValidator.validateExists(data.originDirectory, data.fileNames);
+    const filesExists = await this.fileValidator.validateExists(originDirectory, fileNames);
     if (!filesExists) {
       const message = `Invalid files list, some files are missing`;
       this.logger.error({
-        fileNames: data.fileNames,
-        originDirectory: data.originDirectory,
+        fileNames: fileNames,
+        originDirectory: originDirectory,
         msg: message,
       });
       throw new BadRequestError(message);
     }
+    await this.fileValidator.validateProjections(fileNames, originDirectory);
   }
 
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
@@ -360,6 +366,32 @@ export class LayersManager {
       });
     }
   }
+
+  // public async validateProjections(files: string[], originDirectory: string): Promise<void> {
+  //   if (!Array.isArray(files) || !files.length) {
+  //     const message = `Invalid or empty files list: ${files}`;
+  //     this.logger.error({
+  //       originDirectory: originDirectory,
+  //       files: files,
+  //       msg: message,
+  //     });
+  //     throw new BadRequestError(message);
+  //   }
+
+  //   const validProjection = '4326';
+  //   files.forEach(async (file) => {
+  //     const filePath = join(this.sourceMount, originDirectory, file);
+  //     const projection = await this.gdalUtilities.getProjection(filePath);
+  //     if (projection !== validProjection) {
+  //       const message = `Input file: '${filePath}' has unsupported projection: ${projection}, input must have valid projection: ${validProjection}`;
+  //       this.logger.error({
+  //         filePath: filePath,
+  //         msg: message,
+  //       });
+  //       throw new BadRequestError(message);
+  //     }
+  //   });
+  // }
 
   private async generateRecordIds(): Promise<IRecordIds> {
     let id: string;

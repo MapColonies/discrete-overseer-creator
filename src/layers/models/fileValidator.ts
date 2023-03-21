@@ -6,11 +6,16 @@ import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
+import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 
 @injectable()
 export class FileValidator {
   private readonly sourceMount: string;
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    private readonly gdalUtilities: GdalUtilities
+  ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
   }
 
@@ -66,8 +71,8 @@ export class FileValidator {
     files.forEach((file) => {
       const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
       const index = sqliteClient.getGpkgIndex();
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       if (!index) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         const message = `Geopackage name: ${file} does not have a tiles index`;
         this.logger.error({
           originDirectory: originDirectory,
@@ -77,6 +82,25 @@ export class FileValidator {
         throw new BadRequestError(message);
       }
     });
+  }
+
+  public async validateProjections(files: string[], originDirectory: string): Promise<void> {
+    const validProjection = '4326';
+    await Promise.all(
+      files.map(async (file) => {
+        const filePath = join(this.sourceMount, originDirectory, file);
+        const projection = await this.gdalUtilities.getProjection(filePath);
+        if (projection !== validProjection) {
+          // eslint-disable-next-line @ty pescript-eslint/@typescript-eslint/restrict-template-expressions
+          const message = `Unsupported projection: ${projection}, for input file: ${filePath}, must have valid projection: ${validProjection}`;
+          this.logger.error({
+            filePath: filePath,
+            msg: message,
+          });
+          throw new BadRequestError(message);
+        }
+      })
+    );
   }
 
   private validateGpkgExtension(files: string[]): boolean {
