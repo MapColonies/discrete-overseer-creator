@@ -91,8 +91,9 @@ export class FileValidator {
         const filePath = join(this.sourceMount, originDirectory, file);
         const projection = await this.gdalUtilities.getProjection(filePath);
         if (projection !== validProjection) {
-          // eslint-disable-next-line @ty pescript-eslint/@typescript-eslint/restrict-template-expressions
-          const message = `Unsupported projection: ${projection}, for input file: ${filePath}, must have valid projection: ${validProjection}`;
+          const message = `Unsupported projection: ${
+            projection as string
+          }, for input file: ${filePath}, must have valid projection: ${validProjection}`;
           this.logger.error({
             filePath: filePath,
             msg: message,

@@ -23,7 +23,7 @@ describe('gdalUtilities', () => {
     it('should return null as projection to unprojected file', async () => {
       const filePath = 'tests/mocks/files/unprojected.gpkg';
       const result = await gdalUtilities.getProjection(filePath);
-      expect(result).toBeNull;
+      expect(result).toBeNull();
     });
   });
 });
