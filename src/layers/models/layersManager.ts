@@ -40,7 +40,6 @@ export class LayersManager {
     private readonly fileValidator: FileValidator,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
-    private readonly gdalUtilities: GdalUtilities
   ) {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
