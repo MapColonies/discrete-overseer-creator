@@ -54,7 +54,6 @@ export class LayersManager {
     const files = data.fileNames;
     const polygon = data.metadata.footprint;
     this.validateGeoJsons(data.metadata);
-
     // polygon to bbox
     const extent = bbox(polygon as GeoJSON);
     if (convertedData.id !== undefined) {
