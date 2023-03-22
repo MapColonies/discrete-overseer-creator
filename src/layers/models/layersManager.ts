@@ -20,7 +20,6 @@ import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
-import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { FileValidator } from './fileValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
@@ -39,7 +38,7 @@ export class LayersManager {
     private readonly mapPublisher: MapPublisherClient,
     private readonly fileValidator: FileValidator,
     private readonly splitTilesTasker: SplitTilesTasker,
-    private readonly mergeTilesTasker: MergeTilesTasker,
+    private readonly mergeTilesTasker: MergeTilesTasker
   ) {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
@@ -365,32 +364,6 @@ export class LayersManager {
       });
     }
   }
-
-  // public async validateProjections(files: string[], originDirectory: string): Promise<void> {
-  //   if (!Array.isArray(files) || !files.length) {
-  //     const message = `Invalid or empty files list: ${files}`;
-  //     this.logger.error({
-  //       originDirectory: originDirectory,
-  //       files: files,
-  //       msg: message,
-  //     });
-  //     throw new BadRequestError(message);
-  //   }
-
-  //   const validProjection = '4326';
-  //   files.forEach(async (file) => {
-  //     const filePath = join(this.sourceMount, originDirectory, file);
-  //     const projection = await this.gdalUtilities.getProjection(filePath);
-  //     if (projection !== validProjection) {
-  //       const message = `Input file: '${filePath}' has unsupported projection: ${projection}, input must have valid projection: ${validProjection}`;
-  //       this.logger.error({
-  //         filePath: filePath,
-  //         msg: message,
-  //       });
-  //       throw new BadRequestError(message);
-  //     }
-  //   });
-  // }
 
   private async generateRecordIds(): Promise<IRecordIds> {
     let id: string;

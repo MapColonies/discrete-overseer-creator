@@ -7,7 +7,6 @@ let gdalUtilities: GdalUtilities;
 describe('gdalUtilities', () => {
   beforeAll(() => {
     gdalUtilities = new GdalUtilities(jsLogger({ enabled: false }));
-    process.env.GDAL_DATA = 'node_modules/gdal-async/deps/libgdal/gdal/data';
   });
   beforeEach(function () {
     jest.resetAllMocks();
