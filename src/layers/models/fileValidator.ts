@@ -90,9 +90,9 @@ export class FileValidator {
         const filePath = join(this.sourceMount, originDirectory, file);
         const projection = await this.gdalUtilities.getProjection(filePath);
         if (projection !== this.validProjection) {
-          const message = `Unsupported projection: ${
-            projection as string
-          }, for input file: ${filePath}, must have valid projection: ${this.validProjection}`;
+          const message = `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
+            this.validProjection
+          }`;
           this.logger.error({
             filePath: filePath,
             msg: message,
