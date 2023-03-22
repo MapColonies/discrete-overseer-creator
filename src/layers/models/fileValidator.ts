@@ -11,6 +11,7 @@ import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 @injectable()
 export class FileValidator {
   private readonly sourceMount: string;
+  private readonly validProjection = '4326';
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -84,15 +85,14 @@ export class FileValidator {
   }
 
   public async validateProjections(files: string[], originDirectory: string): Promise<void> {
-    const validProjection = '4326';
     await Promise.all(
       files.map(async (file) => {
         const filePath = join(this.sourceMount, originDirectory, file);
         const projection = await this.gdalUtilities.getProjection(filePath);
-        if (projection !== validProjection) {
+        if (projection !== this.validProjection) {
           const message = `Unsupported projection: ${
             projection as string
-          }, for input file: ${filePath}, must have valid projection: ${validProjection}`;
+          }, for input file: ${filePath}, must have valid projection: ${this.validProjection}`;
           this.logger.error({
             filePath: filePath,
             msg: message,
