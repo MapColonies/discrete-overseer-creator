@@ -13,6 +13,8 @@ import { catalogClientMock } from '../mocks/clients/catalogClient';
 import { JobManagerWrapper } from '../../src/serviceClients/JobManagerWrapper';
 import { MapPublisherClient } from '../../src/serviceClients/mapPublisher';
 import { CatalogClient } from '../../src/serviceClients/catalogClient';
+import { GdalUtilities } from '../../src/utils/GDAL/gdalUtilities';
+import { gdalUtilitiesMock } from '../mocks/gdalUtilitiesMock';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
   initConfig();
@@ -26,6 +28,7 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: JobManagerWrapper, provider: { useValue: jobManagerClientMock } },
     { token: MapPublisherClient, provider: { useValue: mapPublisherClientMock } },
     { token: CatalogClient, provider: { useValue: catalogClientMock } },
+    { token: GdalUtilities, provider: { useValue: gdalUtilitiesMock } },
   ];
 }
 const resetContainer = (clearInstances = true): void => {

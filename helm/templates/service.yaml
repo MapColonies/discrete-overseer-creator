@@ -1,11 +1,12 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "discrete-overseer-creator.name" . -}}
 {{- $cloudProviderFlavor := include "discrete-overseer-creator.cloudProviderFlavor" . -}}
+{{- $serviceName := include "service.fullname" . -}}
 {{- if .Values.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $releaseName }}-{{ $chartName }}
+  name: {{ $serviceName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}

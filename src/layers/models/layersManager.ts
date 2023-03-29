@@ -247,24 +247,27 @@ export class LayersManager {
   }
 
   private async validateFiles(data: IngestionParams): Promise<void> {
-    const originDirectoryExists = this.fileValidator.validateSourceDirectory(data.originDirectory);
+    const fileNames = data.fileNames;
+    const originDirectory = data.originDirectory;
+    const originDirectoryExists = this.fileValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
       throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
     }
-    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(data.originDirectory);
+    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(originDirectory);
     if (!originDirectoryNotWatch) {
       throw new BadRequestError(`"originDirectory" can't be with same name as watch directory`);
     }
-    const filesExists = await this.fileValidator.validateExists(data.originDirectory, data.fileNames);
+    const filesExists = await this.fileValidator.validateExists(originDirectory, fileNames);
     if (!filesExists) {
       const message = `Invalid files list, some files are missing`;
       this.logger.error({
-        fileNames: data.fileNames,
-        originDirectory: data.originDirectory,
+        fileNames: fileNames,
+        originDirectory: originDirectory,
         msg: message,
       });
       throw new BadRequestError(message);
     }
+    await this.fileValidator.validateProjections(fileNames, originDirectory);
   }
 
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
