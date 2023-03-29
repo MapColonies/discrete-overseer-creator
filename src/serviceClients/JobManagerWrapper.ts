@@ -71,8 +71,17 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   public async getJobById(jobId: string): Promise<ICompletedJobs> {
-    const res = await this.getJob<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(jobId);
-    if (res === undefined) {
+    let res: IJobResponse<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;
+    try {
+      res = await this.getJob<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(jobId);
+    } catch (err) {
+      this.logger.error({
+        err,
+        jobId,
+        targetService: this.targetService,
+        msg: `failed to getJob for jobId=${jobId}`,
+        errorMessage: (err as { message?: string }).message,
+      });
       throw new NotFoundError(`job with ${jobId} is not exists`);
     }
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -92,11 +101,17 @@ export class JobManagerWrapper extends JobManagerClient {
   }
 
   public async getTaskById(jobId: string, taskId: string): Promise<TaskResponse> {
-    const res = await this.getTask<ITaskParameters>(jobId, taskId);
-    if (res === null) {
+    try {
+      return await this.getTask<ITaskParameters>(jobId, taskId);
+    } catch (err) {
+      this.logger.error({
+        jobId: jobId,
+        taskId: taskId,
+        msg: `taskId: ${taskId}, jobId: ${jobId} does not exists`,
+        err: err,
+      });
       throw new NotFoundError(`taskId: ${taskId}, jobId: ${jobId} is not exists`);
     }
-    return res;
   }
 
   public async updateJobById(jobId: string, status: OperationStatus, jobPercentage?: number, reason?: string, catalogId?: string): Promise<void> {
