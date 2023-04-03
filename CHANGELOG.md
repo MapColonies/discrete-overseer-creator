@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.5](https://github.com/MapColonies/discrete-overseer-creator-new/compare/v4.1.4...v4.1.5) (2023-04-03)
+
+
+### Bug Fixes
+
+* explorer route for storage handler ([#14](https://github.com/MapColonies/discrete-overseer-creator-new/issues/14)) ([272f9ad](https://github.com/MapColonies/discrete-overseer-creator-new/commit/272f9ad01ae6d5f279e5d7e4b606c341b6f743c5))
+
 ### [4.1.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.2...v4.1.4) (2023-03-29)
 
 
