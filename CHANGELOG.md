@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.1.6](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.5...v4.1.6) (2023-05-02)
+
 ### [4.1.5](https://github.com/MapColonies/discrete-overseer-creator-new/compare/v4.1.4...v4.1.5) (2023-04-03)
 
 
