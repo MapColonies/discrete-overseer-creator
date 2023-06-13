@@ -48,6 +48,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
+  /layers/{recordId}:
+    parameters:
+      - in: path
+        name: recordId
+        description: ID of layer's record in catalog
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      operationId: updateLayer
+      tags:
+        - layers
+      summary: start a process of creating update to exists layer from raw data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLayerPolygonPartsParams'
+            # examples:
+            #   createLayerExample:
+            #     $ref: '#/components/examples/createLayerExample'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+        '409':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+        '500':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
   /jobs/{jobId}/{taskId}/completed:
     post:
       operationId: completeJob
@@ -184,6 +232,115 @@ components:
         - REMOVE
     productType:
       $ref: ./Schema/updateLayerMetadata.yaml#/components/schemas/productType
+
+    recordId:
+      type: string
+      format: uuid
+    UpdateLayerPolygonPartsParams:
+      type: object
+      description: update parameters
+      required:
+        - metadata
+        - originDirectory
+        - fileNames
+      properties:
+        metadata:
+          $ref: '#/components/schemas/updateLayerMetadata'
+        originDirectory:
+          type: string
+          description: layer source directory
+        fileNames:
+          type: array
+          description: layer sources
+          items:
+            type: string
+            pattern: >-
+              ^.+(\.([Tt][Ii][Ff][Ff]?|[Gg][Pp][Kk][Gg]|[Jj][Pp][2Cc]|[Jj]2[Kk]|[Ee][Cc][Ww]))$ 
+
+
+    updateLayerMetadata:
+      type: object
+      description: layer meta data
+      required:
+        - productVersion
+        - footprint
+        - maxResolutionDeg
+      properties:
+        classification:
+          type: string
+          description: Permitted roles
+        productId:
+          type: string
+          description: Layer's external identifier
+          pattern: ^[a-zA-Z0-9_-]+$
+        productName:
+          type: string
+          description: Layer's external name
+        productVersion:
+          type: string
+          description: version of updated layer 
+        productType:
+          $ref: './Schema/updateLayerMetadata.yaml#/components/schemas/productType'
+        productSubType:
+          type: string
+          description: Layer's sub type
+        description:
+          type: string
+        srsId:
+          type: string
+          description: geo system id
+        srsName:
+          type: string
+          description: geo system name
+        producerName:
+          type: string
+          description: creator name default IDFMU
+        sourceDateStart:
+          type: string
+          description: Oldest imaging date
+          format: date-time
+        sourceDateEnd:
+          type: string
+          description: Latest imaging date
+          format: date-time
+        maxResolutionDeg:
+          type: number
+          minimum: 9.e-8
+          maximum: 0.072
+          format: double
+          description: max resolution of layer in degrees/pixel
+        maxResolutionMeter:
+          type: number
+          minimum: 0.01
+          maximum: 8000
+          format: double
+          description: max resolution of layer in meters
+        minHorizontalAccuracyCE90:
+          type: number
+          minimum: 0.01
+          maximum: 4000
+          format: double
+          description: minimum Horizontal Accuracy
+        sensors:
+          type: array
+          items:
+            type: string
+          description: Layer sensors list
+        region:
+          type: array
+          items:
+            type: string
+          description: regions included in the layer
+        rms:
+          type: number
+        scale:
+          type: integer
+          minimum: 0
+          maximum: 100000000
+        footprint:
+          $ref: ./Schema/geojson.yaml#/components/schemas/Geometry
+
+
   examples:
     createLayerExample:
       value:
