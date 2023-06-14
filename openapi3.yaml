@@ -257,16 +257,19 @@ components:
           items:
             type: string
             pattern: >-
-              ^.+(\.([Tt][Ii][Ff][Ff]?|[Gg][Pp][Kk][Gg]|[Jj][Pp][2Cc]|[Jj]2[Kk]|[Ee][Cc][Ww]))$ 
+              ^.+(\.([Tt][Ii][Ff][Ff]?|[Gg][Pp][Kk][Gg]|[Jj][Pp][2Cc]|[Jj]2[Kk]|[Ee][Cc][Ww]))$
 
 
     updateLayerMetadata:
       type: object
       description: layer meta data
       required:
-        - productVersion
+        - sourceDateStart
+        - sourceDateEnd
         - footprint
         - maxResolutionDeg
+        - maxResolutionMeter
+        - sensors
       properties:
         classification:
           type: string

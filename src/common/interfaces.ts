@@ -1,4 +1,4 @@
-import { IRasterCatalogUpsertRequestBody, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { IRasterCatalogUpsertRequestBody, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { ITileRange } from '@map-colonies/mc-utils';
 import { GeoJSON } from 'geojson';
 import { BBox } from '@turf/helpers';
@@ -64,4 +64,41 @@ export interface IMergeTaskParams {
   isNewTarget: boolean;
   sources: IMergeSources[];
   batches: ITileRange[];
+}
+
+//todo - should be implemented on mc-models on future
+export interface IUpdateLayerMetadata {
+  classification: string | undefined;
+  productId: string | undefined;
+  productName: string | undefined;
+  productVersion: string | undefined;
+  productType: ProductType | undefined
+  productSubType: string | undefined;
+  description: string | undefined;
+  srsId: string | undefined;
+  srsName: string | undefined;
+  producerName: string | undefined;
+  sourceDateStart: Date | undefined;
+  sourceDateEnd: Date | undefined;
+  maxResolutionDeg: number | undefined;
+  maxResolutionMeter: number | undefined;
+  minHorizontalAccuracyCE90: number | undefined;
+  sensors: string[] | undefined;
+  region: string[] | undefined;
+  footprint: GeoJSON | undefined;
+}
+//todo - should be implemented on mc-models on future
+export interface UpdateParams {
+  /**
+   * List of the layer files
+   */
+  fileNames: string[];
+  /**
+   * layer directory relative to mount
+   */
+  originDirectory: string;
+  /**
+   * layer metadata
+   */
+  partData: IUpdateLayerMetadata[];
 }
