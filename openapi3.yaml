@@ -240,12 +240,14 @@ components:
       type: object
       description: update parameters
       required:
-        - metadata
+        - partData
         - originDirectory
         - fileNames
       properties:
-        metadata:
-          $ref: '#/components/schemas/updateLayerMetadata'
+        partData:
+          type: array
+          items:
+            $ref: '#/components/schemas/updateLayerMetadata'
         originDirectory:
           type: string
           description: layer source directory
