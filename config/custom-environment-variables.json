@@ -83,6 +83,10 @@
     "mergeBatchSize": {
       "__name": "MERGE_BATCH_SIZE",
       "__format": "number"
+    },
+    "tasksBatchSize": {
+      "__name": "MERGER_TASKS_BATCH_SIZE",
+      "__format": "number"
     }
   },
   "ingestionTilesSplittingTiles": {
@@ -91,7 +95,7 @@
       "__format": "number"
     },
     "tasksBatchSize": {
-      "__name": "TASKS_BATCH_SIZE",
+      "__name": "SPLITTER_TASKS_BATCH_SIZE",
       "__format": "number"
     }
   }

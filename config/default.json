@@ -54,7 +54,8 @@
     "tileSplitTask": "tilesSplitting"
   },
   "ingestionMergeTiles": {
-    "mergeBatchSize": 10000
+    "mergeBatchSize": 10000,
+    "tasksBatchSize": 5
   },
   "ingestionTilesSplittingTiles": {
     "bboxSizeTiles": 10000,
