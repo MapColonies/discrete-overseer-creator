@@ -162,6 +162,7 @@ describe('layers', function () {
     console.warn = jest.fn();
     setValue('tiling.zoomGroups', '0,1,2,3,4,5,6,7,8,9,10');
     setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+    setValue('ingestionMergeTiles.tasksBatchSize',10000)
     setValue('layerSourceDir', 'tests/mocks');
     setValue('watchDirectory', 'watch');
 
