@@ -34,7 +34,7 @@ export class SplitTilesTasker {
     const taskParams = this.generateTasksParameters(data, layerRelativePath, layerZoomRanges);
     let taskBatch: ITaskParameters[] = [];
     let jobId: string | undefined = undefined;
-    for (const task of taskParams) {
+    for await (const task of taskParams) {
       taskBatch.push(task);
       if (taskBatch.length === this.tasksBatchSize) {
         if (jobId === undefined) {
@@ -69,12 +69,16 @@ export class SplitTilesTasker {
     return jobId as string;
   }
 
-  public *generateTasksParameters(data: IngestionParams, layerRelativePath: string, zoomRanges: ITaskZoomRange[]): Generator<ITaskParameters> {
+  public async *generateTasksParameters(
+    data: IngestionParams,
+    layerRelativePath: string,
+    zoomRanges: ITaskZoomRange[]
+  ): AsyncGenerator<ITaskParameters> {
     const ranger = new TileRanger();
     for (const zoomRange of zoomRanges) {
       const zoom = this.getZoom(zoomRange.maxZoom);
       const tileGen = ranger.generateTiles(data.metadata.footprint as Polygon, zoom);
-      for (const tile of tileGen) {
+      for await (const tile of tileGen) {
         yield {
           discreteId: data.metadata.productId as string,
           version: data.metadata.productVersion as string,
