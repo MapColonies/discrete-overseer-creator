@@ -95,7 +95,7 @@ describe('MergeTilesTasker', () => {
   });
 
   describe('createBatchedTasks', () => {
-    it('has no duplicate tiles when tile is split to multiple sources', () => {
+    it('has no duplicate tiles when tile is split to multiple sources', async () => {
       const layers: ILayerMergeData[] = [
         {
           fileName: 'test1',
@@ -120,7 +120,7 @@ describe('MergeTilesTasker', () => {
       const taskGen = mergeTilesTasker.createBatchedTasks(params);
 
       const tiles: Set<string>[] = [new Set<string>(), new Set<string>(), new Set<string>(), new Set<string>(), new Set<string>(), new Set<string>()];
-      for (const task of taskGen) {
+      for await (const task of taskGen) {
         expect(task.sources[0].path).toBe('test/dest');
         for (const tile of tilesGenerator(task.batches)) {
           const tileStr = `${tile.zoom}/${tile.x}/${tile.y}`;
@@ -137,7 +137,7 @@ describe('MergeTilesTasker', () => {
       expect(tiles[5].size).toBe(2048);
     });
 
-    it('generates all and only expected tiles', () => {
+    it('generates all and only expected tiles', async () => {
       const layers: ILayerMergeData[] = [
         {
           fileName: 'test1.gpkg',
@@ -161,7 +161,7 @@ describe('MergeTilesTasker', () => {
 
       const taskGen = mergeTilesTasker.createBatchedTasks(params);
       const tasks: IMergeTaskParams[] = [];
-      for (const task of taskGen) {
+      for await (const task of taskGen) {
         tasks.push(task);
       }
 
@@ -294,7 +294,7 @@ describe('MergeTilesTasker', () => {
       expect(tasks).toEqual(expect.arrayContaining(expectedTasks));
     });
 
-    it('same footprint', () => {
+    it('same footprint', async () => {
       const layers: ILayerMergeData[] = [
         {
           fileName: 'test1.gpkg',
@@ -318,7 +318,7 @@ describe('MergeTilesTasker', () => {
 
       const taskGen = mergeTilesTasker.createBatchedTasks(params);
       const tasks: IMergeTaskParams[] = [];
-      for (const task of taskGen) {
+      for await (const task of taskGen) {
         tasks.push(task);
       }
       const destSourcePath = 'FS';
@@ -433,7 +433,7 @@ describe('MergeTilesTasker', () => {
       expect(tasks).toEqual(expect.arrayContaining(expectedTasks));
     });
 
-    it('generates "New" job type for merging tiles with "isNew" parameter for new sources', () => {
+    it('generates "New" job type for merging tiles with "isNew" parameter for new sources', async () => {
       const layers: ILayerMergeData[] = [
         {
           fileName: 'test1.gpkg',
@@ -457,7 +457,7 @@ describe('MergeTilesTasker', () => {
 
       const taskGen = mergeTilesTasker.createBatchedTasks(params, true);
       const tasks: IMergeTaskParams[] = [];
-      for (const task of taskGen) {
+      for await (const task of taskGen) {
         tasks.push(task);
       }
 

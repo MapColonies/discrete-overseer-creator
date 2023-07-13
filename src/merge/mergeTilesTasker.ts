@@ -71,7 +71,7 @@ export class MergeTilesTasker {
     }
   }
 
-  public *createBatchedTasks(params: IMergeParameters, isNew = false): Generator<IMergeTaskParams> {
+  public async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
     const sourceType = this.config.get<string>('mapServerCacheType');
     const bboxedLayers = params.layers.map((layer) => {
       const bbox = toBbox(layer.footprint) as [number, number, number, number];
@@ -91,7 +91,7 @@ export class MergeTilesTasker {
       for (const overlap of overlaps) {
         const rangeGen = this.tileRanger.encodeFootprint(overlap.intersection as Feature<Polygon>, zoom);
         const batches = tileBatchGenerator(this.batchSize, rangeGen);
-        for (const batch of batches) {
+        for await (const batch of batches) {
           yield {
             targetFormat: params.targetFormat,
             isNewTarget: isNew,
@@ -156,7 +156,7 @@ export class MergeTilesTasker {
     const mergeTasksParams = this.createBatchedTasks(params, isNew);
     let mergeTaskBatch: IMergeTaskParams[] = [];
     let jobId: string | undefined = undefined;
-    for (const mergeTask of mergeTasksParams) {
+    for await (const mergeTask of mergeTasksParams) {
       mergeTaskBatch.push(mergeTask);
       if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
         if (jobId === undefined) {

@@ -4,6 +4,7 @@ import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { SplitTilesTasker } from '../../../../src/layers/models/splitTilesTasker';
 import { jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
 import { configMock, init as initConfig, setValue } from '../../../mocks/config';
+import { ITaskParameters } from '../../../../src/layers/interfaces';
 
 describe('SplitTilesTasker', () => {
   let splitTilesTasker: SplitTilesTasker;
@@ -96,7 +97,7 @@ describe('SplitTilesTasker', () => {
   });
 
   describe('generateTasksParameters', () => {
-    it('generate tasks for multiple ranges', () => {
+    it('generate tasks for multiple ranges', async () => {
       setValue('ingestionTilesSplittingTiles.bboxSizeTiles', 10000);
       const zoomRanges = [
         { minZoom: 1, maxZoom: 1 },
@@ -106,8 +107,8 @@ describe('SplitTilesTasker', () => {
       splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
 
       const gen = splitTilesTasker.generateTasksParameters(testData, layerRelativePath, zoomRanges);
-      const params = [];
-      for (const param of gen) {
+      const params: ITaskParameters[] = [];
+      for await (const param of gen) {
         params.push(param);
       }
 
