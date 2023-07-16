@@ -48,24 +48,33 @@ export class MetadataMerger {
   }
 
   private mergeLayerPolygonParts(updateMetadata: LayerMetadata, oldPolygonParts?: GeoJSON): GeoJSON | undefined {
+    // handle one polygon part undefined state
     let updatePolygonParts = updateMetadata.layerPolygonParts;
     if (!oldPolygonParts) {
       return updatePolygonParts;
     } else if (!updateMetadata.layerPolygonParts) {
       updatePolygonParts = layerMetadataToPolygonParts(updateMetadata);
     }
+    // handle polygon parts merging
     const updateFootprint = updateMetadata.footprint as Footprint;
     const oldFeatures = (oldPolygonParts as FeatureCollection).features;
     const updateFeatures = (updatePolygonParts as FeatureCollection).features;
     const newFeatures: Feature<Polygon | MultiPolygon>[] = [];
-    oldFeatures.forEach((feature) => {
+    // old features handling
+    // for each old feature
+    oldFeatures.forEach((feature : Feature<Polygon | MultiPolygon>) => {
+      // clone old feature
       let updatedFeature: Feature<Polygon | MultiPolygon> | null = { ...(feature as Feature<Polygon | MultiPolygon>) };
+      // remove new footprint from cloned old feature
       updatedFeature = difference(updatedFeature, updateFootprint);
+      // if there is a leftover
       if (updatedFeature !== null) {
+        // push leftover feature into new features collection
         newFeatures.push(updatedFeature);
       }
     });
-    updateFeatures.forEach((feature) => {
+    // push new features into new features collection
+    updateFeatures.forEach((feature : Feature<Polygon | MultiPolygon>) => {
       newFeatures.push(feature as Feature<Polygon | MultiPolygon>);
     });
     return featureCollection(newFeatures);
