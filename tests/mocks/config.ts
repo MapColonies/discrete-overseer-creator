@@ -95,6 +95,7 @@ const registerDefaultConfig = (): void => {
     ingestionMergeTiles: {
       mergeBatchSize: 10000,
       tasksBatchSize: 10000,
+      useNewTargetFlagInUpdateTasks: true,
     },
     ingestionTilesSplittingTiles: {
       bboxSizeTiles: 10000,

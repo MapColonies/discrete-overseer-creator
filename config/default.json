@@ -55,7 +55,8 @@
   },
   "ingestionMergeTiles": {
     "mergeBatchSize": 10000,
-    "tasksBatchSize": 5
+    "tasksBatchSize": 5,
+    "useNewTargetFlagInUpdateTasks": true
   },
   "ingestionTilesSplittingTiles": {
     "bboxSizeTiles": 10000,

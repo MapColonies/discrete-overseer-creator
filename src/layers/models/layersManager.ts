@@ -27,6 +27,7 @@ import { SplitTilesTasker } from './splitTilesTasker';
 export class LayersManager {
   private readonly tileSplitTask: string;
   private readonly tileMergeTask: string;
+  private readonly useNewTargetFlagInUpdateTasks: boolean;
   private grids: Grid[] = [];
 
   public constructor(
@@ -42,6 +43,7 @@ export class LayersManager {
   ) {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
+    this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
   }
 
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
@@ -146,7 +148,16 @@ export class LayersManager {
       data.metadata.transparency = record?.metadata.transparency;
       data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
 
-      jobId = await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl);
+      jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+        data,
+        layerRelativePath,
+        taskType,
+        jobType,
+        this.grids,
+        extent,
+        overseerUrl,
+        this.useNewTargetFlagInUpdateTasks
+      );
 
       const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
