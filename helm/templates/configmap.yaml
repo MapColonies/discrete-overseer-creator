@@ -35,6 +35,7 @@ data:
   INGESTION_MERGE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.mergeTilesTaskType | quote }}
   BBOX_SIZE_TILES: {{ .Values.env.bboxSizeTiles | quote }}
   MERGE_BATCH_SIZE: {{ .Values.env.mergeBatchSize | quote }}
+  USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}
   SPLITTER_TASKS_BATCH_SIZE: {{ .Values.env.splitterTasksBatchSize | quote }}
   MERGER_TASKS_BATCH_SIZE: {{ .Values.env.mergerTasksBatchSize | quote }}
   {{ if .Values.env.tracing.enabled }}

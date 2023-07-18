@@ -87,6 +87,10 @@
     "tasksBatchSize": {
       "__name": "MERGER_TASKS_BATCH_SIZE",
       "__format": "number"
+    },
+    "useNewTargetFlagInUpdateTasks": {
+      "__name": "USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS",
+      "__format": "boolean"
     }
   },
   "ingestionTilesSplittingTiles": {

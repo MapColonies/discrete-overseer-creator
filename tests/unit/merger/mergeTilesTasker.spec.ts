@@ -15,6 +15,7 @@ describe('MergeTilesTasker', () => {
     initConfig();
     setConfigValue('ingestionMergeTiles.mergeBatchSize', 1);
     setConfigValue('ingestionMergeT', 1);
+    setConfigValue('ingestionMergeTiles.useNewTargetFlagInUpdateTasks', true);
     mergeTilesTasker = new MergeTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
   });
 
