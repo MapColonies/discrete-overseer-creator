@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
 import { createLayerJobMock, getJobsMock, jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
-import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findRecordMock } from '../../../mocks/clients/catalogClient';
+import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock } from '../../../mocks/clients/catalogClient';
 import { mapPublisherClientMock, mapExistsMock } from '../../../mocks/clients/mapPublisherClient';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../../mocks/config';
 import {
@@ -205,6 +205,52 @@ describe('LayersManager', () => {
         true
       );
     });
+
+    /* this test is not relevant currently, since we are passing "isNew" parameter from configuration */
+
+    // eslint-disable-next-line jest/no-commented-out-tests
+    // it('createMergeTilesTasksMock function should not called with "isNew" parameter for "Update" job type', async function () {
+    //   // eslint-disable-next-line @typescript-eslint/naming-convention
+    //   setValue({ 'tiling.zoomGroups': '1,2-3' });
+    //   setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+    //   const testData: IngestionParams = {
+    //     fileNames: ['test.gpkg'],
+    //     metadata: { ...testImageMetadata },
+    //     originDirectory: '/here',
+    //   };
+
+    //   const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
+    //   getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+    //   getHighestLayerVersionMock.mockResolvedValue(2.0);
+    //   fileValidatorValidateExistsMock.mockResolvedValue(true);
+    //   validateSourceDirectoryMock.mockResolvedValue(true);
+    //   validateNotWatchDirMock.mockResolvedValue(true);
+    //   mapExistsMock.mockResolvedValue(true);
+    //   getJobsMock.mockResolvedValue([]);
+    //   validateGpkgFilesMock.mockReturnValue(true);
+    //   createLayerJobMock.mockResolvedValue('testJobId');
+    //   createMergeTilesTasksMock.mockResolvedValue(undefined);
+
+    //   await layersManager.createLayer(testData, managerCallbackUrl);
+
+    //   expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+    //   expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
+    //   expect(getJobsMock).toHaveBeenCalledTimes(1);
+    //   expect(findRecordMock).toHaveBeenCalledTimes(1);
+    //   expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
+    //   expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
+    //   // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    //   const relativePath = `undefined/undefined`; // its undefined because 'findRecord' function is executes when job type is "Update" and return record as undefined while testing
+    //   expect(createMergeTilesTasksMock).toHaveBeenCalledWith(
+    //     testData,
+    //     relativePath,
+    //     TaskAction.MERGE_TILES,
+    //     JobAction.UPDATE,
+    //     [Grid.TWO_ON_ONE],
+    //     [0, 0, 1, 1],
+    //     managerCallbackUrl
+    //   );
+    // });
 
     it('should throw Bad Request Error for "Update" job type if layer is not exists in map proxy', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
