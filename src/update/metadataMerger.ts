@@ -64,18 +64,19 @@ export class MetadataMerger {
     // for each old feature
     oldFeatures.forEach((feature: Feature<Polygon | MultiPolygon>) => {
       // clone old feature
-      let updatedFeature: Feature<Polygon | MultiPolygon> | null = { ...(feature ) };
+      let updatedFeature: Feature<Polygon | MultiPolygon> | null = { ...feature };
       // remove new footprint from cloned old feature
       updatedFeature = difference(updatedFeature, updateFootprint);
       // if there is a leftover
       if (updatedFeature !== null) {
         // push leftover feature into new features collection
+        // TODO: difference returnes multipolygon feature - Needs to be changed to Polygon!!!
         newFeatures.push(updatedFeature);
       }
     });
     // push new features into new features collection
     updateFeatures.forEach((feature: Feature<Polygon | MultiPolygon>) => {
-      newFeatures.push(feature );
+      newFeatures.push(feature);
     });
     return featureCollection(newFeatures);
   }
