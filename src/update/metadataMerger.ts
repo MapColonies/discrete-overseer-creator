@@ -57,8 +57,8 @@ export class MetadataMerger {
     }
     // handle polygon parts merging
     const updateFootprint = updateMetadata.footprint as Footprint;
-    const oldFeatures = (oldPolygonParts as FeatureCollection).features;
-    const updateFeatures = (updatePolygonParts as FeatureCollection).features;
+    const oldFeatures = (oldPolygonParts as FeatureCollection<Polygon | MultiPolygon>).features;
+    const updateFeatures = (updatePolygonParts as FeatureCollection<Polygon | MultiPolygon>).features;
     const newFeatures: Feature<Polygon | MultiPolygon>[] = [];
     // old features handling
     // for each old feature
