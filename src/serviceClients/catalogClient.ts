@@ -75,11 +75,26 @@ export class CatalogClient extends HttpClient {
   }
 
   public async getHighestLayerVersion(productId: string, productType: string): Promise<number | undefined> {
+    this.logger.debug({
+      productId,
+      productType,
+      msg: `[getHighestLayerVersion] request highest version for productId: ${productId} productType: ${productType}`,
+    });
     const existsLayerVersions = await this.getLayerVersions(productId, productType);
     if (Array.isArray(existsLayerVersions) && existsLayerVersions.length > 0) {
       const highestExistsLayerVersion = Math.max(...existsLayerVersions);
+      this.logger.debug({
+        productId,
+        productType,
+        msg: `[getHighestLayerVersion] highest version for productId: ${productId} productType: ${productType} was ${highestExistsLayerVersion}`,
+      });
       return highestExistsLayerVersion;
     }
+    this.logger.debug({
+      productId,
+      productType,
+      msg: `[getHighestLayerVersion] highest version for productId: ${productId} productType: ${productType} was undefined`,
+    });
     return undefined;
   }
 

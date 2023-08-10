@@ -1,4 +1,5 @@
-import { BadRequestError } from '@map-colonies/error-types';
+import { inspect } from 'node:util';
+import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
@@ -188,14 +189,27 @@ export class JobsManager {
       await this.abortJobWithStatusFailed(job.id, `Failed to update ingestion`);
       job.status = OperationStatus.FAILED;
     } else if (task.status === OperationStatus.COMPLETED) {
+      this.logger.info({
+        jobId: job.id,
+        taskId: task.id,
+        msg: `task completed - merge job metadata to record`,
+      });
       const highestVersion = await this.catalogClient.getHighestLayerVersion(job.metadata.productId as string, job.metadata.productType as string);
-      const highestVersionToString = Number.isInteger(highestVersion) ? (highestVersion?.toFixed(1) as string) : String(highestVersion);
-
+      if (highestVersion === undefined) {
+        throw new InternalServerError(
+          `Could not find highestVersion for: productId ${job.metadata.productId as string}, productType: ${job.metadata.productType as string}`
+        );
+      }
+      const highestVersionToString = Number.isInteger(highestVersion) ? highestVersion.toFixed(1) : String(highestVersion);
       this.logger.debug({
+        jobId: job.id,
+        taskId: task.id,
         productId: job.metadata.productId,
         productType: job.metadata.productType,
         highestVersion: highestVersionToString,
-        msg: `Getting catalog record with highest version for product ${job.metadata.productId as string}`,
+        msg: `Getting catalog record with version: ${highestVersionToString}, productId ${job.metadata.productId as string}, productType: ${
+          job.metadata.productType as string
+        }`,
       });
 
       const catalogRecord = await this.catalogClient.findRecord(
@@ -204,28 +218,41 @@ export class JobsManager {
         job.metadata.productType as string
       );
 
+      if (catalogRecord === undefined) {
+        throw new InternalServerError(
+          `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
+            job.metadata.productType as string
+          }, version: ${highestVersionToString} to merge data into`
+        );
+      }
+
       this.logger.debug({
-        catalogRecordMetadata: catalogRecord?.metadata,
-        jobMetadata: job.metadata,
-        msg: `Merging catalog record ${catalogRecord?.metadata.id as string} with new metadata`,
+        jobId: job.id,
+        taskId: task.id,
+        catalogRecordMetadata: inspect(catalogRecord),
+        jobMetadata: inspect(job.metadata),
+        msg: `Merging catalog record ${catalogRecord.metadata.id as string} with new metadata`,
       });
 
-      const mergedData = this.metadataMerger.merge(catalogRecord?.metadata as LayerMetadata, job.metadata);
+      const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
       this.logger.debug({
-        internalId: catalogRecord?.metadata.id,
-        metadata: job.metadata,
-        msg: `Updating catalog record ${catalogRecord?.metadata.id as string} with new metadata`,
+        jobId: job.id,
+        taskId: task.id,
+        internalId: catalogRecord.metadata.id,
+        mergedData: inspect(mergedData),
+        msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
       });
-      await this.catalogClient.update(catalogRecord?.metadata.id as string, mergedData);
+      await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
 
       if (job.isSuccessful) {
         const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
         this.logger.info({
           jobId: job.id,
+          taskId: task.id,
           msg: message,
         });
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord?.id);
+        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord.id);
         job.status = OperationStatus.COMPLETED;
       }
     }
