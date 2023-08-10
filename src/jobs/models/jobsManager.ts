@@ -191,11 +191,24 @@ export class JobsManager {
       const highestVersion = await this.catalogClient.getHighestLayerVersion(job.metadata.productId as string, job.metadata.productType as string);
       const highestVersionToString = Number.isInteger(highestVersion) ? (highestVersion?.toFixed(1) as string) : String(highestVersion);
 
+      this.logger.debug({
+        productId: job.metadata.productId,
+        productType: job.metadata.productType,
+        highestVersion: highestVersionToString,
+        msg: `Getting catalog record with highest version for product ${job.metadata.productId as string}`,
+      });
+
       const catalogRecord = await this.catalogClient.findRecord(
         job.metadata.productId as string,
         highestVersionToString,
         job.metadata.productType as string
       );
+
+      this.logger.debug({
+        catalogRecordMetadata: catalogRecord?.metadata,
+        jobMetadata: job.metadata,
+        msg: `Merging catalog record ${catalogRecord?.metadata.id as string} with new metadata`,
+      });
 
       const mergedData = this.metadataMerger.merge(catalogRecord?.metadata as LayerMetadata, job.metadata);
       this.logger.debug({
