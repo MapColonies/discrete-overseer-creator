@@ -4,7 +4,13 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobsManager } from '../../../../src/jobs/models/jobsManager';
 import { jobManagerClientMock, getJobByIdMock, getTaskByIdMock, abortJobMock, updateJobByIdMock } from '../../../mocks/clients/jobManagerClient';
 import { mapPublisherClientMock, publishLayerMock } from '../../../mocks/clients/mapPublisherClient';
-import { catalogClientMock, findRecordMock, publishToCatalogMock, updateMock, getHighestLayerVersionMock } from '../../../mocks/clients/catalogClient';
+import {
+  catalogClientMock,
+  findRecordMock,
+  publishToCatalogMock,
+  updateMock,
+  getHighestLayerVersionMock,
+} from '../../../mocks/clients/catalogClient';
 import { syncClientMock, triggerSyncMock } from '../../../mocks/clients/syncClient';
 import { configMock, init as initMockConfig, setValue } from '../../../mocks/config';
 import { linkBuilderMock } from '../../../mocks/linkBuilder';
@@ -204,7 +210,7 @@ describe('JobsManager', () => {
         metadata: {},
       });
 
-      getHighestLayerVersionMock.mockResolvedValue(["1.0"]);
+      getHighestLayerVersionMock.mockResolvedValue(['1.0']);
 
       await jobsManager.completeJob(jobId, taskId);
 
@@ -288,7 +294,7 @@ describe('JobsManager', () => {
         metadata: {},
       });
 
-      getHighestLayerVersionMock.mockResolvedValue(["1.0"]);
+      getHighestLayerVersionMock.mockResolvedValue(['1.0']);
 
       await jobsManager.completeJob(jobId, taskId);
 
