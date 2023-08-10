@@ -4,7 +4,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobsManager } from '../../../../src/jobs/models/jobsManager';
 import { jobManagerClientMock, getJobByIdMock, getTaskByIdMock, abortJobMock, updateJobByIdMock } from '../../../mocks/clients/jobManagerClient';
 import { mapPublisherClientMock, publishLayerMock } from '../../../mocks/clients/mapPublisherClient';
-import { catalogClientMock, findRecordMock, publishToCatalogMock, updateMock } from '../../../mocks/clients/catalogClient';
+import { catalogClientMock, findRecordMock, publishToCatalogMock, updateMock, getHighestLayerVersionMock } from '../../../mocks/clients/catalogClient';
 import { syncClientMock, triggerSyncMock } from '../../../mocks/clients/syncClient';
 import { configMock, init as initMockConfig, setValue } from '../../../mocks/config';
 import { linkBuilderMock } from '../../../mocks/linkBuilder';
@@ -204,11 +204,14 @@ describe('JobsManager', () => {
         metadata: {},
       });
 
+      getHighestLayerVersionMock.mockResolvedValue(["1.0"]);
+
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
       expect(mergeMock).toHaveBeenCalledTimes(1);
       expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
 
@@ -285,11 +288,14 @@ describe('JobsManager', () => {
         metadata: {},
       });
 
+      getHighestLayerVersionMock.mockResolvedValue(["1.0"]);
+
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobByIdMock).toHaveBeenCalledTimes(0);
       expect(mergeMock).toHaveBeenCalledTimes(1);
       expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
   });
