@@ -42,6 +42,8 @@ spec:
       {{- if .Values.resetOnConfigChange }}
       annotations:
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        prometheus.io/port: {{ .Values.env.metrics.prometheus.port | quote }}
+        prometheus.io/scrape: {{ .Values.env.metrics.prometheus.scrape | quote }}
       {{- end }}
     spec:
     {{- if $cloudProviderImagePullSecretName }}

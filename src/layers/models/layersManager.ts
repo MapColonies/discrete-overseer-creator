@@ -2,6 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
 import { GeoJSON } from 'geojson';
+import client from 'prom-client';
 import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
@@ -28,6 +29,15 @@ export class LayersManager {
   private readonly tileSplitTask: string;
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
+
+  //metrics
+  private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
+  private readonly createJobTasksTotalHistogram?: client.Histogram<'requestType'>;
+  private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
+  // todo - implement on future when will be implemented error handling
+  // private readonly createTilesSplitterTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType'>;
+  // private readonly createMergeTilesTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType'>;
+
   private grids: Grid[] = [];
 
   public constructor(
@@ -39,14 +49,59 @@ export class LayersManager {
     private readonly mapPublisher: MapPublisherClient,
     private readonly fileValidator: FileValidator,
     private readonly splitTilesTasker: SplitTilesTasker,
-    private readonly mergeTilesTasker: MergeTilesTasker
+    private readonly mergeTilesTasker: MergeTilesTasker,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+
+    if (registry !== undefined) {
+      this.requestCreateLayerCounter = new client.Counter({
+        name: 'create_layer_requests_total',
+        help: 'The total number of all create layer requests',
+        labelNames: ['requestType', 'jobType'] as const,
+        registers: [registry],
+      });
+
+      this.createJobTasksTotalHistogram = new client.Histogram({
+        name: 'create_jobs_task_all_seconds',
+        help: 'create ingestion job including all ingestion + tasks types',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['requestType'] as const,
+        registers: [registry],
+      });
+
+      this.createJobTasksHistogram = new client.Histogram({
+        name: 'layer_creation_job_tasks_duration_seconds',
+        help: 'create layer and store duration time (seconds) by job type (new or update) including the tasks generating',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['requestType', 'jobType', 'taskType', 'successCreatingJobTask'] as const,
+        registers: [registry],
+      });
+
+      //todo - this metrics should be enabled after code refactoring (error handling + locate success vs. failed job tasks creation)
+
+      // this.createTilesSplitterTasksHistogram = new client.Histogram({
+      //   name: 'create_tiles_splitter_tasks_creation_duration_seconds',
+      //   help: 'create tiles splitter tasks array calculation duration',
+      //   buckets: config.get<number[]>('telemetry.metrics.buckets'),
+      //   labelNames: ['requestType', 'jobType', 'taskType'] as const,
+      //   registers: [registry],
+      // });
+
+      // this.createMergeTilesTasksHistogram = new client.Histogram({
+      //   name: 'create_merge_tiles_tasks_creation_duration_seconds',
+      //   help: 'create merge tiles tasks array calculation duration',
+      //   buckets: config.get<number[]>('telemetry.metrics.buckets'),
+      //   labelNames: ['requestType', 'jobType', 'taskType'] as const,
+      //   registers: [registry],
+      // });
+    }
   }
 
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
+    let successCreatingJobTask = true; // if create job task metric completed successfully
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -69,6 +124,10 @@ export class LayersManager {
 
     const jobType = await this.getJobType(data);
     const taskType = this.getTaskType(jobType, files, originDirectory);
+
+    const fetchTimerTotalJobsEnd = this.createJobTasksTotalHistogram?.startTimer({ requestType: 'CreateLayer' });
+    const fetchTimerEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
+
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
 
     this.validateCorrectProductVersion(data);
@@ -109,10 +168,28 @@ export class LayersManager {
       const layerRelativePath = `${id}/${displayPath}`;
 
       if (taskType === TaskAction.MERGE_TILES) {
+        // const fetchTimerEnd = this.createMergeTilesTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
         jobId = await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl, true);
+        // if (fetchTimerEnd) {
+        //   fetchTimerEnd();
+        // }
       } else {
+        // const fetchTimerEnd = this.createTilesSplitterTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
         const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
         jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
+        // if (fetchTimerEnd) {
+        //   fetchTimerEnd();
+        // }
+      }
+
+      if (fetchTimerEnd) {
+        // will add new histogram metrics to count creation duration
+        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
+      }
+
+      if (fetchTimerTotalJobsEnd) {
+        // will add new histogram metrics to count creation duration as total metric
+        fetchTimerTotalJobsEnd();
       }
 
       this.logger.debug({
@@ -124,6 +201,7 @@ export class LayersManager {
         taskType: taskType,
         msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
       });
+
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (jobType === JobAction.UPDATE) {
       const record = await this.catalog.findRecord(productId, undefined, productType);
@@ -179,6 +257,16 @@ export class LayersManager {
         taskType: taskType,
         msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
       });
+
+      if (fetchTimerEnd) {
+        // will add new histogram metrics to count creation duration
+        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
+      }
+
+      if (fetchTimerTotalJobsEnd) {
+        // will add new histogram metrics to count creation duration as total metric
+        fetchTimerTotalJobsEnd();
+      }
     } else {
       const message = `Unsupported job type`;
       this.logger.error({
@@ -189,8 +277,15 @@ export class LayersManager {
         taskType: jobType,
         msg: message,
       });
+
+      if (fetchTimerEnd) {
+        // will add new histogram metrics to count creation duration on failure count
+        successCreatingJobTask = false;
+        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
+      }
       throw new BadRequestError(message);
     }
+    this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }
 
   private async getJobType(data: IngestionParams): Promise<JobAction> {

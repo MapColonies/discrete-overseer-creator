@@ -1,6 +1,7 @@
 import { trace } from '@opentelemetry/api';
 import jsLogger from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
+import { Registry } from 'prom-client';
 import { SERVICES } from '../../src/common/constants';
 import { configMock, getMock, hasMock, init as initConfig } from '../mocks/config';
 import { InjectionObject } from '../../src/common/dependencyRegistration';
@@ -29,6 +30,7 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: MapPublisherClient, provider: { useValue: mapPublisherClientMock } },
     { token: CatalogClient, provider: { useValue: catalogClientMock } },
     { token: GdalUtilities, provider: { useValue: gdalUtilitiesMock } },
+    { token: SERVICES.METRICS_REGISTRY, provider: { useValue: new Registry() } },
   ];
 }
 const resetContainer = (clearInstances = true): void => {
