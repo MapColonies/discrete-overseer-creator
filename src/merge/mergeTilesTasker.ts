@@ -12,6 +12,7 @@ import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types'
 import { difference, union, bbox as toBbox, bboxPolygon, Feature, Polygon, BBox } from '@turf/turf';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
+import client from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
 import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
@@ -24,14 +25,28 @@ export class MergeTilesTasker {
   private readonly batchSize: number;
   private readonly mergeTaskBatchSize: number;
 
+  //metrics
+  private readonly fillMergeTaskBatch?: client.Histogram<'operationType' | 'configurationBatchSize'>;
+
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly jobManagerClient: JobManagerWrapper
+    private readonly jobManagerClient: JobManagerWrapper,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     this.batchSize = this.config.get('ingestionMergeTiles.mergeBatchSize');
     this.mergeTaskBatchSize = this.config.get<number>('ingestionMergeTiles.tasksBatchSize');
     this.tileRanger = new TileRanger();
+
+    if (registry !== undefined) {
+      this.fillMergeTaskBatch = new client.Histogram({
+        name: 'fill_batch_tasks_merging_duration',
+        help: 'time taken to fill each task batch as part of merge task',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['operationType', 'configurationBatchSize'] as const,
+        registers: [registry],
+      });
+    }
   }
 
   public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
@@ -156,9 +171,22 @@ export class MergeTilesTasker {
     const mergeTasksParams = this.createBatchedTasks(params, isNew);
     let mergeTaskBatch: IMergeTaskParams[] = [];
     let jobId: string | undefined = undefined;
+
+    let fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+      operationType: 'taskBatchFill',
+      configurationBatchSize: this.mergeTaskBatchSize,
+    });
+
     for await (const mergeTask of mergeTasksParams) {
       mergeTaskBatch.push(mergeTask);
       if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
+        if (fetchTimerTaskBatchFill) {
+          fetchTimerTaskBatchFill();
+        }
+        fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+          operationType: 'taskBatchFill',
+          configurationBatchSize: this.mergeTaskBatchSize,
+        });
         if (jobId === undefined) {
           jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
         } else {
@@ -179,6 +207,9 @@ export class MergeTilesTasker {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
+          if (fetchTimerTaskBatchFill) {
+            fetchTimerTaskBatchFill();
+          }
         } catch (err) {
           //TODO: properly handle errors
           await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);

@@ -2,6 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import { Polygon } from '@turf/helpers';
 import { IngestionParams } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
+import client from 'prom-client';
 import { TileRanger, tileToBbox } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../../common/constants';
@@ -15,13 +16,27 @@ export class SplitTilesTasker {
   private readonly bboxSizeTiles: number;
   private readonly tasksBatchSize: number;
 
+  //metrics
+  private readonly fillSplitterTaskBatch?: client.Histogram<'operationType' | 'configurationBatchSize'>;
+
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly jobManagerClient: JobManagerWrapper
+    private readonly jobManagerClient: JobManagerWrapper,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     this.bboxSizeTiles = config.get<number>('ingestionTilesSplittingTiles.bboxSizeTiles');
     this.tasksBatchSize = config.get<number>('ingestionTilesSplittingTiles.tasksBatchSize');
+
+    if (registry !== undefined) {
+      this.fillSplitterTaskBatch = new client.Histogram({
+        name: 'fill_batch_tasks_splitter_duration',
+        help: 'time taken to fill each task batch as part of splitter task',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['operationType', 'configurationBatchSize'] as const,
+        registers: [registry],
+      });
+    }
   }
 
   public async createSplitTilesTasks(
@@ -34,9 +49,23 @@ export class SplitTilesTasker {
     const taskParams = this.generateTasksParameters(data, layerRelativePath, layerZoomRanges);
     let taskBatch: ITaskParameters[] = [];
     let jobId: string | undefined = undefined;
+
+    let fetchTimerTaskBatchFill = this.fillSplitterTaskBatch?.startTimer({
+      operationType: 'taskBatchFill',
+      configurationBatchSize: this.tasksBatchSize,
+    });
     for await (const task of taskParams) {
       taskBatch.push(task);
+
       if (taskBatch.length === this.tasksBatchSize) {
+        if (fetchTimerTaskBatchFill) {
+          fetchTimerTaskBatchFill();
+        }
+        fetchTimerTaskBatchFill = this.fillSplitterTaskBatch?.startTimer({
+          operationType: 'taskBatchFill',
+          configurationBatchSize: this.tasksBatchSize,
+        });
+
         if (jobId === undefined) {
           jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, taskBatch);
         } else {
@@ -59,6 +88,9 @@ export class SplitTilesTasker {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, taskBatch, taskType);
+          if (fetchTimerTaskBatchFill) {
+            fetchTimerTaskBatchFill();
+          }
         } catch (err) {
           //TODO: properly handle errors
           await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);

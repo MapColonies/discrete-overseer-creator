@@ -8,6 +8,8 @@ import getStorageExplorerMiddleware from '@map-colonies/storage-explorer-middlew
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
+import { metricsMiddleware } from '@map-colonies/telemetry';
+import { Registry } from 'prom-client';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { LAYERS_ROUTER_SYMBOL } from './layers/routes/layersRouter';
@@ -24,7 +26,8 @@ export class ServerBuilder {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(LAYERS_ROUTER_SYMBOL) private readonly layersRouter: Router,
     @inject(JOBS_ROUTER_SYMBOL) private readonly jobsRouter: Router,
-    @inject(TOC_ROUTER_SYMBOL) private readonly tocRouter: Router
+    @inject(TOC_ROUTER_SYMBOL) private readonly tocRouter: Router,
+    @inject(SERVICES.METRICS_REGISTRY) private readonly metricsRegistry?: Registry
   ) {
     this.serverInstance = express();
   }
@@ -54,6 +57,10 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
+    if (this.metricsRegistry) {
+      this.serverInstance.use('/metrics', metricsMiddleware(this.metricsRegistry));
+    }
+
     this.serverInstance.use(httpLogger({ logger: this.logger }));
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {
