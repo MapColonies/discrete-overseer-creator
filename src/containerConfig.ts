@@ -41,7 +41,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
 
           if (config.get<boolean>('telemetry.metrics.enabled')) {
             client.register.setDefaultLabels({
-              project: config.get('app.projectName'),
+              app: SERVICE_NAME,
             });
             return client.register;
           }

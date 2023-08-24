@@ -34,9 +34,6 @@ export class LayersManager {
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
   private readonly createJobTasksTotalHistogram?: client.Histogram<'requestType'>;
   private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
-  // todo - implement on future when will be implemented error handling
-  // private readonly createTilesSplitterTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType'>;
-  // private readonly createMergeTilesTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType'>;
 
   private grids: Grid[] = [];
 
@@ -79,29 +76,10 @@ export class LayersManager {
         labelNames: ['requestType', 'jobType', 'taskType', 'successCreatingJobTask'] as const,
         registers: [registry],
       });
-
-      //todo - this metrics should be enabled after code refactoring (error handling + locate success vs. failed job tasks creation)
-
-      // this.createTilesSplitterTasksHistogram = new client.Histogram({
-      //   name: 'create_tiles_splitter_tasks_creation_duration_seconds',
-      //   help: 'create tiles splitter tasks array calculation duration',
-      //   buckets: config.get<number[]>('telemetry.metrics.buckets'),
-      //   labelNames: ['requestType', 'jobType', 'taskType'] as const,
-      //   registers: [registry],
-      // });
-
-      // this.createMergeTilesTasksHistogram = new client.Histogram({
-      //   name: 'create_merge_tiles_tasks_creation_duration_seconds',
-      //   help: 'create merge tiles tasks array calculation duration',
-      //   buckets: config.get<number[]>('telemetry.metrics.buckets'),
-      //   labelNames: ['requestType', 'jobType', 'taskType'] as const,
-      //   registers: [registry],
-      // });
     }
   }
 
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
-    let successCreatingJobTask = true; // if create job task metric completed successfully
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -140,150 +118,145 @@ export class LayersManager {
       productId: data.metadata.productId,
       msg: message,
     });
+    try {
+      let jobId: string;
+      if (jobType === JobAction.NEW) {
+        const recordIds = await this.generateRecordIds();
+        const id = recordIds.id;
+        const displayPath = recordIds.displayPath;
 
-    let jobId: string;
-    if (jobType === JobAction.NEW) {
-      const recordIds = await this.generateRecordIds();
-      const id = recordIds.id;
-      const displayPath = recordIds.displayPath;
+        data.metadata.displayPath = displayPath;
+        data.metadata.id = id;
 
-      data.metadata.displayPath = displayPath;
-      data.metadata.id = id;
+        await this.validateNotExistsInCatalog(productId, version, productType);
+        if (existsInMapProxy) {
+          const message = `Failed to create new ingestion job for layer: '${productId}-${productType}', already exists on MapProxy`;
+          this.logger.error({
+            productId: productId,
+            productType: productType,
+            version: version,
+            msg: message,
+          });
+          throw new ConflictError(message);
+        }
 
-      await this.validateNotExistsInCatalog(productId, version, productType);
-      if (existsInMapProxy) {
-        const message = `Failed to create new ingestion job for layer: '${productId}-${productType}', already exists on MapProxy`;
-        this.logger.error({
+        data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
+        this.setDefaultValues(data);
+
+        const layerRelativePath = `${id}/${displayPath}`;
+
+        if (taskType === TaskAction.MERGE_TILES) {
+          jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+            data,
+            layerRelativePath,
+            taskType,
+            jobType,
+            this.grids,
+            extent,
+            overseerUrl,
+            true
+          );
+        } else {
+          const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
+          jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
+        }
+
+        if (fetchTimerTotalJobsEnd) {
+          // will add new histogram metrics to count creation duration as total metric
+          fetchTimerTotalJobsEnd();
+        }
+
+        this.logger.debug({
+          jobId: jobId,
+          productId: productId,
+          productType: productType,
+          version: version,
+          jobType: jobType,
+          taskType: taskType,
+          msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+        });
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      } else if (jobType === JobAction.UPDATE) {
+        const record = await this.catalog.findRecord(productId, undefined, productType);
+        data.metadata.id = record?.metadata.id as string;
+        data.metadata.displayPath = record?.metadata.displayPath as string;
+        const recordId = data.metadata.id;
+        const dispalyPath = data.metadata.displayPath;
+        const layerRelativePath = `${recordId}/${dispalyPath}`;
+        if (!existsInMapProxy) {
+          const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
+          this.logger.error({
+            productId: productId,
+            productType: productType,
+            jobType: jobType,
+            taskType: taskType,
+            version: version,
+            msg: message,
+          });
+          throw new BadRequestError(message);
+        }
+
+        data.metadata.transparency = record?.metadata.transparency;
+        data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
+
+        jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+          data,
+          layerRelativePath,
+          taskType,
+          jobType,
+          this.grids,
+          extent,
+          overseerUrl,
+          this.useNewTargetFlagInUpdateTasks
+        );
+
+        const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
+      Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
+      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
+        this.logger.warn({
+          jobId: jobId,
           productId: productId,
           productType: productType,
           version: version,
           msg: message,
         });
-        throw new ConflictError(message);
-      }
+        this.logger.debug({
+          jobId: jobId,
+          productId: productId,
+          productType: productType,
+          version: version,
+          jobType: jobType,
+          taskType: taskType,
+          msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
+        });
 
-      data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
-      this.setDefaultValues(data);
-
-      const layerRelativePath = `${id}/${displayPath}`;
-
-      if (taskType === TaskAction.MERGE_TILES) {
-        // const fetchTimerEnd = this.createMergeTilesTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
-        jobId = await this.mergeTilesTasker.createMergeTilesTasks(data, layerRelativePath, taskType, jobType, this.grids, extent, overseerUrl, true);
-        // if (fetchTimerEnd) {
-        //   fetchTimerEnd();
-        // }
+        if (fetchTimerTotalJobsEnd) {
+          // will add new histogram metrics to count creation duration as total metric
+          fetchTimerTotalJobsEnd();
+        }
       } else {
-        // const fetchTimerEnd = this.createTilesSplitterTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
-        const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
-        jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
-        // if (fetchTimerEnd) {
-        //   fetchTimerEnd();
-        // }
-      }
-
-      if (fetchTimerEnd) {
-        // will add new histogram metrics to count creation duration
-        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
-      }
-
-      if (fetchTimerTotalJobsEnd) {
-        // will add new histogram metrics to count creation duration as total metric
-        fetchTimerTotalJobsEnd();
-      }
-
-      this.logger.debug({
-        jobId: jobId,
-        productId: productId,
-        productType: productType,
-        version: version,
-        jobType: jobType,
-        taskType: taskType,
-        msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    } else if (jobType === JobAction.UPDATE) {
-      const record = await this.catalog.findRecord(productId, undefined, productType);
-      data.metadata.id = record?.metadata.id as string;
-      data.metadata.displayPath = record?.metadata.displayPath as string;
-      const recordId = data.metadata.id;
-      const dispalyPath = data.metadata.displayPath;
-      const layerRelativePath = `${recordId}/${dispalyPath}`;
-      if (!existsInMapProxy) {
-        const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
+        const message = `Unsupported job type`;
         this.logger.error({
           productId: productId,
           productType: productType,
-          jobType: jobType,
-          taskType: taskType,
           version: version,
+          jobType: jobType,
+          taskType: jobType,
           msg: message,
         });
         throw new BadRequestError(message);
       }
-
-      data.metadata.transparency = record?.metadata.transparency;
-      data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
-
-      jobId = await this.mergeTilesTasker.createMergeTilesTasks(
-        data,
-        layerRelativePath,
-        taskType,
-        jobType,
-        this.grids,
-        extent,
-        overseerUrl,
-        this.useNewTargetFlagInUpdateTasks
-      );
-
-      const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
-      Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
-      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
-      this.logger.warn({
-        jobId: jobId,
-        productId: productId,
-        productType: productType,
-        version: version,
-        msg: message,
-      });
-
-      this.logger.debug({
-        jobId: jobId,
-        productId: productId,
-        productType: productType,
-        version: version,
-        jobType: jobType,
-        taskType: taskType,
-        msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
-      });
-
-      if (fetchTimerEnd) {
-        // will add new histogram metrics to count creation duration
-        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
-      }
-
-      if (fetchTimerTotalJobsEnd) {
-        // will add new histogram metrics to count creation duration as total metric
-        fetchTimerTotalJobsEnd();
-      }
-    } else {
-      const message = `Unsupported job type`;
-      this.logger.error({
-        productId: productId,
-        productType: productType,
-        version: version,
-        jobType: jobType,
-        taskType: jobType,
-        msg: message,
-      });
-
+    } catch (e) {
       if (fetchTimerEnd) {
         // will add new histogram metrics to count creation duration on failure count
-        successCreatingJobTask = false;
-        fetchTimerEnd({ successCreatingJobTask: String(successCreatingJobTask) });
+        fetchTimerEnd({ successCreatingJobTask: String(false) });
       }
-      throw new BadRequestError(message);
+      throw e;
+    }
+    if (fetchTimerEnd) {
+      // will add new histogram metrics to count creation duration on success count
+      fetchTimerEnd({ successCreatingJobTask: String(true) });
     }
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }

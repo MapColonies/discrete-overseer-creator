@@ -106,8 +106,5 @@
       "__name": "SPLITTER_TASKS_BATCH_SIZE",
       "__format": "number"
     }
-  },
-  "app": {
-    "projectName": "APP_PROJECT_NAME"
   }
 }

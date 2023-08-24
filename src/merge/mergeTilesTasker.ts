@@ -12,6 +12,7 @@ import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types'
 import { difference, union, bbox as toBbox, bboxPolygon, Feature, Polygon, BBox } from '@turf/turf';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
+import client from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
 import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
@@ -25,46 +26,27 @@ export class MergeTilesTasker {
   private readonly mergeTaskBatchSize: number;
 
   //metrics
-  // todo - implement on future after designing + refactoring
-  // private readonly createSingleMergeTaskHistogram?: client.Histogram<'operationType' | 'zoom'>;
-  // private readonly createMergeTasksPerZoomLevelHistogram?: client.Histogram<'operationType' | 'zoom'>;
-  // private readonly fillMergeTaskBatch?: client.Histogram<'operationType' | 'configurationBatchSize'>;
+  private readonly fillMergeTaskBatch?: client.Histogram<'operationType' | 'configurationBatchSize'>;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly jobManagerClient: JobManagerWrapper
+    private readonly jobManagerClient: JobManagerWrapper,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     this.batchSize = this.config.get('ingestionMergeTiles.mergeBatchSize');
     this.mergeTaskBatchSize = this.config.get<number>('ingestionMergeTiles.tasksBatchSize');
     this.tileRanger = new TileRanger();
 
-    // todo - implement on future after designing + refactoring
-    // if (registry !== undefined) {
-    //   this.createSingleMergeTaskHistogram = new client.Histogram({
-    //     name: 'create_single_merge_task_duration',
-    //     help: 'create single merge task including batches',
-    //     buckets: config.get<number[]>('telemetry.metrics.buckets'),
-    //     labelNames: ['operationType', 'zoom'] as const,
-    //     registers: [registry],
-    //   });
-
-    //   this.createMergeTasksPerZoomLevelHistogram = new client.Histogram({
-    //     name: 'create_merge_tasks_per_zoom_level_duration',
-    //     help: 'create merging tasks (including batches) per zoom',
-    //     buckets: config.get<number[]>('telemetry.metrics.buckets'),
-    //     labelNames: ['operationType', 'zoom'] as const,
-    //     registers: [registry],
-    //   });
-
-    //   this.fillMergeTaskBatch = new client.Histogram({
-    //     name: 'fill_batch_tasks_merging_duration',
-    //     help: 'time taken to fill each task batch as part of merge task',
-    //     buckets: config.get<number[]>('telemetry.metrics.buckets'),
-    //     labelNames: ['operationType', 'configurationBatchSize'] as const,
-    //     registers: [registry],
-    //   });
-    // }
+    if (registry !== undefined) {
+      this.fillMergeTaskBatch = new client.Histogram({
+        name: 'fill_batch_tasks_merging_duration',
+        help: 'time taken to fill each task batch as part of merge task',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['operationType', 'configurationBatchSize'] as const,
+        registers: [registry],
+      });
+    }
   }
 
   public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
@@ -116,10 +98,6 @@ export class MergeTilesTasker {
     });
 
     for (let zoom = params.maxZoom; zoom >= 0; zoom--) {
-      // const fetchTimerPerZoomTaskCreate = this.createMergeTasksPerZoomLevelHistogram?.startTimer({
-      //   operationType: 'createTasksPerZoom',
-      //   zoom,
-      // });
       const snappedLayers = bboxedLayers.map((layer) => {
         const poly = bboxPolygon(snapBBoxToTileGrid(layer.footprint, zoom));
         return { ...layer, footprint: poly };
@@ -129,7 +107,6 @@ export class MergeTilesTasker {
         const rangeGen = this.tileRanger.encodeFootprint(overlap.intersection as Feature<Polygon>, zoom);
         const batches = tileBatchGenerator(this.batchSize, rangeGen);
         for await (const batch of batches) {
-          // const fetchTimerSingleTaskCreate = this.createSingleMergeTaskHistogram?.startTimer({ operationType: 'createSingleMergeTask', zoom });
           yield {
             targetFormat: params.targetFormat,
             isNewTarget: isNew,
@@ -158,14 +135,8 @@ export class MergeTilesTasker {
               })
             ),
           };
-          // if (fetchTimerSingleTaskCreate) {
-          //   fetchTimerSingleTaskCreate();
-          // }
         }
       }
-      // if (fetchTimerPerZoomTaskCreate) {
-      //   fetchTimerPerZoomTaskCreate();
-      // }
     }
   }
 
@@ -200,20 +171,22 @@ export class MergeTilesTasker {
     const mergeTasksParams = this.createBatchedTasks(params, isNew);
     let mergeTaskBatch: IMergeTaskParams[] = [];
     let jobId: string | undefined = undefined;
-    // let fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
-    //   operationType: 'taskBatchFill',
-    //   configurationBatchSize: this.mergeTaskBatchSize,
-    // });
+
+    let fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+      operationType: 'taskBatchFill',
+      configurationBatchSize: this.mergeTaskBatchSize,
+    });
+
     for await (const mergeTask of mergeTasksParams) {
       mergeTaskBatch.push(mergeTask);
       if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
-        // if (fetchTimerTaskBatchFill) {
-        //   fetchTimerTaskBatchFill();
-        // }
-        // fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
-        //   operationType: 'taskBatchFill',
-        //   configurationBatchSize: this.mergeTaskBatchSize,
-        // });
+        if (fetchTimerTaskBatchFill) {
+          fetchTimerTaskBatchFill();
+        }
+        fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+          operationType: 'taskBatchFill',
+          configurationBatchSize: this.mergeTaskBatchSize,
+        });
         if (jobId === undefined) {
           jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
         } else {
@@ -234,9 +207,9 @@ export class MergeTilesTasker {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
-          // if (fetchTimerTaskBatchFill) {
-          //   fetchTimerTaskBatchFill();
-          // }
+          if (fetchTimerTaskBatchFill) {
+            fetchTimerTaskBatchFill();
+          }
         } catch (err) {
           //TODO: properly handle errors
           await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);

@@ -70,7 +70,6 @@ env:
   mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
-  projectName: 'discrete-overseer-creator'
   useNewTargetFlagInUpdateTasks: true
   splitterTasksBatchSize: 100
   mergerTasksBatchSize: 100
@@ -91,6 +90,22 @@ env:
       port: 8080
     enabled: true
     url: http://localhost:55681/v1/metrics
+    buckets:
+    - 0.005
+    - 0.01
+    - 0.025
+    - 0.05
+    - 0.1
+    - 0.25
+    - 0.5
+    - 1
+    - 2.5
+    - 5
+    - 10
+    - 15
+    - 50
+    - 250
+    - 500
 
 resources:
   enabled: true

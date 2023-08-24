@@ -65,8 +65,5 @@
   "ingestionTilesSplittingTiles": {
     "bboxSizeTiles": 10000,
     "tasksBatchSize": 5
-  },
-  "app": {
-    "projectName": "discrete-overseer-creator"
   }
 }
