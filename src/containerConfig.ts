@@ -2,7 +2,7 @@ import config from 'config';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { trace } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
-import { instancePerContainerCachingFactory } from 'tsyringe';
+import { instanceCachingFactory } from 'tsyringe';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import client from 'prom-client';
 import { SERVICES, SERVICE_NAME } from './common/constants';
@@ -36,7 +36,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
     {
       token: SERVICES.METRICS_REGISTRY,
       provider: {
-        useFactory: instancePerContainerCachingFactory((container) => {
+        useFactory: instanceCachingFactory((container) => {
           const config = container.resolve<IConfig>(SERVICES.CONFIG);
 
           if (config.get<boolean>('telemetry.metrics.enabled')) {

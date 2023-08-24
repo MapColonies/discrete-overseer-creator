@@ -32,7 +32,6 @@ export class LayersManager {
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
-  private readonly createJobTasksTotalHistogram?: client.Histogram<'requestType'>;
   private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
 
   private grids: Grid[] = [];
@@ -58,14 +57,6 @@ export class LayersManager {
         name: 'create_layer_requests_total',
         help: 'The total number of all create layer requests',
         labelNames: ['requestType', 'jobType'] as const,
-        registers: [registry],
-      });
-
-      this.createJobTasksTotalHistogram = new client.Histogram({
-        name: 'create_jobs_task_all_seconds',
-        help: 'create ingestion job including all ingestion + tasks types',
-        buckets: config.get<number[]>('telemetry.metrics.buckets'),
-        labelNames: ['requestType'] as const,
         registers: [registry],
       });
 
@@ -103,8 +94,7 @@ export class LayersManager {
     const jobType = await this.getJobType(data);
     const taskType = this.getTaskType(jobType, files, originDirectory);
 
-    const fetchTimerTotalJobsEnd = this.createJobTasksTotalHistogram?.startTimer({ requestType: 'CreateLayer' });
-    const fetchTimerEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
+    const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
 
@@ -159,11 +149,6 @@ export class LayersManager {
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
-        }
-
-        if (fetchTimerTotalJobsEnd) {
-          // will add new histogram metrics to count creation duration as total metric
-          fetchTimerTotalJobsEnd();
         }
 
         this.logger.debug({
@@ -230,11 +215,6 @@ export class LayersManager {
           taskType: taskType,
           msg: `Successfully created job type: ${jobType} and tasks type: ${taskType}`,
         });
-
-        if (fetchTimerTotalJobsEnd) {
-          // will add new histogram metrics to count creation duration as total metric
-          fetchTimerTotalJobsEnd();
-        }
       } else {
         const message = `Unsupported job type`;
         this.logger.error({
@@ -248,15 +228,15 @@ export class LayersManager {
         throw new BadRequestError(message);
       }
     } catch (e) {
-      if (fetchTimerEnd) {
+      if (fetchTimerTotalJobsEnd) {
         // will add new histogram metrics to count creation duration on failure count
-        fetchTimerEnd({ successCreatingJobTask: String(false) });
+        fetchTimerTotalJobsEnd({ successCreatingJobTask: 'false' });
       }
       throw e;
     }
-    if (fetchTimerEnd) {
+    if (fetchTimerTotalJobsEnd) {
       // will add new histogram metrics to count creation duration on success count
-      fetchTimerEnd({ successCreatingJobTask: String(true) });
+      fetchTimerTotalJobsEnd({ successCreatingJobTask: 'true' });
     }
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }
