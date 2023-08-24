@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.2.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.12...v4.2.0) (2023-08-24)
+
+
+### Features
+
+* adding prom-client metrics + basic metrics (MAPCO-3345) ([#22](https://github.com/MapColonies/discrete-overseer-creator/issues/22)) ([8a1e739](https://github.com/MapColonies/discrete-overseer-creator/commit/8a1e739f8b65347c70fce73813114849a4750247))
+
 ### [4.1.12](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.11...v4.1.12) (2023-08-13)
 
 ### [4.1.11](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.10...v4.1.11) (2023-07-18)
