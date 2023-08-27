@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.2.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.2.0...v4.2.1) (2023-08-27)
+
+
+### Bug Fixes
+
+* fixing configurable enable\disable metrics config param ([#23](https://github.com/MapColonies/discrete-overseer-creator/issues/23)) ([4b4e6f8](https://github.com/MapColonies/discrete-overseer-creator/commit/4b4e6f8b6c41e4105305c1f50a79b95d101af3d7))
+
 ## [4.2.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.12...v4.2.0) (2023-08-24)
 
 
