@@ -18,7 +18,10 @@
       "url": "TELEMETRY_TRACING_URL"
     },
     "metrics": {
-      "enabled": "TELEMETRY_METRICS_ENABLED",
+      "enabled": {
+        "__name": "TELEMETRY_METRICS_ENABLED",
+        "__format": "boolean"
+      },
       "url": "TELEMETRY_METRICS_URL",
       "interval": "TELEMETRY_METRICS_INTERVAL",
       "buckets": {

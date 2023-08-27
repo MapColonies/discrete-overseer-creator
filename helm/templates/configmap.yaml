@@ -43,7 +43,7 @@ data:
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
   {{ end }}
   {{ if .Values.env.metrics.enabled }}
-  TELEMETRY_METRICS_ENABLED: 'true'
+  TELEMETRY_METRICS_ENABLED: {{ .Values.env.metrics.enabled | quote }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
   {{ end }}
