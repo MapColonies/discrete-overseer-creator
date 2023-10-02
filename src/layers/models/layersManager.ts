@@ -8,6 +8,7 @@ import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFo
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { TilesMimeFormat, lookup as mimeLookup } from '@map-colonies/types';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
@@ -131,6 +132,7 @@ export class LayersManager {
         }
 
         data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
+        data.metadata.format = mimeLookup(data.metadata.tileOutputFormat) as TilesMimeFormat;
         this.setDefaultValues(data);
 
         const layerRelativePath = `${id}/${displayPath}`;
@@ -184,6 +186,7 @@ export class LayersManager {
 
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
+        data.metadata.format = record?.metadata.format;
 
         jobId = await this.mergeTilesTasker.createMergeTilesTasks(
           data,
@@ -196,9 +199,10 @@ export class LayersManager {
           this.useNewTargetFlagInUpdateTasks
         );
 
-        const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
+        const message = `Update job - Transparency, TileOutputFormat and TilesMimeFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
-      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
+      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat},
+      TilesMimeFormat => from ${data.metadata.format as TilesMimeFormat} to ${record?.metadata.format as TilesMimeFormat}`;
         this.logger.warn({
           jobId: jobId,
           productId: productId,
