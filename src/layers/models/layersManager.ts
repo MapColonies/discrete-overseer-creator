@@ -132,7 +132,7 @@ export class LayersManager {
         }
 
         data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
-        data.metadata.format = mimeLookup(data.metadata.tileOutputFormat) as TilesMimeFormat;
+        data.metadata.tileMimeFormat = mimeLookup(data.metadata.tileOutputFormat) as TilesMimeFormat;
         this.setDefaultValues(data);
 
         const layerRelativePath = `${id}/${displayPath}`;
@@ -186,7 +186,7 @@ export class LayersManager {
 
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
-        data.metadata.format = record?.metadata.format;
+        data.metadata.tileMimeFormat = record?.metadata.tileMimeFormat;
 
         jobId = await this.mergeTilesTasker.createMergeTilesTasks(
           data,
@@ -202,7 +202,7 @@ export class LayersManager {
         const message = `Update job - Transparency, TileOutputFormat and TilesMimeFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
       TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat},
-      TilesMimeFormat => from ${data.metadata.format as TilesMimeFormat} to ${record?.metadata.format as TilesMimeFormat}`;
+      TilesMimeFormat => from ${data.metadata.tileMimeFormat as TilesMimeFormat} to ${record?.metadata.tileMimeFormat as TilesMimeFormat}`;
         this.logger.warn({
           jobId: jobId,
           productId: productId,
