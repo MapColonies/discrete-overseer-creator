@@ -70,7 +70,7 @@ env:
   mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
-  useNewTargetFlagInUpdateTasks: false
+  useNewTargetFlagInUpdateTasks: true
   splitterTasksBatchSize: 100
   mergerTasksBatchSize: 100
   disableHttpClientLogs: false
