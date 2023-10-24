@@ -38,6 +38,7 @@ data:
   USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}
   SPLITTER_TASKS_BATCH_SIZE: {{ .Values.env.splitterTasksBatchSize | quote }}
   MERGER_TASKS_BATCH_SIZE: {{ .Values.env.mergerTasksBatchSize | quote }}
+  FORBBIDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
   {{ if .Values.env.tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}

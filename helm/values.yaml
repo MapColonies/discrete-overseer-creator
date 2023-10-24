@@ -55,6 +55,9 @@ image:
 
 enableWMS: true
 env:
+  forbiddenTypesForParallelIngesion:
+    - Ingestion_New
+    - Ingestion_Update
   port: 80
   targetPort: 8080
   protocol: TCP

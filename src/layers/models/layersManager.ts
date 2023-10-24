@@ -336,15 +336,20 @@ export class LayersManager {
   }
 
   private async validateJobNotRunning(productId: string, productType: ProductType): Promise<void> {
+    const notFoundIndex = -1;
     const findJobParameters: IFindJobsRequest = {
       resourceId: productId,
       productType,
       isCleaned: false,
       shouldReturnTasks: false,
     };
+    const ingestionJobTypes = this.config.get<string[]>('forbiddenTypesForParallelIngesion');
     const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
-      if (job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) {
+      if (
+        job.status == OperationStatus.IN_PROGRESS ||
+        (job.status == OperationStatus.PENDING && ingestionJobTypes.indexOf(job.type) == notFoundIndex)
+      ) {
         const message = `Layer id: ${productId} product type: ${productType}, job is already running`;
         this.logger.error({
           productId: productId,

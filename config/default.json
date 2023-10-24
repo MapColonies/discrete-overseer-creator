@@ -65,5 +65,6 @@
   "ingestionTilesSplittingTiles": {
     "bboxSizeTiles": 10000,
     "tasksBatchSize": 5
-  }
+  },
+  "forbiddenTypesForParallelIngesion": ["Ingestion_New", "Ingestion_Update"]
 }
