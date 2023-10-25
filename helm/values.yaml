@@ -58,6 +58,7 @@ env:
   forbiddenTypesForParallelIngesion:
     - Ingestion_New
     - Ingestion_Update
+    - shlomo
   port: 80
   targetPort: 8080
   protocol: TCP

@@ -348,7 +348,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      getJobsMock.mockResolvedValue([{ status: OperationStatus.PENDING }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.PENDING, type: 'Ingestion_New' }]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -370,7 +370,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      getJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' }]);
 
       const action = async () => {
         await layersManager.createLayer(testData, managerCallbackUrl);
@@ -405,7 +405,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      getJobsMock.mockResolvedValue([{ status: OperationStatus.COMPLETED }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.COMPLETED, type: 'Ingestion_New' }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
 
       const action = async () => {
@@ -442,7 +442,7 @@ describe('LayersManager', () => {
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
-      getJobsMock.mockResolvedValue([{ status: OperationStatus.FAILED }]);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.FAILED, type: 'Ingestion_New' }]);
       generateTasksParametersMock.mockReturnValue(taskParams);
 
       const action = async () => {

@@ -687,7 +687,10 @@ describe('layers', function () {
   describe('Sad Path', function () {
     // All requests with status code 4XX-5XX
     it('should return 409 if rested layer is already being generated', async function () {
-      const jobs = [{ status: OperationStatus.FAILED }, { status: OperationStatus.IN_PROGRESS }];
+      const jobs = [
+        { status: OperationStatus.FAILED, type: 'Ingestion_New' },
+        { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
+      ];
       getJobsMock.mockResolvedValue(jobs);
 
       const response = await requestSender.createLayer(validTestData);
