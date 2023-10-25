@@ -336,7 +336,6 @@ export class LayersManager {
   }
 
   private async validateJobNotRunning(productId: string, productType: ProductType): Promise<void> {
-    const notFoundIndex = -1;
     const findJobParameters: IFindJobsRequest = {
       resourceId: productId,
       productType,
