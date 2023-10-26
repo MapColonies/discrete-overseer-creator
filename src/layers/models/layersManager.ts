@@ -342,10 +342,11 @@ export class LayersManager {
       isCleaned: false,
       shouldReturnTasks: false,
     };
+    const ingestionJobTypes = this.config.get<string[]>('forbiddenTypesForParallelIngesion');
     const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
-      if (job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) {
-        const message = `Layer id: ${productId} product type: ${productType}, job is already running`;
+      if ((job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) && ingestionJobTypes.includes(job.type)) {
+        const message = `Layer id: ${productId} product type: ${productType}, conflicting job ${job.type} is already running for that layer`;
         this.logger.error({
           productId: productId,
           productType: productType,

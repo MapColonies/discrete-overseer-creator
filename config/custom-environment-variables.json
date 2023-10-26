@@ -109,5 +109,9 @@
       "__name": "SPLITTER_TASKS_BATCH_SIZE",
       "__format": "number"
     }
+  },
+  "forbiddenTypesForParallelIngesion": {
+    "__name": "FORBBIDEN_TYPES_FOR_PARALLEL_INGESTION",
+    "__format": "json"
   }
 }

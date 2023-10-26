@@ -195,6 +195,38 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
+    it('should return 200 if export is running for the same layer', async function () {
+      const jobs = [{ status: OperationStatus.IN_PROGRESS, type: 'tilesExport' }];
+      getJobsMock.mockResolvedValue(jobs);
+
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(mapExistsMock).toHaveBeenCalledTimes(1);
+      expect(catalogExistsMock).toHaveBeenCalledTimes(1);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(httpStatusCodes.OK);
+    });
+
+    it('should return 200 if other jobs for same layer are Aborted Expired or Failed', async function () {
+      const jobs = [
+        { status: OperationStatus.ABORTED, type: 'Ingestion_New' },
+        { status: OperationStatus.EXPIRED, type: 'Ingestion_New' },
+        { status: OperationStatus.ABORTED, type: 'Ingestion_New' },
+      ];
+      getJobsMock.mockResolvedValue(jobs);
+
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(mapExistsMock).toHaveBeenCalledTimes(1);
+      expect(catalogExistsMock).toHaveBeenCalledTimes(1);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(httpStatusCodes.OK);
+    });
+
     it('should return 200 status code for sending request transparency opaque with png output format', async function () {
       getJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
@@ -686,8 +718,49 @@ describe('layers', function () {
 
   describe('Sad Path', function () {
     // All requests with status code 4XX-5XX
-    it('should return 409 if rested layer is already being generated', async function () {
-      const jobs = [{ status: OperationStatus.FAILED }, { status: OperationStatus.IN_PROGRESS }];
+    it('should return 409 if tested layer is already being In-Progress', async function () {
+      const jobs = [
+        { status: OperationStatus.FAILED, type: 'Ingestion_New' },
+        { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
+      ];
+      getJobsMock.mockResolvedValue(jobs);
+
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.status).toBe(httpStatusCodes.CONFLICT);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
+      expect(mapExistsMock).toHaveBeenCalledTimes(0);
+      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(0);
+      expect(createTasksMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('should return 409 if tested layer is already being generated while also having aborted job', async function () {
+      const jobs = [
+        { status: OperationStatus.ABORTED, type: 'Ingestion_New' },
+        { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
+      ];
+      getJobsMock.mockResolvedValue(jobs);
+
+      const response = await requestSender.createLayer(validTestData);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.status).toBe(httpStatusCodes.CONFLICT);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
+      expect(mapExistsMock).toHaveBeenCalledTimes(0);
+      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(0);
+      expect(createTasksMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('should return 409 if tested layer is already being generated while also having expired job', async function () {
+      const jobs = [
+        { status: OperationStatus.EXPIRED, type: 'Ingestion_New' },
+        { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
+      ];
       getJobsMock.mockResolvedValue(jobs);
 
       const response = await requestSender.createLayer(validTestData);
