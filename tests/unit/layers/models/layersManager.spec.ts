@@ -332,7 +332,27 @@ describe('LayersManager', () => {
       };
 
       await expect(action).rejects.toThrow(BadRequestError);
+    });
+
+    it('should create the new layer although an export for same layer is in progress', async function () {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      setValue({ 'tiling.zoomGroups': '1' });
+      const testData: IngestionParams = {
+        fileNames: ['test.gpkg'],
+        metadata: { ...testImageMetadata },
+        originDirectory: '/here',
+      };
+
+      catalogExistsMock.mockResolvedValue(false);
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      validateSourceDirectoryMock.mockResolvedValue(true);
+      validateNotWatchDirMock.mockResolvedValue(true);
+      getJobsMock.mockResolvedValue([{ status: OperationStatus.IN_PROGRESS, type: 'tilesExport' }]);
+
+      await layersManager.createLayer(testData, managerCallbackUrl);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
     });
 
     it('fail if layer status is pending', async function () {

@@ -346,7 +346,7 @@ export class LayersManager {
     const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
       if ((job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) && ingestionJobTypes.includes(job.type)) {
-        const message = `Layer id: ${productId} product type: ${productType}, job is already running`;
+        const message = `Layer id: ${productId} product type: ${productType}, conflicting job ${job.type} is already running for that layer`;
         this.logger.error({
           productId: productId,
           productType: productType,
