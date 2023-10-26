@@ -737,7 +737,7 @@ describe('layers', function () {
       expect(createTasksMock).toHaveBeenCalledTimes(0);
     });
 
-    it('should return 409 if rested layer is already being generated', async function () {
+    it('should return 409 if rested layer is already being generated while also having aborted job', async function () {
       const jobs = [
         { status: OperationStatus.ABORTED, type: 'Ingestion_New' },
         { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
@@ -756,7 +756,7 @@ describe('layers', function () {
       expect(createTasksMock).toHaveBeenCalledTimes(0);
     });
 
-    it('should return 409 if rested layer is already being generated', async function () {
+    it('should return 409 if rested layer is already being generated while also having expired job', async function () {
       const jobs = [
         { status: OperationStatus.EXPIRED, type: 'Ingestion_New' },
         { status: OperationStatus.IN_PROGRESS, type: 'Ingestion_New' },
