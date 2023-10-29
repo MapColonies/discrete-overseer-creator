@@ -299,8 +299,8 @@ describe('JobsManager', () => {
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobByIdMock).toHaveBeenCalledTimes(0);
-      expect(mergeMock).toHaveBeenCalledTimes(1);
-      expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(mergeMock).toHaveBeenCalledTimes(0);
+      expect(updateMock).toHaveBeenCalledTimes(0);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
