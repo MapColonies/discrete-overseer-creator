@@ -65,7 +65,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  tilingZoomGroups: ['0-12', '13' '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
+  tilingZoomGroups: ['0-12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
   shouldSync: true
   layerSourceDir: '/layerSources'
   displayNameDir: "\\layerSources"
