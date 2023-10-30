@@ -11,7 +11,7 @@ export class ZoomLevelCalculator {
   private readonly zoomRanges: ITaskZoomRange[];
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
-    const batches = config.get<string>('tiling.zoomGroups');
+    const batches = config.get<string[]>('tiling.zoomGroups');
     logger.info({ msg: `batches: ${batches}, ${isArray(batches)} type: ${typeof batches}` });
 
     this.zoomRanges = this.getZoomRanges(batches);
