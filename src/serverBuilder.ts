@@ -94,8 +94,8 @@ export class ServerBuilder {
   }
 
   private getFileExtensions(): string[] {
-    const extensionsStr = this.config.get<string>('validFileExtensions');
-    const extensions = extensionsStr.split(',').map((ext) => ext.trim());
+    const extensionsStr = this.config.get<string[]>('validFileExtensions');
+    const extensions = extensionsStr.map((ext) => ext.trim());
     return makeInsensitive(...extensions);
   }
 }
