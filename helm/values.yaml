@@ -26,7 +26,7 @@ rasterCommon:
     fs:
       ingestionSourcePvc:
         enabled: true
-        name: ingestion-source-pvc
+        name: local-sources-pvc
         subPath: ingestion-source
   ca:
     secretName: ''
@@ -45,8 +45,8 @@ resetOnConfigChange: true
 imagePullPolicy: Always
 
 cloudProvider:
-  dockerRegistryUrl: my-registry-url.io
-  imagePullSecretName: 'my-registry-secret'
+  dockerRegistryUrl: acrarolibotnonprod.azurecr.io
+  imagePullSecretName: 'acr-registry'
   flavor: openshift
 
 image:
@@ -65,11 +65,29 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
-  tilingZoomGroups: ['0-12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
+  tilingZoomGroups: 
+  - '0-12'
+  - '13'
+  - '14'
+  - '15'
+  - '16'
+  - '17'
+  - '18'
+  - '19'
+  - '20'
+  - '21'
+  - '22'
+  - '23'
   shouldSync: true
   layerSourceDir: '/layerSources'
   displayNameDir: "\\layerSources"
-  validFileExtensions: ['tif', 'tiff', 'gpkg', 'jp2', 'jpc', 'j2k']
+  validFileExtensions: 
+  - 'tif'
+  - 'tiff'
+  - 'gpkg'
+  - 'jp2'
+  - 'jpc'
+  - 'j2k'
   mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
