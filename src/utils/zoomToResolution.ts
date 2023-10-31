@@ -10,10 +10,8 @@ import { isArray } from 'lodash';
 export class ZoomLevelCalculator {
   private readonly zoomRanges: ITaskZoomRange[];
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {
     const batches = config.get<string[]>('tiling.zoomGroups');
-    logger.info({ msg: `batches: ${batches}, ${isArray(batches)} type: ${typeof batches}` });
-
     this.zoomRanges = this.getZoomRanges(batches);
   }
 
@@ -31,6 +29,9 @@ export class ZoomLevelCalculator {
   }
 
   private getZoomRanges(batches: string[]): ITaskZoomRange[] {
+    if (typeof batches === 'string') {
+      batches = JSON.parse(batches);
+    }
     const zoomRanges = batches.map((batch) => {
       const limits = batch.split('-').map((value) => Number.parseInt(value));
       const zoomRange: ITaskZoomRange = {
