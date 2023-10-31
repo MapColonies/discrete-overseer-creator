@@ -3,8 +3,6 @@ import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
 import { ITaskZoomRange } from '../jobs/interfaces';
 import { SERVICES } from '../common/constants';
 import { IConfig } from '../common/interfaces';
-import { Logger } from '@map-colonies/js-logger';
-import { isArray } from 'lodash';
 
 @singleton()
 export class ZoomLevelCalculator {
@@ -30,7 +28,7 @@ export class ZoomLevelCalculator {
 
   private getZoomRanges(batches: string[]): ITaskZoomRange[] {
     if (typeof batches === 'string') {
-      batches = JSON.parse(batches);
+      batches = JSON.parse(batches) as string[];
     }
     const zoomRanges = batches.map((batch) => {
       const limits = batch.split('-').map((value) => Number.parseInt(value));
