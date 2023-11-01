@@ -69,7 +69,7 @@ describe('JobsManager', () => {
 
     it('publish layer to catalog once if all tasks are done for RASTER_MAP', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ mapServerCacheType: 'fs', 'tiling.zoomGroups': '0-10,11,12,13,14,15,16,17,18' });
+      setValue({ mapServerCacheType: 'fs', 'tiling.zoomGroups': ['0-10', '11', '12', '13', '14', '15', '16', '17', '18'] });
       setValue('shouldSync', true);
       setValue('ingestionNewJobType', ingestionNewJobType);
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
@@ -119,7 +119,7 @@ describe('JobsManager', () => {
 
     it('do nothing if some tasks are not done', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ mapServerCacheType: 'fs', 'tiling.zoomGroups': '' });
+      setValue({ mapServerCacheType: 'fs', 'tiling.zoomGroups': [] });
       setValue('ingestionNewJobType', ingestionNewJobType);
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
 

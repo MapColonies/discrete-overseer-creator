@@ -90,7 +90,7 @@ describe('LayersManager', () => {
   describe('createLayer', () => {
     it('should create "New" job type with "Split-Tiles" task type successfully', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
@@ -130,7 +130,7 @@ describe('LayersManager', () => {
 
     it('should create "Update" job type with "Merge-Tiles" task type successfully when includes only GPKG files', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.gpkg'],
@@ -161,7 +161,7 @@ describe('LayersManager', () => {
 
     it('createMergeTilesTasksMock function should be called with "isNew" parameter for "New" job type', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.gpkg'],
@@ -254,7 +254,7 @@ describe('LayersManager', () => {
 
     it('should throw Bad Request Error for "Update" job type if layer is not exists in map proxy', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
 
       const testData: IngestionParams = {
@@ -284,7 +284,7 @@ describe('LayersManager', () => {
 
     it('should throw Bad Request Error for "New" or "Update" job type if higher product version is already exists in catalog', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
@@ -310,7 +310,7 @@ describe('LayersManager', () => {
     // TODO: Handle test when update is supported for other formats
     it('should throw Bad Request Error for "Update" job type if there is unsupported file (not GPKG) in request', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
@@ -336,7 +336,7 @@ describe('LayersManager', () => {
 
     it('should create the new layer although an export for same layer is in progress', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.gpkg'],
         metadata: { ...testImageMetadata },
@@ -357,7 +357,7 @@ describe('LayersManager', () => {
 
     it('fail if layer status is pending', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -378,7 +378,7 @@ describe('LayersManager', () => {
 
     it('fail if layer status is inProgress', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -413,7 +413,7 @@ describe('LayersManager', () => {
       ];
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -449,7 +449,7 @@ describe('LayersManager', () => {
       ];
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -473,7 +473,7 @@ describe('LayersManager', () => {
 
     it('fail if layer exists in mapping server for "New" job type', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -496,7 +496,7 @@ describe('LayersManager', () => {
 
     it('fail if layer exists in catalog for "New" job type', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -519,7 +519,7 @@ describe('LayersManager', () => {
 
     it('fail if files are missing for "New" job type', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1' });
+      setValue({ 'tiling.zoomGroups': ['1'] });
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -541,7 +541,7 @@ describe('LayersManager', () => {
   describe('generateRecordIds', () => {
     it('metadata for "new" ingestion job should includes "id" and "displayPath" while creating job tasks', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,2-3' });
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
