@@ -27,7 +27,7 @@ export class ZoomLevelCalculator {
   }
 
   private getZoomRanges(batches: string[]): ITaskZoomRange[] {
-    const zoomRanges = Object.values(batches).map((batch) => {
+    const zoomRanges = batches.map((batch) => {
       const limits = batch.split('-').map((value) => Number.parseInt(value));
       const zoomRange: ITaskZoomRange = {
         minZoom: Math.min(...limits),
