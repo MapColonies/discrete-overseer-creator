@@ -235,16 +235,6 @@ export class JobsManager {
       });
 
       if (job.isSuccessful) {
-        const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
-        this.logger.info({
-          jobId: job.id,
-          taskId: task.id,
-          msg: message,
-        });
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord.id);
-        job.status = OperationStatus.COMPLETED;
-
         const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
         this.logger.debug({
           jobId: job.id,
@@ -254,6 +244,16 @@ export class JobsManager {
           msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
         });
         await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
+
+        const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
+        this.logger.info({
+          jobId: job.id,
+          taskId: task.id,
+          msg: message,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord.id);
+        job.status = OperationStatus.COMPLETED;
       }
     }
   }
