@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.2.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.2.1...v4.2.2) (2023-11-05)
+
+
+### Bug Fixes
+
+* add feature to block parallel ingestion from the same layer ([#27](https://github.com/MapColonies/discrete-overseer-creator/issues/27)) ([264fb84](https://github.com/MapColonies/discrete-overseer-creator/commit/264fb84f83a7403aff4ef98fae847d41f9956b60))
+* changed useNewTargetFlagInUpdateTasks to false ([599e0b0](https://github.com/MapColonies/discrete-overseer-creator/commit/599e0b0d0ebd54e737969244021a99e421a0079a))
+* fix audit ([#30](https://github.com/MapColonies/discrete-overseer-creator/issues/30)) ([14522d1](https://github.com/MapColonies/discrete-overseer-creator/commit/14522d1985757439322c6893b2f4a642cd94eace))
+* reading  metrics enable true\false ([#24](https://github.com/MapColonies/discrete-overseer-creator/issues/24)) ([4b7135d](https://github.com/MapColonies/discrete-overseer-creator/commit/4b7135d617c043c8adfec44c09dd75ea9f3e48cf))
+* updated mc-models version to support coordinates validation (MAPCO-3584) ([#26](https://github.com/MapColonies/discrete-overseer-creator/issues/26)) ([9bbf47d](https://github.com/MapColonies/discrete-overseer-creator/commit/9bbf47dd51ca78459191a4a93647ad39ca1af687))
+
 ### [4.2.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.2.0...v4.2.1) (2023-08-27)
 
 
