@@ -73,7 +73,7 @@ describe('SplitTilesTasker', () => {
       generateTasksParametersSpy = jest.spyOn(SplitTilesTasker.prototype, 'generateTasksParameters');
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      setValue({ 'tiling.zoomGroups': '1,8-5,2' });
+      setValue({ 'tiling.zoomGroups': ['1', '8-5', '2'] });
 
       await splitTilesTasker.createSplitTilesTasks(
         testData,

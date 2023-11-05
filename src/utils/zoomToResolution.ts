@@ -9,7 +9,7 @@ export class ZoomLevelCalculator {
   private readonly zoomRanges: ITaskZoomRange[];
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {
-    const batches = config.get<string>('tiling.zoomGroups');
+    const batches = config.get<string[]>('tiling.zoomGroups');
     this.zoomRanges = this.getZoomRanges(batches);
   }
 
@@ -26,9 +26,8 @@ export class ZoomLevelCalculator {
     return layerZoomRanges;
   }
 
-  private getZoomRanges(batches: string): ITaskZoomRange[] {
-    const zoomBatches = batches.split(',');
-    const zoomRanges = zoomBatches.map((batch) => {
+  private getZoomRanges(batches: string[]): ITaskZoomRange[] {
+    const zoomRanges = batches.map((batch) => {
       const limits = batch.split('-').map((value) => Number.parseInt(value));
       const zoomRange: ITaskZoomRange = {
         minZoom: Math.min(...limits),

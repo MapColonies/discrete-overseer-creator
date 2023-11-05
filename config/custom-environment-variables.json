@@ -54,14 +54,20 @@
   "layerSourceDir": "LAYER_SOURCE_DIR",
   "mapServerCacheType": "MAP_SERVER_CACHE_TYPE",
   "displayNameDir": "DISPLAY_NAME_DIR",
-  "validFileExtensions": "VALID_FILE_EXTENSIONS",
+  "validFileExtensions": {
+    "__name": "VALID_FILE_EXTENSIONS",
+    "__format": "json"
+  },
   "jobManagerURL": "JOB_MANAGER_URL",
   "syncServiceURL": "SYNC_SERVICE_URL",
   "mapPublishingServiceURL": "MAP_PUBLISHING_SERVICE_URL",
   "publicMapServerURL": "PUBLIC_MAP_SERVER_URL",
   "catalogPublishingServiceURL": "CATALOG_PUBLISHING_SERVICE_URL",
   "tiling": {
-    "zoomGroups": "TILING_ZOOM_GROUPS"
+    "zoomGroups": {
+      "__name": "TILING_ZOOM_GROUPS",
+      "__format": "json"
+    }
   },
   "httpRetry": {
     "attempts": {
