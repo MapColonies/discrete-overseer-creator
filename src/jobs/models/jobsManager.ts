@@ -234,17 +234,17 @@ export class JobsManager {
         msg: `Merging catalog record ${catalogRecord.metadata.id as string} with new metadata`,
       });
 
-      const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
-      this.logger.debug({
-        jobId: job.id,
-        taskId: task.id,
-        internalId: catalogRecord.metadata.id,
-        mergedData: inspect(mergedData),
-        msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
-      });
-      await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
-
       if (job.isSuccessful) {
+        const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
+        this.logger.debug({
+          jobId: job.id,
+          taskId: task.id,
+          internalId: catalogRecord.metadata.id,
+          mergedData: inspect(mergedData),
+          msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
+        });
+        await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
+
         const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
         this.logger.info({
           jobId: job.id,
