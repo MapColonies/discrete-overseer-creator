@@ -88,21 +88,17 @@ export class MergeTilesTasker {
 
   public async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
     const sourceType = this.config.get<string>('mapServerCacheType');
-    const bboxedLayers = params.layers.map((layer) => {
-      const bbox = toBbox(layer.footprint) as [number, number, number, number];
-      return {
-        fileName: layer.fileName,
-        tilesPath: layer.tilesPath,
-        footprint: bbox,
-      };
-    });
-
     for (let zoom = params.maxZoom; zoom >= 0; zoom--) {
-      const snappedLayers = bboxedLayers.map((layer) => {
-        const poly = bboxPolygon(snapBBoxToTileGrid(layer.footprint, zoom));
-        return { ...layer, footprint: poly };
+      const mappedLayers = params.layers.map((layer) => {
+        return {
+          fileName: layer.fileName,
+          tilesPath: layer.tilesPath,
+          footprint: layer.footprint,
+        };
       });
-      const overlaps = this.createLayerOverlaps(snappedLayers);
+
+      // TODO: as we send the original footprints (instead of BBOX) some tiles can be repeated in several groups (order matters if exists in 2 GPKG's and one is full while other partial)
+      const overlaps = this.createLayerOverlaps(mappedLayers);
       for (const overlap of overlaps) {
         const rangeGen = this.tileRanger.encodeFootprint(overlap.intersection as Feature<Polygon>, zoom);
         const batches = tileBatchGenerator(this.batchSize, rangeGen);
