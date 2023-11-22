@@ -1,15 +1,7 @@
 import { join } from 'path';
-import {
-  degreesPerPixelToZoomLevel,
-  Footprint,
-  multiIntersect,
-  snapBBoxToTileGrid,
-  subGroupsGen,
-  tileBatchGenerator,
-  TileRanger,
-} from '@map-colonies/mc-utils';
+import { degreesPerPixelToZoomLevel, Footprint, multiIntersect, subGroupsGen, tileBatchGenerator, TileRanger } from '@map-colonies/mc-utils';
 import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { difference, union, bbox as toBbox, bboxPolygon, Feature, Polygon, BBox } from '@turf/turf';
+import { difference, union, Feature, Polygon, BBox } from '@turf/turf';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import client from 'prom-client';

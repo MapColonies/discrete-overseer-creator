@@ -1,6 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
-import { tilesGenerator } from '@map-colonies/mc-utils';
 import { bboxPolygon, polygon } from '@turf/turf';
 import { ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeTaskParams } from '../../../src/common/interfaces';
 import { Grid } from '../../../src/layers/interfaces';
@@ -96,6 +95,9 @@ describe('MergeTilesTasker', () => {
   });
 
   describe('createBatchedTasks', () => {
+    // since we now send the original footprints (instead of BBOX) some tiles can be repeated in several groups
+    //      (order matters if exists in 2 GPKG's and one is full while other partial)
+
     // it('has no duplicate tiles when tile is split to multiple sources', async () => {
     //   const layers: ILayerMergeData[] = [
     //     {
@@ -204,12 +206,6 @@ describe('MergeTilesTasker', () => {
               grid: Grid.TWO_ON_ONE,
               extent: { minX: 0, minY: 0, maxX: 1, maxY: 1 },
             },
-            // {
-            //   type: filesSourceType,
-            //   path: layers[1].tilesPath,
-            //   grid: Grid.TWO_ON_ONE,
-            //   extent: { minX: 0, minY: 0, maxX: 1, maxY: 1 },
-            // },
           ],
           batches: [{ minX: 0, maxX: 1, minY: 0, maxY: 1, zoom: 0 }],
         },
