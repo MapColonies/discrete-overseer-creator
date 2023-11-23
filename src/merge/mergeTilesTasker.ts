@@ -89,7 +89,7 @@ export class MergeTilesTasker {
         };
       });
 
-      // TODO: as we send the original footprints (instead of BBOX) some tiles can be repeated in several groups (order matters if exists in 2 GPKG's and one is full while other partial)
+      // TODO: as we send the original footprints (instead of BBOX) some tiles can be repeated in several groups (if order matters between sources they should be ingested separatedly)
       const overlaps = this.createLayerOverlaps(mappedLayers);
       for (const overlap of overlaps) {
         const rangeGen = this.tileRanger.encodeFootprint(overlap.intersection as Feature<Polygon>, zoom);
