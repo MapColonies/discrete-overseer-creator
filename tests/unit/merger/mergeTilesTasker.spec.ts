@@ -95,8 +95,7 @@ describe('MergeTilesTasker', () => {
   });
 
   describe('createBatchedTasks', () => {
-    // since we now send the original footprints (instead of BBOX) some tiles can be repeated in several groups
-    //      (order matters if exists in 2 GPKG's and one is full while other partial)
+    // since we send the original footprints (instead of BBOX) some tiles can be repeated in several groups (if order matters between sources they should be ingested separatedly)
 
     // it('has no duplicate tiles when tile is split to multiple sources', async () => {
     //   const layers: ILayerMergeData[] = [
