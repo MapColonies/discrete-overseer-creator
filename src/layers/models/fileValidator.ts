@@ -1,5 +1,5 @@
-import { promises as fsPromises, constants as fsConstants } from 'fs';
-import { join, extname } from 'path';
+import { promises as fsPromises, constants as fsConstants } from 'node:fs';
+import { join, extname } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import { BadRequestError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
