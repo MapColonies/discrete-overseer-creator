@@ -12,6 +12,12 @@ import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 export class FileValidator {
   private readonly sourceMount: string;
   private readonly validProjection = '4326';
+  private readonly validCRS = 4326;
+  private readonly validFileFormat = 'GPKG';
+  private readonly validPixelSizeRange = {
+    "min": 0.000000335276,
+    "max": 0.703125
+  }
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -101,6 +107,35 @@ export class FileValidator {
         }
       })
     );
+  }
+
+  public async validateInfoData(files: string[], originDirectory: string): Promise<void>{
+    await Promise.all(
+      files.map(async (file) => {
+        const filePath = join(this.sourceMount, originDirectory, file);
+        const infoData= await this.gdalUtilities.getInfoData(filePath);
+        let message ='';
+        if (infoData.CRS !== this.validCRS) {
+            message = `Unsupported CRS: ${infoData.CRS as string}, for input file: ${filePath}, must have valid CRS: ${
+            this.validProjection}`;
+        }
+        if (infoData.fileFormat !== this.validFileFormat) {
+            message += `Unsupported file format: ${infoData.fileFormat as string}, for input file: ${filePath}, must have valid CRS: ${
+            this.validProjection}`;
+        }
+        if (infoData.pixelSize>this.validPixelSizeRange.max || infoData.pixelSize<this.validPixelSizeRange.min){
+          message += `Unsupported pixel size: ${infoData.pixelSize as string}, for input file: ${filePath}, not in the range of: ${
+            this.validPixelSizeRange.min } to ${this.validPixelSizeRange.max}`;
+        }
+        if(message!==''){
+          this.logger.error({
+            filePath: filePath,
+            msg: message,
+          });
+          throw new BadRequestError(message);
+        }   
+      })
+    )
   }
 
   private validateGpkgExtension(files: string[]): boolean {

@@ -327,6 +327,7 @@ export class LayersManager {
       throw new BadRequestError(message);
     }
     await this.fileValidator.validateProjections(fileNames, originDirectory);
+    await this.fileValidator.validateInfoData(fileNames, originDirectory);
   }
 
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
