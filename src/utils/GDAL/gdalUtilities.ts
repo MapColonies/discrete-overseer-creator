@@ -28,7 +28,7 @@ export class GdalUtilities {
     }
   }
 
-  public async getInfoData(filePath: string): Promise< any | undefined> {
+  public async getInfoData(filePath: string): Promise<any | undefined> {
     try {
       this.logger.debug({
         filePath: filePath,
@@ -36,16 +36,16 @@ export class GdalUtilities {
       });
       const dataset: gdal.Dataset = await gdal.openAsync(filePath);
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
-      const infoData = JSON.parse(jsonString);     
-      const CRS : number = infoData.stac["proj:epsg"];
-      const fileFormat : string = infoData.driverShortName;
-      const pixelSize : number = infoData.geoTransform[1]
+      const infoData = JSON.parse(jsonString);
+      const CRS: number = infoData.stac['proj:epsg'];
+      const fileFormat: string = infoData.driverShortName;
+      const pixelSize: number = infoData.geoTransform[1];
       //TODO: see if we can add projection to here/ use CRS instead of projection
       const response = {
-        "CRS": CRS,
-        "fileFormat" : fileFormat,
-        "pixelSize" : pixelSize
-      }
+        CRS: CRS,
+        fileFormat: fileFormat,
+        pixelSize: pixelSize,
+      };
       // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
       dataset.close();
       return response;

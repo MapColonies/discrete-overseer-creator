@@ -27,12 +27,12 @@ describe('gdalUtilities', () => {
     });
   });
 
-  describe('getInfoData', () =>{
-    it('should extract CRS, fileFormat and pixelSize',async () =>{
+  describe('getInfoData', () => {
+    it('should extract CRS, fileFormat and pixelSize', async () => {
       const filePath = 'tests/mocks/files/indexed.gpkg';
       const result = await gdalUtilities.getInfoData(filePath);
-      const expected= {"CRS":4326, "fileFormat":'GPKG', "pixelSize": 0.001373291015625};
+      const expected = { CRS: 4326, fileFormat: 'GPKG', pixelSize: 0.001373291015625 };
       expect(result).toStrictEqual(expected);
     });
-  })
+  });
 });
