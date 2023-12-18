@@ -113,6 +113,7 @@ export class FileValidator {
     await Promise.all(
       files.map(async (file) => {
         const filePath = join(this.sourceMount, originDirectory, file);
+        const projection = await this.gdalUtilities.getProjection(filePath);
         const infoData = await this.gdalUtilities.getInfoData(filePath);
         let message = '';
         if (infoData.CRS !== this.validCRS) {
@@ -127,6 +128,11 @@ export class FileValidator {
           message += `Unsupported pixel size: ${infoData.pixelSize as string}, for input file: ${filePath}, not in the range of: ${
             this.validPixelSizeRange.min
           } to ${this.validPixelSizeRange.max}`;
+        }
+        if (projection !== this.validProjection) {
+          message += `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
+            this.validProjection
+          }`;
         }
         if (message !== '') {
           this.logger.error({
