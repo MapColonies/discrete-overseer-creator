@@ -53,7 +53,7 @@ export class GdalUtilities {
       const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on file';
       this.logger.error({
         filePath: filePath,
-        msg: `get gdal info, error occurred: ${message}`,
+        msg: `[GdalUtilities][GetInfoData] error occurred: ${(err as Error).message}`,
         err: err,
       });
       throw err;
