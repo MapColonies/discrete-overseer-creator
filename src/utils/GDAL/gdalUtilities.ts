@@ -37,12 +37,12 @@ export class GdalUtilities {
       const dataset: gdal.Dataset = await gdal.openAsync(filePath);
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
       const infoData = JSON.parse(jsonString);
-      const CRS: number = infoData.stac['proj:epsg'];
+      const crs: number = infoData.stac['proj:epsg'];
       const fileFormat: string = infoData.driverShortName;
       const pixelSize: number = infoData.geoTransform[1];
       //TODO: see if we can add projection to here/ use CRS instead of projection
       const response = {
-        CRS: CRS,
+        crs: crs,
         fileFormat: fileFormat,
         pixelSize: pixelSize,
       };
@@ -53,7 +53,7 @@ export class GdalUtilities {
       const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on file';
       this.logger.error({
         filePath: filePath,
-        msg: `[GdalUtilities][GetInfoData] error occurred: ${(err as Error).message}`,
+        msg: `[GdalUtilities][GetInfoData] error occurred: ${message}`,
         err: err,
       });
       throw err;
