@@ -7,6 +7,7 @@ import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
+import { Grid } from '../interfaces';
 
 @injectable()
 export class FileValidator {
@@ -70,7 +71,9 @@ export class FileValidator {
     if (!isExtensionValid) {
       return false;
     }
+    //TODO: add here all GPKG validations
     this.validateGpkgIndex(files, originDirectory);
+    this.validateGpkgGrid(files, originDirectory);
     return true;
   }
 
@@ -80,6 +83,22 @@ export class FileValidator {
       const index = sqliteClient.getGpkgIndex();
       if (!index) {
         const message = `Geopackage name: ${file} does not have a tiles index`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
+  }
+
+  public validateGpkgGrid(files: string[], originDirectory: string): void {
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const grid: Grid | undefined = sqliteClient.getGrid();
+      if (grid !== Grid.TWO_ON_ONE) {
+        const message = `Geopackage name: ${file} grid is not two_on_one`;
         this.logger.error({
           originDirectory: originDirectory,
           fileName: file,
@@ -115,19 +134,16 @@ export class FileValidator {
         const filePath = join(this.sourceMount, originDirectory, file);
         const projection = await this.gdalUtilities.getProjection(filePath);
         const infoData = await this.gdalUtilities.getInfoData(filePath);
+        //TODO: seperate to different mini-functions?
         let message = '';
-        if (infoData.CRS !== this.validCRS) {
-          message = `Unsupported CRS: ${infoData.CRS as string}, for input file: ${filePath}, must have valid CRS: ${this.validProjection}`;
+        if (infoData.crs !== this.validCRS) {
+          message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}`;
         }
         if (infoData.fileFormat !== this.validFileFormat) {
-          message += `Unsupported file format: ${infoData.fileFormat as string}, for input file: ${filePath}, must have valid CRS: ${
-            this.validProjection
-          }`;
+          message += `Unsupported file format: ${infoData.fileFormat}, for input file: ${filePath}, must have valid crs: ${this.validProjection}`;
         }
         if (infoData.pixelSize > this.validPixelSizeRange.max || infoData.pixelSize < this.validPixelSizeRange.min) {
-          message += `Unsupported pixel size: ${infoData.pixelSize as string}, for input file: ${filePath}, not in the range of: ${
-            this.validPixelSizeRange.min
-          } to ${this.validPixelSizeRange.max}`;
+          message += `Unsupported pixel size: ${infoData.pixelSize}, for input file: ${filePath}, not in the range of: ${this.validPixelSizeRange.min} to ${this.validPixelSizeRange.max}`;
         }
         if (projection !== this.validProjection) {
           message += `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
