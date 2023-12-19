@@ -56,7 +56,7 @@ export class SQLiteClient {
     let db: SQLiteDB | undefined = undefined;
     try {
       db = new Database(this.fullPath, { fileMustExist: true });
-      
+
       // get the matrix_width and matrix_height
       const matrixQuery = 'SELECT MAX(matrix_width) as matrixWidth, MAX(matrix_height) as matrixHeight FROM gpkg_tile_matrix';
       const matrixValues = db.prepare(matrixQuery).get() as IMatrixValues;
@@ -85,26 +85,26 @@ export class SQLiteClient {
     }
   }
 
-  public getGpkgTileWidthAndHeight(): { tile_width: number; tile_height: number }[] {
+  public getGpkgTileWidthAndHeight(): { tileWidth: number; tileHeight: number }[] {
     let db: SQLiteDB | undefined = undefined;
     try {
       db = new Database(this.fullPath, { fileMustExist: true });
       const sql = `SELECT tile_width,tile_height FROM "gpkg_tile_matrix" group by tile_width,tile_height;`;
       this.logger.debug({ msg: `Executing query ${sql} on DB ${this.fullPath}` });
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const TilesSizes = db.prepare(sql).all() as { tile_width: number; tile_height: number }[];
-      if (TilesSizes.length !== 1 || TilesSizes[0].tile_width !== 256 || TilesSizes[0].tile_height !== 256) {
+      const tilesSizes = db.prepare(sql).all() as { tileWidth: number; tileHeight: number }[];
+      if (tilesSizes.length !== 1 || tilesSizes[0].tileWidth !== 256 || tilesSizes[0].tileHeight !== 256) {
         const message = 'invalid gpkg, all tile_width and tile_height must be 256 pixels';
         this.logger.error({
-          TilesSizes: TilesSizes,
+          tilesSizes: tilesSizes,
           msg: message,
         });
         throw new Error(message);
       }
       this.logger.debug({
-        msg: `Extract tile sizes: ${TilesSizes[0].tile_width}, ${TilesSizes[0].tile_height}`,
+        msg: `Extract tile sizes: ${tilesSizes[0].tileWidth}, ${tilesSizes[0].tileHeight}`,
       });
-      return TilesSizes;
+      return tilesSizes;
     } catch (err) {
       const message = `Failed to get tiles sizes type: ${(err as Error).message}`;
       this.logger.error({

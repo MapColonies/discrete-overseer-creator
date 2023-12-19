@@ -177,8 +177,8 @@ export class FileValidator {
   private validateTilesWidthAndHeight(files: string[], originDirectory: string): void {
     files.forEach((file) => {
       const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-      const TilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
-      if (TilesSizes[0].tile_width !== this.validTileSize || TilesSizes[0].tile_height !== this.validTileSize) {
+      const tilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
+      if (tilesSizes[0].tileWidth !== this.validTileSize || tilesSizes[0].tileHeight !== this.validTileSize) {
         const message = `Geopackage name: ${file} - tile sizes are not 256`;
         this.logger.error({
           originDirectory: originDirectory,

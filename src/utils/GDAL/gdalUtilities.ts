@@ -28,7 +28,8 @@ export class GdalUtilities {
     }
   }
 
-  public async getInfoData(filePath: string): Promise<any | undefined> {
+  //public async getInfoData(filePath: string): Promise<{ crs: number; fileFormat: string; pixelSize: number } | undefined> {
+  public async getInfoData(filePath: string): Promise< any| undefined> {
     try {
       this.logger.debug({
         filePath: filePath,
