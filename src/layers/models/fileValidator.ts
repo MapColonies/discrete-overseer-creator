@@ -19,6 +19,7 @@ export class FileValidator {
     min: 0.000000335276,
     max: 0.703125,
   };
+  private readonly validTileSize = 256;
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -74,39 +75,8 @@ export class FileValidator {
     //TODO: add here all GPKG validations
     this.validateGpkgIndex(files, originDirectory);
     this.validateGpkgGrid(files, originDirectory);
+    this.validateTilesWidthAndHeight(files, originDirectory);
     return true;
-  }
-
-  public validateGpkgIndex(files: string[], originDirectory: string): void {
-    files.forEach((file) => {
-      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-      const index = sqliteClient.getGpkgIndex();
-      if (!index) {
-        const message = `Geopackage name: ${file} does not have a tiles index`;
-        this.logger.error({
-          originDirectory: originDirectory,
-          fileName: file,
-          msg: message,
-        });
-        throw new BadRequestError(message);
-      }
-    });
-  }
-
-  public validateGpkgGrid(files: string[], originDirectory: string): void {
-    files.forEach((file) => {
-      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-      const grid: Grid | undefined = sqliteClient.getGrid();
-      if (grid !== Grid.TWO_ON_ONE) {
-        const message = `Geopackage name: ${file} grid is not two_on_one`;
-        this.logger.error({
-          originDirectory: originDirectory,
-          fileName: file,
-          msg: message,
-        });
-        throw new BadRequestError(message);
-      }
-    });
   }
 
   public async validateProjections(files: string[], originDirectory: string): Promise<void> {
@@ -170,5 +140,53 @@ export class FileValidator {
       return extname(file).toLowerCase() === validGpkgExt;
     });
     return allValid;
+  }
+
+  private validateGpkgIndex(files: string[], originDirectory: string): void {
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const index = sqliteClient.getGpkgIndex();
+      if (!index) {
+        const message = `Geopackage name: ${file} does not have a tiles index`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
+  }
+
+  private validateGpkgGrid(files: string[], originDirectory: string): void {
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const grid: Grid | undefined = sqliteClient.getGrid();
+      if (grid !== Grid.TWO_ON_ONE) {
+        const message = `Geopackage name: ${file} grid is not two_on_one`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
+  }
+
+  private validateTilesWidthAndHeight(files: string[], originDirectory: string): void {
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const TilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
+      if (TilesSizes[0].tile_width !== this.validTileSize || TilesSizes[0].tile_height !== this.validTileSize) {
+        const message = `Geopackage name: ${file} - tile sizes are not 256`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
   }
 }
