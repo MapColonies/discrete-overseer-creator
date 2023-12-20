@@ -93,7 +93,6 @@ export class LayersManager {
 
     const jobType = await this.getJobType(data);
     const taskType = this.getTaskType(jobType, files, originDirectory);
-
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
@@ -162,13 +161,12 @@ export class LayersManager {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      } else if (jobType === JobAction.UPDATE) {
+      } else if (jobType === JobAction.UPDATE || jobType === JobAction.SWAP_UPDATE) {
         const record = await this.catalog.findRecord(productId, undefined, productType);
         data.metadata.id = record?.metadata.id as string;
-        data.metadata.displayPath = record?.metadata.displayPath as string;
         const recordId = data.metadata.id;
-        const dispalyPath = data.metadata.displayPath;
-        const layerRelativePath = `${recordId}/${dispalyPath}`;
+        let layerRelativePath = '';
+        let useNewTargetFlagInUpdateTasks = this.useNewTargetFlagInUpdateTasks;
         if (!existsInMapProxy) {
           const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
           this.logger.error({
@@ -181,10 +179,22 @@ export class LayersManager {
           });
           throw new BadRequestError(message);
         }
-
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
+        let previousRelativePath = undefined;
 
+        if (jobType === JobAction.SWAP_UPDATE) {
+          const displayPath = (await this.generateRecordIds()).displayPath;
+          previousRelativePath = record?.metadata.displayPath as string; // for future cleanup on previous version
+          data.metadata.displayPath = displayPath;
+          layerRelativePath = `${recordId}/${displayPath}`;
+          useNewTargetFlagInUpdateTasks = true; // swap should upload new tiles without merging to new displayPath.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        } else if (jobType === JobAction.UPDATE) {
+          data.metadata.displayPath = record?.metadata.displayPath as string;
+          const displayPath = data.metadata.displayPath;
+          layerRelativePath = `${recordId}/${displayPath}`;
+        }
         jobId = await this.mergeTilesTasker.createMergeTilesTasks(
           data,
           layerRelativePath,
@@ -193,12 +203,13 @@ export class LayersManager {
           this.grids,
           extent,
           overseerUrl,
-          this.useNewTargetFlagInUpdateTasks
+          useNewTargetFlagInUpdateTasks,
+          previousRelativePath
         );
 
         const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
-      Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
-      TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
+    Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
+    TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
         this.logger.warn({
           jobId: jobId,
           productId: productId,
@@ -245,6 +256,7 @@ export class LayersManager {
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
     const productType = data.metadata.productType as ProductType;
+    const productSubType = data.metadata.productSubType;
     const highestVersion = await this.catalog.getHighestLayerVersion(productId, productType);
 
     if (highestVersion === undefined) {
@@ -253,6 +265,10 @@ export class LayersManager {
 
     const requestedLayerVersion = parseFloat(version);
     if (requestedLayerVersion > highestVersion) {
+      const updateSwapTypes = this.config.get<string[]>('ingestionSwapUpdateSubTypes');
+      if (productSubType !== undefined && updateSwapTypes.includes(productSubType)) {
+        return JobAction.SWAP_UPDATE;
+      }
       return JobAction.UPDATE;
     }
     if (requestedLayerVersion === highestVersion) {
@@ -449,7 +465,6 @@ export class LayersManager {
       };
 
       this.logger.debug({ msg: `generated record id: ${recordIds.id}, display path: ${recordIds.displayPath}` });
-
       return recordIds;
     } catch (err) {
       this.logger.error({

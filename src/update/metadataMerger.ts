@@ -9,7 +9,7 @@ import { layerMetadataToPolygonParts } from '../common/utils/polygonPartsBuilder
 
 @singleton()
 export class MetadataMerger {
-  public merge(oldMetadata: LayerMetadata, updateMetadata: LayerMetadata): LayerMetadata {
+  public merge(oldMetadata: LayerMetadata, updateMetadata: LayerMetadata, isSwap = false): LayerMetadata {
     const newMetadata: LayerMetadata = {
       ...oldMetadata,
       productVersion: updateMetadata.productVersion,
@@ -20,14 +20,26 @@ export class MetadataMerger {
       sourceDateEnd:
         (oldMetadata.sourceDateEnd as Date) >= (updateMetadata.sourceDateEnd as Date) ? oldMetadata.sourceDateEnd : updateMetadata.sourceDateEnd,
       ingestionDate: getUTCDate(),
-      minHorizontalAccuracyCE90: Math.max(oldMetadata.minHorizontalAccuracyCE90 ?? 0, updateMetadata.minHorizontalAccuracyCE90 ?? 0),
-      layerPolygonParts: this.mergeLayerPolygonParts(updateMetadata, oldMetadata.layerPolygonParts),
-      footprint: union(oldMetadata.footprint as Footprint, updateMetadata.footprint as Footprint)?.geometry as GeoJSON,
-      region: this.mergeUniqueArrays(oldMetadata.region, updateMetadata.region),
+      description: isSwap ? updateMetadata.description : (oldMetadata.description as string) + '\n' + (updateMetadata.description as string),
+      minHorizontalAccuracyCE90: isSwap
+        ? updateMetadata.minHorizontalAccuracyCE90 ?? 0
+        : Math.max(oldMetadata.minHorizontalAccuracyCE90 ?? 0, updateMetadata.minHorizontalAccuracyCE90 ?? 0),
+      layerPolygonParts: isSwap
+        ? layerMetadataToPolygonParts(updateMetadata)
+        : this.mergeLayerPolygonParts(updateMetadata, oldMetadata.layerPolygonParts),
+      footprint: isSwap
+        ? (updateMetadata.footprint as Footprint)
+        : (union(oldMetadata.footprint as Footprint, updateMetadata.footprint as Footprint)?.geometry as GeoJSON),
+      region: isSwap ? updateMetadata.region : this.mergeUniqueArrays(oldMetadata.region, updateMetadata.region),
       rawProductData: undefined,
-      maxResolutionDeg: Math.min(oldMetadata.maxResolutionDeg as number, updateMetadata.maxResolutionDeg as number),
-      maxResolutionMeter: Math.min(oldMetadata.maxResolutionMeter as number, updateMetadata.maxResolutionMeter as number),
-      classification: this.mergeClassification(oldMetadata.classification, updateMetadata.classification),
+      maxResolutionDeg: isSwap
+        ? (updateMetadata.maxResolutionDeg as number)
+        : Math.min(oldMetadata.maxResolutionDeg as number, updateMetadata.maxResolutionDeg as number),
+      maxResolutionMeter: isSwap
+        ? (updateMetadata.maxResolutionMeter as number)
+        : Math.min(oldMetadata.maxResolutionMeter as number, updateMetadata.maxResolutionMeter as number),
+      displayPath: isSwap ? updateMetadata.displayPath : oldMetadata.displayPath,
+      classification: isSwap ? updateMetadata.classification : this.mergeClassification(oldMetadata.classification, updateMetadata.classification),
     };
     newMetadata.productBoundingBox = createBBoxString(newMetadata.footprint as Footprint);
     newMetadata.sensors = this.polygonPartsToSensors(newMetadata.layerPolygonParts as FeatureCollection);

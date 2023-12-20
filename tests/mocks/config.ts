@@ -113,6 +113,7 @@ const registerDefaultConfig = (): void => {
     jobDomain: 'RASTER',
     ingestionNewJobType: 'Ingestion_New',
     ingestionUpdateJobType: 'Ingestion_Update',
+    ingestionSwapUpdateJobType: 'Ingestion_Swap_Update',
     ingestionTaskType: {
       tileMergeTask: 'tilesMerging',
       tileSplitTask: 'tilesSplitting',

@@ -16,6 +16,8 @@ import { MapPublisherClient } from '../../src/serviceClients/mapPublisher';
 import { CatalogClient } from '../../src/serviceClients/catalogClient';
 import { GdalUtilities } from '../../src/utils/GDAL/gdalUtilities';
 import { gdalUtilitiesMock } from '../mocks/gdalUtilitiesMock';
+import { MetadataMerger } from '../../src/update/metadataMerger';
+import { metadataMergerMock } from '../mocks/metadataMerger';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
   initConfig();
@@ -30,6 +32,7 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: MapPublisherClient, provider: { useValue: mapPublisherClientMock } },
     { token: CatalogClient, provider: { useValue: catalogClientMock } },
     { token: GdalUtilities, provider: { useValue: gdalUtilitiesMock } },
+    { token: MetadataMerger, provider: { useValue: metadataMergerMock } },
     { token: SERVICES.METRICS_REGISTRY, provider: { useValue: new Registry() } },
   ];
 }

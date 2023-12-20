@@ -4,7 +4,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
 import { createLayerJobMock, getJobsMock, jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
-import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock } from '../../../mocks/clients/catalogClient';
+import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findRecordMock } from '../../../mocks/clients/catalogClient';
 import { mapPublisherClientMock, mapExistsMock } from '../../../mocks/clients/mapPublisherClient';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../../mocks/config';
 import {
@@ -157,6 +157,48 @@ describe('LayersManager', () => {
       expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create "Swap Update" job type with "Merge-Tiles" task type successfully when includes subtype of AVIRUT', async function () {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
+      setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      const testData: IngestionParams = {
+        fileNames: ['test.gpkg'],
+        metadata: { ...testImageMetadata, productSubType: 'עבירות' },
+        originDirectory: '/here',
+      };
+      findRecordMock.mockResolvedValue({ metadata: { ...testImageMetadata, displayPath: 'test_previous_dir' } });
+      const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
+      getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+      getHighestLayerVersionMock.mockResolvedValue(2.0);
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      validateSourceDirectoryMock.mockResolvedValue(true);
+      validateNotWatchDirMock.mockResolvedValue(true);
+      mapExistsMock.mockResolvedValue(true);
+      getJobsMock.mockResolvedValue([]);
+      validateGpkgFilesMock.mockReturnValue(true);
+      createLayerJobMock.mockResolvedValue('testJobId');
+      createMergeTilesTasksMock.mockResolvedValue(undefined);
+
+      await layersManager.createLayer(testData, managerCallbackUrl);
+
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
+      expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
+      expect(createMergeTilesTasksMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        'Ingestion_Swap_Update',
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        true,
+        'test_previous_dir'
+      );
     });
 
     it('createMergeTilesTasksMock function should be called with "isNew" parameter for "New" job type', async function () {

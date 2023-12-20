@@ -136,7 +136,8 @@ export class MergeTilesTasker {
     grids: Grid[],
     extent: BBox,
     managerCallbackUrl: string,
-    isNew?: boolean
+    isNew?: boolean,
+    previousRelativePath?: string
   ): Promise<string> {
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
       const fileRelativePath = join(data.originDirectory, fileName);
@@ -176,7 +177,15 @@ export class MergeTilesTasker {
           configurationBatchSize: this.mergeTaskBatchSize,
         });
         if (jobId === undefined) {
-          jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+          jobId = await this.jobManagerClient.createLayerJob(
+            data,
+            layerRelativePath,
+            jobType,
+            taskType,
+            mergeTaskBatch,
+            managerCallbackUrl,
+            previousRelativePath
+          );
         } else {
           try {
             await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
@@ -190,11 +199,20 @@ export class MergeTilesTasker {
     }
     if (mergeTaskBatch.length !== 0) {
       if (jobId === undefined) {
-        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+        jobId = await this.jobManagerClient.createLayerJob(
+          data,
+          layerRelativePath,
+          jobType,
+          taskType,
+          mergeTaskBatch,
+          managerCallbackUrl,
+          previousRelativePath
+        );
       } else {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
+
           if (fetchTimerTaskBatchFill) {
             fetchTimerTaskBatchFill();
           }
