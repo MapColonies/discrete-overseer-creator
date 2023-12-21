@@ -5,10 +5,11 @@ import { BadRequestError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
-import { pixelRange } from '../interfaces';
+import { PixelRange } from '../interfaces';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { Grid } from '../interfaces';
+import { InfoData } from '../../utils/interfaces';
 
 @injectable()
 export class FileValidator {
@@ -16,7 +17,7 @@ export class FileValidator {
   private readonly validProjection = '4326';
   private readonly validCRS: number;
   private readonly validFileFormat: string;
-  private readonly validPixelSizeRange: pixelRange;
+  private readonly validPixelSizeRange: PixelRange;
   private readonly validTileSize: number;
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -27,7 +28,7 @@ export class FileValidator {
     this.validCRS = this.config.get<number>('validationValues.crs');
     this.validFileFormat = this.config.get<string>('validationValues.fileFormat');
     this.validTileSize = this.config.get<number>('validationValues.tileSize');
-    this.validPixelSizeRange = this.config.get<pixelRange>('validationValues.pixelSizeRange');
+    this.validPixelSizeRange = this.config.get<PixelRange>('validationValues.pixelSizeRange');
   }
 
   public validateSourceDirectory(srcDir: string): boolean {
@@ -105,7 +106,7 @@ export class FileValidator {
       await Promise.all(
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
-          const infoData = await this.gdalUtilities.getInfoData(filePath);
+          const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           //TODO: seperate to different mini-functions?
           let message = '';
           if (infoData.crs !== this.validCRS) {
@@ -136,18 +137,6 @@ export class FileValidator {
       throw new Error(message);
     }
   }
-
-  private validateGpkgExtension(files: string[]): boolean {
-    if (!Array.isArray(files) || !files.length) {
-      return false;
-    }
-    const validGpkgExt = '.gpkg';
-    const allValid = files.every((file) => {
-      return extname(file).toLowerCase() === validGpkgExt;
-    });
-    return allValid;
-  }
-
   public validateGpkgIndex(files: string[], originDirectory: string): void {
     try {
       files.forEach((file) => {
@@ -172,6 +161,17 @@ export class FileValidator {
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(message);
     }
+  }
+
+  private validateGpkgExtension(files: string[]): boolean {
+    if (!Array.isArray(files) || !files.length) {
+      return false;
+    }
+    const validGpkgExt = '.gpkg';
+    const allValid = files.every((file) => {
+      return extname(file).toLowerCase() === validGpkgExt;
+    });
+    return allValid;
   }
 
   private validateGpkgGrid(files: string[], originDirectory: string): void {
@@ -205,7 +205,7 @@ export class FileValidator {
       files.forEach((file) => {
         const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
         const tilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
-        if (tilesSizes[0].tile_width !== this.validTileSize || tilesSizes[0].tile_height !== this.validTileSize) {
+        if (tilesSizes.tileWidth !== this.validTileSize || tilesSizes.tileHeight !== this.validTileSize) {
           const message = `Geopackage name: ${file} - tile sizes are not 256`;
           this.logger.error({
             originDirectory: originDirectory,
