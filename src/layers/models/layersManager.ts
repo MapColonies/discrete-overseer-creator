@@ -328,8 +328,8 @@ export class LayersManager {
     }
     //TODO: fix unit tests after the union of this 2 validations
     //await this.fileValidator.validateProjections(fileNames, originDirectory);
+    this.fileValidator.validateInfoData(fileNames, originDirectory);
     this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
-    await this.fileValidator.validateInfoData(fileNames, originDirectory);
   }
 
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {

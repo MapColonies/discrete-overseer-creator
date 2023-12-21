@@ -116,6 +116,20 @@
       "__format": "number"
     }
   },
+  "validationValues": {
+    "crs":{
+      "__name":"CRS",
+      "__format":"number"
+    },
+    "fileFormat":"FILE_FORMAT",
+    "pixelSizeRange" : 
+      { 
+      "__name":"PIXEL_SIZE_RANGE",
+      "__format":"json"},
+    "tileSize" : {
+      "__name": "TILE_SIZE", 
+      "__format":"number"} 
+    },
   "forbiddenTypesForParallelIngesion": {
     "__name": "FORBBIDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"
