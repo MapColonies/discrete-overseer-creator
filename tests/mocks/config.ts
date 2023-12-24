@@ -114,6 +114,7 @@ const registerDefaultConfig = (): void => {
     ingestionNewJobType: 'Ingestion_New',
     ingestionUpdateJobType: 'Ingestion_Update',
     ingestionSwapUpdateJobType: 'Ingestion_Swap_Update',
+    supportedIngestionSwapTypes: [{ productType: 'RasterVectorBest', productSubType: 'testProductSubType' }],
     ingestionTaskType: {
       tileMergeTask: 'tilesMerging',
       tileSplitTask: 'tilesSplitting',

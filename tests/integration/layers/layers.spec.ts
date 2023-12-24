@@ -336,7 +336,7 @@ describe('layers', function () {
         'Ingestion_Update',
         expect.anything(),
         expect.anything(),
-        expect.anything(),
+        expect.anything(), // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         true,
         undefined
       );
@@ -346,25 +346,30 @@ describe('layers', function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       const generateRecordIdsSpy = jest.spyOn(LayersManager.prototype as any, 'generateRecordIds');
       const createMergeTilesTaskspy = jest.spyOn(MergeTilesTasker.prototype as any, 'createMergeTilesTasks');
-
+      setValue('supportedIngestionSwapTypes', [{ productType: 'RasterVectorBest', productSubType: 'testProductSubType' }]);
       getJobsMock.mockResolvedValue([]);
       getHighestLayerVersionMock.mockResolvedValue(1.0);
       mapExistsMock.mockResolvedValue(true);
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
-      const higherVersionMetadata = { ...validTestData.metadata, productVersion: '3.0', productSubType: 'עבירות' };
+      const higherVersionMetadata = {
+        ...validTestData.metadata,
+        productVersion: '3.0',
+        productType: ProductType.RASTER_VECTOR_BEST,
+        productSubType: 'testProductSubType',
+      };
       const validHigherVersionRecord = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: higherVersionMetadata };
 
       const response = await requestSender.createLayer(validHigherVersionRecord);
 
       expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.OK);
-      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(0);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
       expect(createTasksMock).toHaveBeenCalledTimes(0);
-      expect(generateRecordIdsSpy).toHaveBeenCalledTimes(1);
+      expect(generateRecordIdsSpy).toHaveBeenCalledTimes(0);
       expect(createMergeTilesTaskspy).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTaskspy).toHaveBeenCalledWith(
         expect.anything(),
@@ -375,7 +380,7 @@ describe('layers', function () {
         expect.anything(),
         expect.anything(),
         true,
-        undefined
+        { previousRelativePath: undefined }
       );
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });

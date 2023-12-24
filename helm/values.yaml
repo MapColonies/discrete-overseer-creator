@@ -23,9 +23,9 @@ rasterCommon:
         mergeTilesTaskType: tilesMerging
       updateSwap:
         jobType: Ingestion_Swap_Update
-        subType: 
-        - "עבירות"
-  storage:
+        supportedIngestionSwapTypes: 
+        - productType: RasterVectorBest
+          productSubType: testProductSubType
     tilesStorageProvider: "FS"
     fs:
       ingestionSourcePvc:

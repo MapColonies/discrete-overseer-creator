@@ -7,7 +7,7 @@ import { inject, injectable } from 'tsyringe';
 import client from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { SERVICES } from '../common/constants';
-import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
+import { ICleanupData, IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
 import { Grid } from '../layers/interfaces';
 import { JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
 
@@ -137,7 +137,7 @@ export class MergeTilesTasker {
     extent: BBox,
     managerCallbackUrl: string,
     isNew?: boolean,
-    previousRelativePath?: string
+    cleanupData?: ICleanupData
   ): Promise<string> {
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
       const fileRelativePath = join(data.originDirectory, fileName);
@@ -184,7 +184,7 @@ export class MergeTilesTasker {
             taskType,
             mergeTaskBatch,
             managerCallbackUrl,
-            previousRelativePath
+            cleanupData
           );
         } else {
           try {
@@ -206,7 +206,7 @@ export class MergeTilesTasker {
           taskType,
           mergeTaskBatch,
           managerCallbackUrl,
-          previousRelativePath
+          cleanupData
         );
       } else {
         // eslint-disable-next-line no-useless-catch

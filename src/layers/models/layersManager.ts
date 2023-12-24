@@ -10,7 +10,7 @@ import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
-import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
+import { IConfig, IMergeTaskParams, IRecordIds, ISupportedIngestionSwapTypes } from '../../common/interfaces';
 import { JobAction, TaskAction } from '../../common/enums';
 import { layerMetadataToPolygonParts } from '../../common/utils/polygonPartsBuilder';
 import { createBBoxString } from '../../utils/bbox';
@@ -166,7 +166,7 @@ export class LayersManager {
         data.metadata.id = record?.metadata.id as string;
         const recordId = data.metadata.id;
         let layerRelativePath = '';
-        let useNewTargetFlagInUpdateTasks = this.useNewTargetFlagInUpdateTasks;
+        let useNewTargetFlagInUpdateTasks = undefined;
         if (!existsInMapProxy) {
           const message = `Failed to create update job for layer: '${productId}-${productType}', is not exists on MapProxy`;
           this.logger.error({
@@ -181,20 +181,22 @@ export class LayersManager {
         }
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
-        let previousRelativePath = undefined;
-
+        let cleanupData = undefined;
+        let displayPath = '';
         if (jobType === JobAction.SWAP_UPDATE) {
-          const displayPath = (await this.generateRecordIds()).displayPath;
-          previousRelativePath = record?.metadata.displayPath as string; // for future cleanup on previous version
+          displayPath = uuidv4();
+          // TODO: for future cleanup on previous version
+          // TODO: (in cleanup) S3 Tiles wont be deleted if there is existing export job in progress
+          cleanupData = { previousRelativePath: record?.metadata.displayPath as string };
           data.metadata.displayPath = displayPath;
-          layerRelativePath = `${recordId}/${displayPath}`;
           useNewTargetFlagInUpdateTasks = true; // swap should upload new tiles without merging to new displayPath.
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (jobType === JobAction.UPDATE) {
+          useNewTargetFlagInUpdateTasks = this.useNewTargetFlagInUpdateTasks;
           data.metadata.displayPath = record?.metadata.displayPath as string;
-          const displayPath = data.metadata.displayPath;
-          layerRelativePath = `${recordId}/${displayPath}`;
+          displayPath = data.metadata.displayPath;
         }
+        layerRelativePath = `${recordId}/${displayPath}`;
         jobId = await this.mergeTilesTasker.createMergeTilesTasks(
           data,
           layerRelativePath,
@@ -204,7 +206,7 @@ export class LayersManager {
           extent,
           overseerUrl,
           useNewTargetFlagInUpdateTasks,
-          previousRelativePath
+          cleanupData
         );
 
         const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
@@ -262,11 +264,13 @@ export class LayersManager {
     if (highestVersion === undefined) {
       return JobAction.NEW;
     }
-
     const requestedLayerVersion = parseFloat(version);
     if (requestedLayerVersion > highestVersion) {
-      const updateSwapTypes = this.config.get<string[]>('ingestionSwapUpdateSubTypes');
-      if (productSubType !== undefined && updateSwapTypes.includes(productSubType)) {
+      const supportedIngestionSwapTypes = this.config.get<ISupportedIngestionSwapTypes[]>('supportedIngestionSwapTypes');
+      const isSwapUpdate = supportedIngestionSwapTypes.find((supportedSwapObj) => {
+        return supportedSwapObj.productType === productType && supportedSwapObj.productSubType === productSubType;
+      });
+      if (isSwapUpdate) {
         return JobAction.SWAP_UPDATE;
       }
       return JobAction.UPDATE;

@@ -151,7 +151,7 @@ export class JobsManager {
         format: metadata.tileOutputFormat as TileOutputFormat,
       };
       if (isLayerUpdate) {
-        await this.mapPublisher.updateLayer(publishReq); // create new mapproxy layer
+        await this.mapPublisher.updateLayer(publishReq); // update existing mapproxy layer
       } else {
         await this.mapPublisher.publishLayer(publishReq); // update existing mapproxy layer
       }
@@ -270,9 +270,9 @@ export class JobsManager {
         if (isSwap) {
           // swap update should replace layer on mapproxy
           await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath, true);
+          // TODO: refresh redis cache on previous footprint
         }
         await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
-
         const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
         this.logger.info({
           jobId: job.id,

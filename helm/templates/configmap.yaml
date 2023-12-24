@@ -34,7 +34,7 @@ data:
   INGESTION_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.jobType | quote }}
   INGESTION_MERGE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.mergeTilesTaskType | quote }}
   INGESTION_SWAP_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.jobType | quote }}
-  INGESTION_SWAP_UPDATE_SUB_TYPES: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.subType | quote }}
+  SUPPORTED_iNGESTION_SWAP_TYPES: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}
   BBOX_SIZE_TILES: {{ .Values.env.bboxSizeTiles | quote }}
   MERGE_BATCH_SIZE: {{ .Values.env.mergeBatchSize | quote }}
   USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}

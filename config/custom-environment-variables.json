@@ -89,8 +89,8 @@
   "ingestionNewJobType": "INGESTION_NEW_JOB_TYPE",
   "ingestionUpdateJobType": "INGESTION_UPDATE_JOB_TYPE",
   "ingestionSwapUpdateJobType": "INGESTION_SWAP_UPDATE_JOB_TYPE",
-  "ingestionSwapUpdateSubTypes": {
-    "__name": "SWAP_UPDATE_SUB_TYPES",
+  "supportedIngestionSwapTypes": {
+    "__name": "SUPPORTED_iNGESTION_SWAP_TYPES",
     "__format": "json"
   },
   "ingestionTaskType": {

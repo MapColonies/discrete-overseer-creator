@@ -92,6 +92,7 @@ describe('LayersManager', () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+
       const testData: IngestionParams = {
         fileNames: ['test.tif'],
         metadata: { ...testImageMetadata },
@@ -159,13 +160,15 @@ describe('LayersManager', () => {
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
     });
 
-    it('should create "Swap Update" job type with "Merge-Tiles" task type successfully when includes subtype of AVIRUT', async function () {
+    it('should create "Swap Update" job type with "Merge-Tiles" task type successfully when includes subtype of supported swap', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      setValue('supportedIngestionSwapTypes', [{ productType: 'RasterVectorBest', productSubType: 'testProductSubType' }]);
+
       const testData: IngestionParams = {
         fileNames: ['test.gpkg'],
-        metadata: { ...testImageMetadata, productSubType: 'עבירות' },
+        metadata: { ...testImageMetadata, productType: ProductType.RASTER_VECTOR_BEST, productSubType: 'testProductSubType' },
         originDirectory: '/here',
       };
       findRecordMock.mockResolvedValue({ metadata: { ...testImageMetadata, displayPath: 'test_previous_dir' } });
@@ -185,7 +188,7 @@ describe('LayersManager', () => {
 
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
-      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledWith(
@@ -197,7 +200,7 @@ describe('LayersManager', () => {
         expect.anything(),
         expect.anything(),
         true,
-        'test_previous_dir'
+        { previousRelativePath: 'test_previous_dir' }
       );
     });
 
