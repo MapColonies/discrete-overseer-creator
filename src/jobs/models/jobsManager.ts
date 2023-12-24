@@ -53,7 +53,7 @@ export class JobsManager {
   }
 
   public async completeJob(jobId: string, taskId: string): Promise<void> {
-    const rootJobSpan = this.tracer.startSpan('rootJobSpan');
+    const rootSpan = this.tracer.startSpan('completeJobRoot');
 
     const job = await this.tracer.startActiveSpan('getJobById', async (span) => {
       const job = await this.jobManager.getJobById(jobId);
@@ -107,7 +107,7 @@ export class JobsManager {
         span.end();
       });
     }
-    rootJobSpan.end();
+    rootSpan.end();
   }
 
   private async publishToCatalog(jobId: string, metadata: LayerMetadata, layerName: string): Promise<string> {

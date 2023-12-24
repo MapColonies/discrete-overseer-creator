@@ -8,6 +8,7 @@ import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFo
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { Tracer } from '@opentelemetry/api';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
@@ -39,6 +40,7 @@ export class LayersManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) private readonly tracer: Tracer,
     private readonly zoomLevelCalculator: ZoomLevelCalculator,
     private readonly db: JobManagerWrapper,
     private readonly catalog: CatalogClient,
@@ -71,6 +73,8 @@ export class LayersManager {
   }
 
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
+    const rootSpan = this.tracer.startSpan('createLayerRoot');
+
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -79,7 +83,10 @@ export class LayersManager {
     const originDirectory = data.originDirectory;
     const files = data.fileNames;
     const polygon = data.metadata.footprint;
-    this.validateGeoJsons(data.metadata);
+    this.tracer.startActiveSpan('validateGeoJsons', (span) => {
+      this.validateGeoJsons(data.metadata);
+      span.end();
+    });
     // polygon to bbox
     const extent = bbox(polygon as GeoJSON);
     if (convertedData.id !== undefined) {
@@ -88,17 +95,38 @@ export class LayersManager {
     if (data.metadata.ingestionDate !== undefined) {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
-    await this.validateFiles(data);
-    await this.validateJobNotRunning(productId, productType);
+    await this.tracer.startActiveSpan('validateFiles', async (span) => {
+      await this.validateFiles(data);
+      span.end();
+    });
+    await this.tracer.startActiveSpan('validateJobNotRunning', async (span) => {
+      await this.validateJobNotRunning(productId, productType);
+      span.end();
+    });
 
-    const jobType = await this.getJobType(data);
-    const taskType = this.getTaskType(jobType, files, originDirectory);
+    const jobType = await this.tracer.startActiveSpan('getJobType', async (span) => {
+      const jobType = await this.getJobType(data);
+      span.end();
+      return jobType;
+    });
+    const taskType = this.tracer.startActiveSpan('getTaskType', (span) => {
+      const taskType = this.getTaskType(jobType, files, originDirectory);
+      span.end();
+      return taskType;
+    });
 
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
-    const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
+    const existsInMapProxy = await this.tracer.startActiveSpan('isExistsInMapProxy', async (span) => {
+      const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
+      span.end();
+      return existsInMapProxy;
+    });
 
-    this.validateCorrectProductVersion(data);
+    this.tracer.startActiveSpan('validateCorrectProductVersion', (span) => {
+      this.validateCorrectProductVersion(data);
+      span.end();
+    });
     const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
       data.metadata.productId as string
     } productType: ${productType}`;
@@ -118,7 +146,10 @@ export class LayersManager {
         data.metadata.displayPath = displayPath;
         data.metadata.id = id;
 
-        await this.validateNotExistsInCatalog(productId, version, productType);
+        await this.tracer.startActiveSpan('validateNotExistsInCatalog', async (span) => {
+          await this.validateNotExistsInCatalog(productId, version, productType);
+          span.end();
+        });
         if (existsInMapProxy) {
           const message = `Failed to create new ingestion job for layer: '${productId}-${productType}', already exists on MapProxy`;
           this.logger.error({
@@ -130,25 +161,44 @@ export class LayersManager {
           throw new ConflictError(message);
         }
 
-        data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
-        this.setDefaultValues(data);
+        data.metadata.tileOutputFormat = this.tracer.startActiveSpan('getTileOutputFormat', (span) => {
+          const output = this.getTileOutputFormat(taskType, transparency);
+          span.end();
+          return output;
+        });
+        this.tracer.startActiveSpan('setDefaultValues', (span) => {
+          this.setDefaultValues(data);
+          span.end();
+        });
 
         const layerRelativePath = `${id}/${displayPath}`;
 
         if (taskType === TaskAction.MERGE_TILES) {
-          jobId = await this.mergeTilesTasker.createMergeTilesTasks(
-            data,
-            layerRelativePath,
-            taskType,
-            jobType,
-            this.grids,
-            extent,
-            overseerUrl,
-            true
-          );
+          jobId = await this.tracer.startActiveSpan('mergeTilesTasker', async (span) => {
+            const jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+              data,
+              layerRelativePath,
+              taskType,
+              jobType,
+              this.grids,
+              extent,
+              overseerUrl,
+              true
+            );
+            span.end();
+            return jobId;
+          });
         } else {
-          const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
-          jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
+          const layerZoomRanges = this.tracer.startActiveSpan('createLayerZoomRanges', (span) => {
+            const ranges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
+            span.end();
+            return ranges;
+          });
+          jobId = await this.tracer.startActiveSpan('createSplitTilesTasks', async (span) => {
+            const jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
+            span.end();
+            return jobId;
+          });
         }
 
         this.logger.debug({
@@ -163,7 +213,11 @@ export class LayersManager {
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (jobType === JobAction.UPDATE) {
-        const record = await this.catalog.findRecord(productId, undefined, productType);
+        const record = await this.tracer.startActiveSpan('findRecord', async (span) => {
+          const record = await this.catalog.findRecord(productId, undefined, productType);
+          span.end();
+          return record;
+        });
         data.metadata.id = record?.metadata.id as string;
         data.metadata.displayPath = record?.metadata.displayPath as string;
         const recordId = data.metadata.id;
@@ -185,16 +239,20 @@ export class LayersManager {
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
 
-        jobId = await this.mergeTilesTasker.createMergeTilesTasks(
-          data,
-          layerRelativePath,
-          taskType,
-          jobType,
-          this.grids,
-          extent,
-          overseerUrl,
-          this.useNewTargetFlagInUpdateTasks
-        );
+        jobId = await this.tracer.startActiveSpan('createMergeTilesTasks', async (span) => {
+          const jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+            data,
+            layerRelativePath,
+            taskType,
+            jobType,
+            this.grids,
+            extent,
+            overseerUrl,
+            this.useNewTargetFlagInUpdateTasks
+          );
+          span.end();
+          return jobId;
+        });
 
         const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
       Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
@@ -239,6 +297,8 @@ export class LayersManager {
       fetchTimerTotalJobsEnd({ successCreatingJobTask: 'true' });
     }
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
+
+    rootSpan.end();
   }
 
   private async getJobType(data: IngestionParams): Promise<JobAction> {
