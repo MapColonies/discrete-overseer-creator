@@ -1,6 +1,7 @@
 import { inspect } from 'node:util';
 import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
+import { Tracer } from '@opentelemetry/api';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -34,6 +35,7 @@ export class JobsManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) private readonly tracer: Tracer,
     @inject(SyncClient) private readonly syncClient: SyncClient,
     private readonly jobManager: JobManagerWrapper,
     private readonly mapPublisher: MapPublisherClient,
@@ -51,8 +53,19 @@ export class JobsManager {
   }
 
   public async completeJob(jobId: string, taskId: string): Promise<void> {
-    const job = await this.jobManager.getJobById(jobId);
-    const task = await this.jobManager.getTaskById(jobId, taskId);
+    const rootJobSpan = this.tracer.startSpan('rootJobSpan');
+
+    const job = await this.tracer.startActiveSpan('getJobById', async (span) => {
+      const job = await this.jobManager.getJobById(jobId);
+      span.end();
+      return job;
+    });
+    const task = await this.tracer.startActiveSpan('getTaskById', async (span) => {
+      const task = await this.jobManager.getTaskById(jobId, taskId);
+      span.end();
+      return task;
+    });
+
     if (job.type === this.ingestionUpdateJobType && task.type === this.ingestionTaskType.tileMergeTask) {
       const message = `[TasksManager][completeJob] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}`;
       this.logger.info({
@@ -60,7 +73,10 @@ export class JobsManager {
         taskId: taskId,
         msg: message,
       });
-      await this.handleUpdateIngestion(job, task);
+      await this.tracer.startActiveSpan('handleUpdateIngestion', async (span) => {
+        await this.handleUpdateIngestion(job, task);
+        span.end();
+      });
     } else if (
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
       job.type === this.ingestionNewJobType
@@ -71,7 +87,10 @@ export class JobsManager {
         taskId: taskId,
         msg: message,
       });
-      await this.handleNewIngestion(job, task);
+      await this.tracer.startActiveSpan('handleNewIngestion', async (span) => {
+        await this.handleNewIngestion(job, task);
+        span.end();
+      });
     } else {
       const message = `[TasksManager][completeJob] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
       this.logger.error({
@@ -83,8 +102,12 @@ export class JobsManager {
     }
 
     if (job.status === OperationStatus.IN_PROGRESS) {
-      await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
+      await this.tracer.startActiveSpan('updateJobById', async (span) => {
+        await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
+        span.end();
+      });
     }
+    rootJobSpan.end();
   }
 
   private async publishToCatalog(jobId: string, metadata: LayerMetadata, layerName: string): Promise<string> {
