@@ -71,35 +71,54 @@ export class FileValidator {
   }
 
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
-    const isExtensionValid = this.validateGpkgExtension(files);
-    if (!isExtensionValid) {
-      return false;
+    try {
+      const isExtensionValid = this.validateGpkgExtension(files);
+      if (!isExtensionValid) {
+        return false;
+      }
+      //TODO: add here all GPKG validations
+      this.validateGpkgIndex(files, originDirectory);
+      this.validateGpkgGrid(files, originDirectory);
+      this.validateTilesWidthAndHeight(files, originDirectory);
+      return true;
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        const message = `Failed to validate File GDAL Info: ${err.message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        throw new BadRequestError(message);
+      } else {
+        const message = `Failed to validate File GDAL Info: ${(err as Error).message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
     }
-    //TODO: add here all GPKG validations
-    this.validateGpkgIndex(files, originDirectory);
-    this.validateGpkgGrid(files, originDirectory);
-    this.validateTilesWidthAndHeight(files, originDirectory);
-    return true;
   }
-
-  public async validateProjections(files: string[], originDirectory: string): Promise<void> {
-    await Promise.all(
-      files.map(async (file) => {
-        const filePath = join(this.sourceMount, originDirectory, file);
-        const projection = await this.gdalUtilities.getProjection(filePath);
-        if (projection !== this.validProjection) {
-          const message = `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
-            this.validProjection
-          }`;
-          this.logger.error({
-            filePath: filePath,
-            msg: message,
-          });
-          throw new BadRequestError(message);
-        }
-      })
-    );
-  }
+  //TODO: remove when done with pr
+  // public async validateProjections(files: string[], originDirectory: string): Promise<void> {
+  //   await Promise.all(
+  //     files.map(async (file) => {
+  //       const filePath = join(this.sourceMount, originDirectory, file);
+  //       const projection = await this.gdalUtilities.getProjection(filePath);
+  //       if (projection !== this.validProjection) {
+  //         const message = `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
+  //           this.validProjection
+  //         }`;
+  //         this.logger.error({
+  //           filePath: filePath,
+  //           msg: message,
+  //         });
+  //         throw new BadRequestError(message);
+  //       }
+  //     })
+  //   );
+  // }
 
   public async validateInfoData(files: string[], originDirectory: string): Promise<void> {
     try {
@@ -107,7 +126,6 @@ export class FileValidator {
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
-          //TODO: seperate to different mini-functions?
           let message = '';
           if (infoData.crs !== this.validCRS) {
             message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}`;
@@ -128,39 +146,38 @@ export class FileValidator {
         })
       );
     } catch (err) {
-      const message = `Failed to validate File GDAL Info: ${(err as Error).message}`;
-      this.logger.error({
-        msg: message,
-        err: err,
-      });
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
+      if (err instanceof BadRequestError) {
+        const message = `Failed to validate File GDAL Info: ${err.message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        throw new BadRequestError(message);
+      } else {
+        const message = `Failed to validate File GDAL Info: ${(err as Error).message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
     }
   }
   public validateGpkgIndex(files: string[], originDirectory: string): void {
-    try {
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const index = sqliteClient.getGpkgIndex();
-        if (!index) {
-          const message = `Geopackage name: ${file} does not have a tiles index`;
-          this.logger.error({
-            originDirectory: originDirectory,
-            fileName: file,
-            msg: message,
-          });
-          throw new BadRequestError(message);
-        }
-      });
-    } catch (err) {
-      const message = `Failed to validate Gpkg Index: ${(err as Error).message}`;
-      this.logger.error({
-        msg: message,
-        err: err,
-      });
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
-    }
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const index = sqliteClient.getGpkgIndex();
+      if (!index) {
+        const message = `Geopackage name: ${file} does not have a tiles index`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
   }
 
   private validateGpkgExtension(files: string[]): boolean {
@@ -175,54 +192,34 @@ export class FileValidator {
   }
 
   private validateGpkgGrid(files: string[], originDirectory: string): void {
-    try {
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const grid: Grid | undefined = sqliteClient.getGrid();
-        if (grid !== Grid.TWO_ON_ONE) {
-          const message = `Geopackage name: ${file} grid is not two_on_one`;
-          this.logger.error({
-            originDirectory: originDirectory,
-            fileName: file,
-            msg: message,
-          });
-          throw new BadRequestError(message);
-        }
-      });
-    } catch (err) {
-      const message = `Failed to validate Gpkg Grid: ${(err as Error).message}`;
-      this.logger.error({
-        msg: message,
-        err: err,
-      });
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
-    }
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const grid: Grid | undefined = sqliteClient.getGrid();
+      if (grid !== Grid.TWO_ON_ONE) {
+        const message = `Geopackage name: ${file} grid is not two_on_one`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
   }
 
   private validateTilesWidthAndHeight(files: string[], originDirectory: string): void {
-    try {
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const tilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
-        if (tilesSizes.tileWidth !== this.validTileSize || tilesSizes.tileHeight !== this.validTileSize) {
-          const message = `Geopackage name: ${file} - tile sizes are not 256`;
-          this.logger.error({
-            originDirectory: originDirectory,
-            fileName: file,
-            msg: message,
-          });
-          throw new BadRequestError(message);
-        }
-      });
-    } catch (err) {
-      const message = `Failed to validate Gpkg Tile Width and Tile Height: ${(err as Error).message}`;
-      this.logger.error({
-        msg: message,
-        err: err,
-      });
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
-    }
+    files.forEach((file) => {
+      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+      const tilesSizes = sqliteClient.getGpkgTileWidthAndHeight();
+      if (tilesSizes.tileWidth !== this.validTileSize || tilesSizes.tileHeight !== this.validTileSize) {
+        const message = `Geopackage name: ${file} - tile sizes are not 256`;
+        this.logger.error({
+          originDirectory: originDirectory,
+          fileName: file,
+          msg: message,
+        });
+        throw new BadRequestError(message);
+      }
+    });
   }
 }

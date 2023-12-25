@@ -13,19 +13,19 @@ describe('gdalUtilities', () => {
     initMockConfig();
   });
 
-  describe('getProjection', () => {
-    it('should return 4326 projection', async () => {
-      const filePath = 'tests/mocks/files/indexed.gpkg';
-      const result = await gdalUtilities.getProjection(filePath);
-      expect(result).toBe('4326');
-    });
+  // describe('getProjection', () => {
+  //   it('should return 4326 projection', async () => {
+  //     const filePath = 'tests/mocks/files/indexed.gpkg';
+  //     const result = await gdalUtilities.getProjection(filePath);
+  //     expect(result).toBe('4326');
+  //   });
 
-    it('should return null as projection to unprojected file', async () => {
-      const filePath = 'tests/mocks/files/unprojected.gpkg';
-      const result = await gdalUtilities.getProjection(filePath);
-      expect(result).toBeNull();
-    });
-  });
+  //   it('should return null as projection to unprojected file', async () => {
+  //     const filePath = 'tests/mocks/files/unprojected.gpkg';
+  //     const result = await gdalUtilities.getProjection(filePath);
+  //     expect(result).toBeNull();
+  //   });
+  // });
 
   describe('getInfoData', () => {
     it('should extract CRS, fileFormat and pixelSize', async () => {
@@ -37,8 +37,8 @@ describe('gdalUtilities', () => {
 
     it('should throw error when fails to extract data', async () => {
       const filePath = 'tests/mocks/files/text.gpkg';
-      const action = async () => await gdalUtilities.getInfoData(filePath);
-      expect(action).rejects.toThrow(Error);
+      const action = async () => gdalUtilities.getInfoData(filePath);
+      await expect(action).rejects.toThrow(Error);
     });
   });
 });
