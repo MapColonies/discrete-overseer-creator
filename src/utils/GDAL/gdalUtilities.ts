@@ -58,7 +58,7 @@ export class GdalUtilities {
         msg: `[GdalUtilities][GetInfoData] error occurred: ${message}`,
         err: err,
       });
-      throw err;
+      throw new Error(message);
     }
   }
 }

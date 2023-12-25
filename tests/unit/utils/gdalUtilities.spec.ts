@@ -34,5 +34,11 @@ describe('gdalUtilities', () => {
       const expected = { crs: 4326, fileFormat: 'GPKG', pixelSize: 0.001373291015625 };
       expect(result).toStrictEqual(expected);
     });
+
+    it('should throw error when fails to extract data', async () => {
+      const filePath = 'tests/mocks/files/text.gpkg';
+      const action = async () => await gdalUtilities.getInfoData(filePath);
+      expect(action).rejects.toThrow(Error);
+    });
   });
 });
