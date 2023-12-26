@@ -3,6 +3,7 @@ import * as gdal from 'gdal-async';
 import { inject, singleton } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { InfoData } from '../interfaces';
+import { GeoJSON } from 'geojson';
 
 @singleton()
 export class GdalUtilities {
@@ -38,15 +39,18 @@ export class GdalUtilities {
       const dataset: gdal.Dataset = await gdal.openAsync(filePath);
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
       //eslint-disable-next-line @typescript-eslint/naming-convention
-      const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string };
+      const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string};
+      //const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string; wgs84Extent : GeoJSON};
       const crs: number = data.stac['proj:epsg'];
       const fileFormat: string = data.driverShortName;
       const pixelSize: number = data.geoTransform[1];
+      //const footprint: GeoJSON = data.wgs84Extent;
       //TODO: see if we can add projection to here/ use CRS instead of projection
       const infoData: InfoData = {
         crs: crs,
         fileFormat: fileFormat,
         pixelSize: pixelSize,
+        //footprint: footprint
       };
       // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
       dataset.close();
@@ -61,4 +65,28 @@ export class GdalUtilities {
       throw new Error(message);
     }
   }
+
+  public async getFootprint(filePath: string): Promise<GeoJSON | undefined> {
+      try {
+        this.logger.debug({
+          filePath: filePath,
+          msg: `[GdalUtilities][GetFootprint] open file to read in path: ${filePath}`,
+        });
+        const dataset: gdal.Dataset = await gdal.openAsync(filePath);
+        const jsonString = await gdal.infoAsync(dataset, ['-json']);
+        //eslint-disable-next-line @typescript-eslint/naming-convention
+        const data = JSON.parse(jsonString) as {wgs84Extent:GeoJSON};
+        const footprint: GeoJSON = data.wgs84Extent;
+        // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
+        dataset.close();
+        return footprint;
+      } catch (err) {
+        this.logger.error({
+          filePath: filePath,
+          msg: `[GdalUtilities][GetFootprint] error occurred: ${(err as Error).message}`,
+          err: err,
+        });
+        throw err;
+      }
+    }
 }

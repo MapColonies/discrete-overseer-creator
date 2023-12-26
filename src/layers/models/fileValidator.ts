@@ -72,25 +72,32 @@ export class FileValidator {
 
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     try {
+      //TODO: can we accept 1 gpkg and other files?
+      if(files.length!==1){
+        const message = `Cant accept more that one gpkg file`;
+        this.logger.error({
+          msg: message
+        });
+        throw new BadRequestError(message);
+      }
       const isExtensionValid = this.validateGpkgExtension(files);
       if (!isExtensionValid) {
         return false;
       }
-      //TODO: add here all GPKG validations
       this.validateGpkgIndex(files, originDirectory);
       this.validateGpkgGrid(files, originDirectory);
       this.validateTilesWidthAndHeight(files, originDirectory);
       return true;
     } catch (err) {
       if (err instanceof BadRequestError) {
-        const message = `Failed to validate File GDAL Info: ${err.message}`;
+        const message = `Failed to validate File Gpkg: ${err.message}`;
         this.logger.error({
           msg: message,
           err: err,
         });
         throw new BadRequestError(message);
       } else {
-        const message = `Failed to validate File GDAL Info: ${(err as Error).message}`;
+        const message = `Failed to validate File Gpkg: ${(err as Error).message}`;
         this.logger.error({
           msg: message,
           err: err,
@@ -125,6 +132,7 @@ export class FileValidator {
       await Promise.all(
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
+          //const avi= (await this.gdalUtilities.getFootprint(filePath));
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if (infoData.crs !== this.validCRS) {
