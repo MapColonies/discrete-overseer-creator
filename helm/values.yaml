@@ -103,7 +103,7 @@ env:
     mountPath: /usr/app/config
     fileName: linkTemplates.template
   tracing:
-    enabled: false
+    enabled: true
     url: http://localhost:55681/v1/trace
   metrics:
     prometheus:
