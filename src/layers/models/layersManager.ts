@@ -308,6 +308,15 @@ export class LayersManager {
   private async validateFiles(data: IngestionParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
+    if(fileNames.length!==1){
+      const message = `Invalid files list, can contain only one file`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new BadRequestError(message);
+    }
     const originDirectoryExists = this.fileValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
       throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
@@ -326,8 +335,6 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    //TODO: fix unit tests after the union of this 2 validations
-    //await this.fileValidator.validateProjections(fileNames, originDirectory);
     await this.fileValidator.validateInfoData(fileNames, originDirectory);
     this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }
@@ -476,4 +483,12 @@ export class LayersManager {
     }
     return tileOutputFormat;
   }
+
+  private compareRawDataToRequestParams(metadata: LayerMetadata): void{
+    const footprint = metadata.footprint as GeoJSON;
+    const maxResolutionDeg = metadata.maxResolutionDeg;
+
+    
+  }
+  
 }
