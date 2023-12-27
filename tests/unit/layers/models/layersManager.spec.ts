@@ -168,7 +168,7 @@ describe('LayersManager', () => {
 
       const testData: IngestionParams = {
         fileNames: ['test.gpkg'],
-        metadata: { ...testImageMetadata, productType: ProductType.RASTER_VECTOR_BEST, productSubType: 'testProductSubType' },
+        metadata: { ...testImageMetadata, productType: ProductType.RASTER_VECTOR_BEST, productSubType: 'testProductSubType', productVersion: '4.0' },
         originDirectory: '/here',
       };
       findRecordMock.mockResolvedValue({ metadata: { ...testImageMetadata, displayPath: 'test_previous_dir' } });
