@@ -356,8 +356,15 @@ describe('layers', function () {
         productVersion: '3.0',
         productType: ProductType.RASTER_VECTOR_BEST,
         productSubType: 'testProductSubType',
+        displayPath: 'test',
       };
-      const validHigherVersionRecord = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: higherVersionMetadata };
+      const validHigherVersionRecord = {
+        ...validTestData,
+        fileNames: ['indexed.gpkg'],
+        originDirectory: 'files',
+        metadata: { ...higherVersionMetadata, productVersion: '1.23', displayPath: 'test' },
+      };
+      findRecordMock.mockResolvedValue(validHigherVersionRecord);
 
       const response = await requestSender.createLayer(validHigherVersionRecord);
 
@@ -380,7 +387,7 @@ describe('layers', function () {
         expect.anything(),
         expect.anything(),
         true,
-        { previousRelativePath: undefined }
+        { previousRelativePath: 'test', previousProductVersion: '1.23' }
       );
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
