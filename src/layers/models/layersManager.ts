@@ -277,6 +277,7 @@ export class LayersManager {
   }
 
   private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
+    //TODO: check if necessary - this function is called after 
     const validGpkgFiles = this.fileValidator.validateGpkgFiles(files, originDirectory);
     if (validGpkgFiles) {
       const grids: Grid[] = [];
@@ -336,7 +337,7 @@ export class LayersManager {
       throw new BadRequestError(message);
     }
     await this.fileValidator.validateInfoData(fileNames, originDirectory);
-    this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
+    //this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }
 
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {

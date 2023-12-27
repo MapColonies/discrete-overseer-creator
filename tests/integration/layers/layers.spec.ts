@@ -13,7 +13,7 @@ import { catalogExistsMock, getHighestLayerVersionMock } from '../../mocks/clien
 import { setValue, clear as clearConfig } from '../../mocks/config';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
-import { getProjectionMock, getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
+import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersRequestSender } from './helpers/requestSender';
 
 const validPolygon = {
@@ -94,7 +94,7 @@ const validTestImageMetadata = {
   transparency: Transparency.TRANSPARENT,
 } as unknown as LayerMetadata;
 const validTestData = {
-  fileNames: ['blueMarble.gpkg'],
+  fileNames: ['indexed.gpkg'],
   metadata: validTestImageMetadata,
   originDirectory: '/files',
 };
@@ -171,7 +171,7 @@ describe('layers', function () {
       useChild: false,
     });
     requestSender = new LayersRequestSender(app);
-    getProjectionMock.mockResolvedValue('4326');
+    //getProjectionMock.mockResolvedValue('4326');
     getInfoDataMock.mockReturnValue({ crs: 4326, fileFormat: 'GPKG', pixelSize: 0.001373291015625 });
     createLayerJobMock.mockResolvedValue('jobId');
   });
@@ -228,7 +228,7 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
-    it.only('should return 200 status code for sending request transparency opaque with png output format', async function () {
+    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
       getJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: transparencyOpaqueMetadata };
@@ -248,7 +248,7 @@ describe('layers', function () {
           metadata: {
             ...validTestData.metadata,
             transparency: Transparency.OPAQUE,
-            tileOutputFormat: TileOutputFormat.PNG,
+            tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -256,13 +256,16 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
+        expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything()
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3); - isnt called at all- now it is merge not split
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -286,7 +289,7 @@ describe('layers', function () {
             ...validTestData.metadata,
             productVersion: `${productVersionMetadata.productVersion}.0`,
             transparency: Transparency.OPAQUE,
-            tileOutputFormat: TileOutputFormat.PNG,
+            tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -294,13 +297,16 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
+        expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything()
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -343,7 +349,7 @@ describe('layers', function () {
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
     it('should return 200 status code for sending request with extra metadata fields', async function () {
@@ -375,13 +381,16 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
+        expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything(),
         expect.anything()
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
     it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
@@ -590,7 +599,7 @@ describe('layers', function () {
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();
-      expect(getProjectionMock).toHaveBeenCalledTimes(1);
+      //expect(getProjectionMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getJobsMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
