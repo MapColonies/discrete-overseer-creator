@@ -73,4 +73,5 @@ export interface ISupportedIngestionSwapTypes {
 
 export interface ICleanupData {
   previousRelativePath: string;
+  previousProductVersion: string;
 }

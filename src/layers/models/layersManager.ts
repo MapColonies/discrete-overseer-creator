@@ -187,7 +187,10 @@ export class LayersManager {
           displayPath = uuidv4();
           // TODO: for future cleanup on previous version
           // TODO: (in cleanup) S3 Tiles wont be deleted if there is existing export job in progress
-          cleanupData = { previousRelativePath: record?.metadata.displayPath as string };
+          cleanupData = {
+            previousRelativePath: record?.metadata.displayPath as string,
+            previousProductVersion: record?.metadata.productVersion as string,
+          };
           data.metadata.displayPath = displayPath;
           useNewTargetFlagInUpdateTasks = true; // swap should upload new tiles without merging to new displayPath.
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -390,6 +393,21 @@ export class LayersManager {
       throw new ConflictError(message);
     }
   }
+
+  // private async getCurrentLayerVersion(productId: string, productType: string): Promise<string | undefined> {
+  //   const record = await this.catalog.findRecord(productId, undefined, productType);
+  //   if (!record) {
+  //     const message = `Layer id: ${productId} type: ${productType }, not found on catalog on product version searching`;
+  //     this.logger.error({
+  //       productId: productId,
+  //       productType: productType,
+  //       msg: message,
+  //     });
+  //     throw new ConflictError(message);
+  //   }
+  //   const productVersion = record.metadata.productVersion;
+  //   return productVersion;
+  // }
 
   private setDefaultValues(data: IngestionParams): void {
     data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;

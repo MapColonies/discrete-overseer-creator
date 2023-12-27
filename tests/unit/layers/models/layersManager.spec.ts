@@ -174,7 +174,7 @@ describe('LayersManager', () => {
       findRecordMock.mockResolvedValue({ metadata: { ...testImageMetadata, displayPath: 'test_previous_dir' } });
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
-      getHighestLayerVersionMock.mockResolvedValue(2.0);
+      getHighestLayerVersionMock.mockResolvedValue(3.0);
       fileValidatorValidateExistsMock.mockResolvedValue(true);
       validateSourceDirectoryMock.mockResolvedValue(true);
       validateNotWatchDirMock.mockResolvedValue(true);
@@ -200,7 +200,7 @@ describe('LayersManager', () => {
         expect.anything(),
         expect.anything(),
         true,
-        { previousRelativePath: 'test_previous_dir' }
+        { previousRelativePath: 'test_previous_dir', previousProductVersion: '3.0' }
       );
     });
 
