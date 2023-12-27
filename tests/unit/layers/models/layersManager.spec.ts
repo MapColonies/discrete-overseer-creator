@@ -155,7 +155,7 @@ describe('LayersManager', () => {
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
       expect(getJobsMock).toHaveBeenCalledTimes(1);
-      expect(validateGpkgFilesMock).toHaveBeenCalledTimes(2);
+      expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
     });
 
@@ -186,7 +186,7 @@ describe('LayersManager', () => {
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
       expect(getJobsMock).toHaveBeenCalledTimes(2);
-      expect(validateGpkgFilesMock).toHaveBeenCalledTimes(2);
+      expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
       expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       const mockId = createMergeTilesTasksMock.mock.calls[0][0].metadata.id;
