@@ -331,7 +331,6 @@ describe('MergeTilesTasker', () => {
         grids: [Grid.TWO_ON_ONE, Grid.TWO_ON_ONE],
         targetFormat: TileOutputFormat.JPEG,
       };
-
       const taskGen = mergeTilesTasker.createBatchedTasks(params);
       const tasks: IMergeTaskParams[] = [];
       for await (const task of taskGen) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { bboxPolygon, featureCollection, polygon } from '@turf/turf';
 import { LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
 import { MetadataMerger } from '../../../src/update/metadataMerger';
@@ -128,7 +129,7 @@ describe('MetadataMerger', () => {
         test: '1',
         // eslint-disable-next-line @typescript-eslint/naming-convention
         SensorType: 'RGB',
-      },
+      }, // eslint-disable-next-line @typescript-eslint/naming-convention
     }),
     bboxPolygon([4, 0, 5, 3], {
       properties: {
@@ -145,14 +146,53 @@ describe('MetadataMerger', () => {
       },
     }),
   ]);
+
   expectedPolygonParts.features.forEach((feat) => {
     delete feat.bbox;
   });
+
+  const expectedSwapPolygonParts = {
+    bbox: [4, 3, 7, 7],
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [4, 3],
+                [7, 3],
+                [7, 7],
+                [4, 7],
+                [4, 3],
+              ],
+            ],
+          },
+        },
+        properties: {
+          Dsc: 'test',
+          Rms: null,
+          Ep90: 3,
+          Scale: null,
+          Cities: null,
+          Source: 'testId-2.0',
+          Countries: 'r1,r4',
+          Resolution: '0.0072',
+          SensorType: 'RGB,VIS',
+          SourceName: 'test',
+        },
+      },
+    ],
+  };
   const expectedMetadata = {
     minHorizontalAccuracyCE90: 5,
     classification: '4',
     creationDate: new Date(1, 1, 1),
-    description: 'test',
+    description: 'test\ntest',
     footprint: expectedFootprint.geometry,
     includedInBests: [],
     layerPolygonParts: expectedPolygonParts,
@@ -177,6 +217,36 @@ describe('MetadataMerger', () => {
     scale: undefined,
   } as unknown as LayerMetadata;
 
+  const expectedSwapMergedMetadata = {
+    minHorizontalAccuracyCE90: 3,
+    classification: '6',
+    creationDate: new Date(1, 1, 1),
+    description: 'test',
+    footprint: updateFootprint,
+    includedInBests: [],
+    layerPolygonParts: expectedSwapPolygonParts,
+    maxResolutionMeter: 500,
+    producerName: 'tester',
+    productBoundingBox: '4,3,7,7',
+    productId: 'testId',
+    productName: 'test',
+    productSubType: 'data',
+    productType: ProductType.ORTHOPHOTO,
+    productVersion: '2.0',
+    rawProductData: undefined,
+    region: ['r1', 'r4'],
+    maxResolutionDeg: 0.0072,
+    sensors: ['RGB', 'VIS'],
+    sourceDateEnd: new Date(2, 1, 1),
+    sourceDateStart: new Date(1, 1, 1),
+    srsId: 'EPSG:4326',
+    srsName: 'wgs84',
+    type: RecordType.RECORD_RASTER,
+    rms: undefined,
+    scale: undefined,
+    displayPath: undefined,
+  } as unknown as LayerMetadata;
+
   beforeEach(() => {
     merger = new MetadataMerger();
   });
@@ -186,6 +256,14 @@ describe('MetadataMerger', () => {
       const { ingestionDate, ...restUpdateMetadata } = merged;
       expect(ingestionDate?.getTime()).toBeGreaterThan(baseMetadata.ingestionDate?.getTime() as number);
       expect(restUpdateMetadata).toEqual(expectedMetadata);
+    });
+
+    it('merges update swap metadata properly', () => {
+      const isSwap = true;
+      const merged = merger.merge(baseMetadata, updateMetadata, isSwap);
+      const { ingestionDate, ...restUpdateMetadata } = merged;
+      expect(ingestionDate?.getTime()).toBeGreaterThan(baseMetadata.ingestionDate?.getTime() as number);
+      expect(restUpdateMetadata).toEqual(expectedSwapMergedMetadata);
     });
   });
 });
