@@ -394,21 +394,6 @@ export class LayersManager {
     }
   }
 
-  // private async getCurrentLayerVersion(productId: string, productType: string): Promise<string | undefined> {
-  //   const record = await this.catalog.findRecord(productId, undefined, productType);
-  //   if (!record) {
-  //     const message = `Layer id: ${productId} type: ${productType }, not found on catalog on product version searching`;
-  //     this.logger.error({
-  //       productId: productId,
-  //       productType: productType,
-  //       msg: message,
-  //     });
-  //     throw new ConflictError(message);
-  //   }
-  //   const productVersion = record.metadata.productVersion;
-  //   return productVersion;
-  // }
-
   private setDefaultValues(data: IngestionParams): void {
     data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;
     data.metadata.srsName = data.metadata.srsName === undefined ? 'WGS84GEO' : data.metadata.srsName;
