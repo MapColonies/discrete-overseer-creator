@@ -73,10 +73,10 @@ export class FileValidator {
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     try {
       //TODO: can we accept 1 gpkg and other files?
-      if(files.length!==1){
+      if (files.length !== 1) {
         const message = `Cant accept more that one gpkg file`;
         this.logger.error({
-          msg: message
+          msg: message,
         });
         throw new BadRequestError(message);
       }

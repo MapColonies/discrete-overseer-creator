@@ -277,7 +277,7 @@ export class LayersManager {
   }
 
   private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
-    //TODO: check if necessary - this function is called after 
+    //TODO: check if necessary - this function is called after
     const validGpkgFiles = this.fileValidator.validateGpkgFiles(files, originDirectory);
     if (validGpkgFiles) {
       const grids: Grid[] = [];
@@ -309,7 +309,7 @@ export class LayersManager {
   private async validateFiles(data: IngestionParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
-    if(fileNames.length!==1){
+    if (fileNames.length !== 1) {
       const message = `Invalid files list, can contain only one file`;
       this.logger.error({
         fileNames: fileNames,
@@ -485,11 +485,8 @@ export class LayersManager {
     return tileOutputFormat;
   }
 
-  private compareRawDataToRequestParams(metadata: LayerMetadata): void{
+  private compareRawDataToRequestParams(metadata: LayerMetadata): void {
     const footprint = metadata.footprint as GeoJSON;
     const maxResolutionDeg = metadata.maxResolutionDeg;
-
-    
   }
-  
 }
