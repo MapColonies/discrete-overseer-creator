@@ -47,6 +47,7 @@ describe('JobsManager', () => {
 
   describe('completeWorkerTask', () => {
     const testMetadata = {
+      id: 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23',
       description: 'test desc',
       productType: ProductType.ORTHOPHOTO_HISTORY,
       productName: 'test',
@@ -185,7 +186,7 @@ describe('JobsManager', () => {
 
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
-
+      mergeMock.mockReturnValue(rasterMapTestData);
       getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,
@@ -230,7 +231,7 @@ describe('JobsManager', () => {
 
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
-
+      mergeMock.mockReturnValue(rasterMapTestData);
       getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,
@@ -349,8 +350,8 @@ describe('JobsManager', () => {
       expect(updateJobByIdMock).toHaveBeenCalledTimes(0);
       expect(mergeMock).toHaveBeenCalledTimes(0);
       expect(updateMock).toHaveBeenCalledTimes(0);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
-      expect(findRecordMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
+      expect(findRecordMock).toHaveBeenCalledTimes(0);
     });
   });
 });
