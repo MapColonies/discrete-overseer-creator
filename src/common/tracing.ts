@@ -1,9 +1,11 @@
+import * as env from 'env-var';
 import { Tracing } from '@map-colonies/telemetry';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-
 import { Span, SpanStatusCode, Tracer } from '@opentelemetry/api';
 import { IGNORED_INCOMING_TRACE_ROUTES, IGNORED_OUTGOING_TRACE_ROUTES } from './constants';
+
+const isTracingEnabled = env.get('TELEMETRY_TRACING_ENABLED').default('false').asBool();
 
 export const tracing = new Tracing([
   new HttpInstrumentation({
@@ -14,6 +16,9 @@ export const tracing = new Tracing([
 ]);
 
 export const asyncCallInSpan = async <T>(fn: () => Promise<T>, tracer: Tracer, spanName: string): Promise<T> => {
+  if (!isTracingEnabled) {
+    return fn();
+  }
   return new Promise((resolve, reject) => {
     return tracer.startActiveSpan(spanName, (span) => {
       fn()
@@ -30,6 +35,9 @@ export const asyncCallInSpan = async <T>(fn: () => Promise<T>, tracer: Tracer, s
 };
 
 export const callInSpan = <T>(fn: () => T, tracer: Tracer, spanName: string): T => {
+  if (!isTracingEnabled) {
+    return fn();
+  }
   return tracer.startActiveSpan(spanName, (span) => {
     try {
       const result = fn();

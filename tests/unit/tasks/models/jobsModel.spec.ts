@@ -17,6 +17,7 @@ import { linkBuilderMock } from '../../../mocks/linkBuilder';
 import { OperationTypeEnum } from '../../../../src/serviceClients/syncClient';
 import { mergeMock, metadataMergerMock } from '../../../mocks/metadataMerger';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../../../src/layers/interfaces';
+import { tracerMock } from '../../../mocks/tracer';
 
 let jobsManager: JobsManager;
 
@@ -35,6 +36,7 @@ describe('JobsManager', () => {
     jobsManager = new JobsManager(
       configMock,
       jsLogger({ enabled: false }),
+      tracerMock,
       syncClientMock,
       jobManagerClientMock,
       mapPublisherClientMock,
