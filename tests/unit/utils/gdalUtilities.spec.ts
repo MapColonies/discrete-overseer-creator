@@ -13,20 +13,6 @@ describe('gdalUtilities', () => {
     initMockConfig();
   });
 
-  // describe('getProjection', () => {
-  //   it('should return 4326 projection', async () => {
-  //     const filePath = 'tests/mocks/files/indexed.gpkg';
-  //     const result = await gdalUtilities.getProjection(filePath);
-  //     expect(result).toBe('4326');
-  //   });
-
-  //   it('should return null as projection to unprojected file', async () => {
-  //     const filePath = 'tests/mocks/files/unprojected.gpkg';
-  //     const result = await gdalUtilities.getProjection(filePath);
-  //     expect(result).toBeNull();
-  //   });
-  // });
-
   describe('getInfoData', () => {
     it('should extract CRS, fileFormat and pixelSize', async () => {
       const filePath = 'tests/mocks/files/indexed.gpkg';

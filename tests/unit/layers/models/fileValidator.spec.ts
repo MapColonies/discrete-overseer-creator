@@ -47,52 +47,6 @@ describe('FileValidator', () => {
     });
   });
 
-  // describe('validateProjections', () => {
-  //   it('should not throw an error due to valid projection', async function () {
-  //     getProjectionMock.mockReturnValue('4326');
-  //     setValue({ layerSourceDir: 'tests/mocks' });
-  //     const testData: string[] = ['indexed.gpkg'];
-  //     const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);
-
-  //     const action = async () => fileValidator.validateProjections(testData, 'files');
-  //     await expect(action()).resolves.not.toThrow(BadRequestError);
-  //     expect(getProjectionMock).toHaveBeenCalledTimes(1);
-  //   });
-
-  //   it('should throw BadRequestError due to invalid projection', async function () {
-  //     getProjectionMock.mockReturnValue('3857');
-  //     setValue({ layerSourceDir: 'tests/mocks' });
-  //     const testData: string[] = ['indexed.gpkg'];
-  //     const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);
-
-  //     const action = async () => fileValidator.validateProjections(testData, 'files');
-  //     await expect(action).rejects.toThrow(BadRequestError);
-  //     expect(getProjectionMock).toHaveBeenCalledTimes(1);
-  //   });
-
-  //   it('should throw BadRequestError due to missing projection', async function () {
-  //     getProjectionMock.mockReturnValue(undefined);
-  //     setValue({ layerSourceDir: 'tests/mocks' });
-  //     const testData: string[] = ['indexed.gpkg'];
-  //     const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);
-
-  //     const action = async () => fileValidator.validateProjections(testData, 'files');
-  //     await expect(action).rejects.toThrow(BadRequestError);
-  //     expect(getProjectionMock).toHaveBeenCalledTimes(1);
-  //   });
-
-  //   it('should call "getProjection" for each of the input files', async function () {
-  //     getProjectionMock.mockReturnValue('4326');
-  //     setValue({ layerSourceDir: 'tests/mocks' });
-  //     const testData: string[] = ['indexed.gpkg', 'unindexed.gpkg', 'test.tif'];
-  //     const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);
-
-  //     const action = async () => fileValidator.validateProjections(testData, 'files');
-  //     await expect(action()).resolves.not.toThrow(BadRequestError);
-  //     expect(getProjectionMock).toHaveBeenCalledTimes(3);
-  //   });
-  // });
-
   describe('validateGpkgFiles', () => {
     it('should fail if geopackage does not have a tiles index', function () {
       const getGpkgIndexFn = jest.spyOn(SQLiteClient.prototype as unknown as { getGpkgIndex: () => unknown }, 'getGpkgIndex');

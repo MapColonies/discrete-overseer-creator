@@ -72,17 +72,13 @@ export class FileValidator {
 
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     try {
-      //TODO: can we accept 1 gpkg and other files?
-      if (files.length !== 1) {
-        const message = `Cant accept more that one gpkg file`;
+      const isExtensionValid = this.validateGpkgExtension(files);
+      if (files.length !== 1 || !isExtensionValid) {
+        const message = `Must provide only one file in a format of GeoPackage file`;
         this.logger.error({
           msg: message,
         });
         throw new BadRequestError(message);
-      }
-      const isExtensionValid = this.validateGpkgExtension(files);
-      if (!isExtensionValid) {
-        return false;
       }
       this.validateGpkgIndex(files, originDirectory);
       this.validateGpkgGrid(files, originDirectory);
@@ -107,25 +103,6 @@ export class FileValidator {
       }
     }
   }
-  //TODO: remove when done with pr
-  // public async validateProjections(files: string[], originDirectory: string): Promise<void> {
-  //   await Promise.all(
-  //     files.map(async (file) => {
-  //       const filePath = join(this.sourceMount, originDirectory, file);
-  //       const projection = await this.gdalUtilities.getProjection(filePath);
-  //       if (projection !== this.validProjection) {
-  //         const message = `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
-  //           this.validProjection
-  //         }`;
-  //         this.logger.error({
-  //           filePath: filePath,
-  //           msg: message,
-  //         });
-  //         throw new BadRequestError(message);
-  //       }
-  //     })
-  //   );
-  // }
 
   public async validateInfoData(files: string[], originDirectory: string): Promise<void> {
     try {
