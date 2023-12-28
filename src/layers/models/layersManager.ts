@@ -8,6 +8,7 @@ import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFo
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getIssues } from '@placemarkio/check-geojson';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
@@ -403,8 +404,13 @@ export class LayersManager {
     const footprint = metadata.footprint as Geometry;
     // TODO: consider split footprint type and footprint coordinates condition to prevent misundestand error log.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if ((footprint.type != 'Polygon' && footprint.type != 'MultiPolygon') || footprint.coordinates == undefined || !isValidGeoJson(footprint)) {
-      const message = `Received invalid footprint: ${JSON.stringify(footprint)}`;
+    if (
+      (footprint.type != 'Polygon' && footprint.type != 'MultiPolygon') ||
+      footprint.coordinates == undefined ||
+      !this.validateGeometry(footprint) ||
+      !isValidGeoJson(footprint)
+    ) {
+      const message = `Received invalid footprint: ${JSON.stringify(footprint)} `;
       this.logger.error({
         productId: metadata.productId,
         productType: metadata.productType,
@@ -427,6 +433,7 @@ export class LayersManager {
           (feature.geometry.type != 'Polygon' && feature.geometry.type != 'MultiPolygon') ||
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           feature.geometry.coordinates == undefined ||
+          !this.validateGeometry(footprint) ||
           !isValidGeoJson(feature)
         ) {
           throw new BadRequestError(`received invalid footprint for layerPolygonParts feature, it must be valid Polygon or MultiPolygon`);
@@ -483,6 +490,14 @@ export class LayersManager {
       tileOutputFormat = TileOutputFormat.PNG;
     }
     return tileOutputFormat;
+  }
+
+  private validateGeometry(footprint: Geometry): boolean {
+    const footprintIssues = getIssues(JSON.stringify(footprint));
+    if (footprintIssues.length === 0) {
+      return true;
+    }
+    return false;
   }
 
   private compareRawDataToRequestParams(metadata: LayerMetadata): void {

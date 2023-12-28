@@ -109,7 +109,6 @@ export class FileValidator {
       await Promise.all(
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
-          //const avi= (await this.gdalUtilities.getFootprint(filePath));
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if (infoData.crs !== this.validCRS) {

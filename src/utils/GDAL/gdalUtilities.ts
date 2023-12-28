@@ -18,17 +18,16 @@ export class GdalUtilities {
       const dataset: gdal.Dataset = await gdal.openAsync(filePath);
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
       //eslint-disable-next-line @typescript-eslint/naming-convention
-      const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string };
-      //const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string; wgs84Extent : GeoJSON};
+      const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string; wgs84Extent: GeoJSON };
       const crs: number = data.stac['proj:epsg'];
       const fileFormat: string = data.driverShortName;
       const pixelSize: number = data.geoTransform[1];
-      //const footprint: GeoJSON = data.wgs84Extent;
+      const footprint: GeoJSON = data.wgs84Extent;
       const infoData: InfoData = {
         crs: crs,
         fileFormat: fileFormat,
         pixelSize: pixelSize,
-        //footprint: footprint
+        footprint: footprint,
       };
       // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
       dataset.close();
@@ -44,7 +43,7 @@ export class GdalUtilities {
     }
   }
 
-  public async getFootprint(filePath: string): Promise<GeoJSON | undefined> {
+  public async getFootprint(filePath: string): Promise<{ footprint: GeoJSON; resolutionDegree: number } | undefined> {
     try {
       this.logger.debug({
         filePath: filePath,
@@ -55,9 +54,10 @@ export class GdalUtilities {
       //eslint-disable-next-line @typescript-eslint/naming-convention
       const data = JSON.parse(jsonString) as { wgs84Extent: GeoJSON };
       const footprint: GeoJSON = data.wgs84Extent;
+      const resolutionDegree = 3;
       // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
       dataset.close();
-      return footprint;
+      return { footprint: footprint, resolutionDegree: resolutionDegree };
     } catch (err) {
       this.logger.error({
         filePath: filePath,
