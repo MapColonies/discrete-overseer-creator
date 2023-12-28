@@ -393,7 +393,7 @@ describe('layers', function () {
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
-    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
+    it('should return 200 status code for transparency opaque with jpeg output format', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       getJobsMock.mockResolvedValue([]);
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);

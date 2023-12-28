@@ -1,9 +1,9 @@
 import { Logger } from '@map-colonies/js-logger';
 import * as gdal from 'gdal-async';
 import { inject, singleton } from 'tsyringe';
+import { GeoJSON } from 'geojson';
 import { SERVICES } from '../../common/constants';
 import { InfoData } from '../interfaces';
-import { GeoJSON } from 'geojson';
 
 @singleton()
 export class GdalUtilities {
