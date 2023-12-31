@@ -4,13 +4,13 @@ export enum MapServerCacheType {
 }
 
 export enum JobAction {
-  NEW = 'Ingestion_New_Ranny',
-  UPDATE = 'Ingestion_Update_Ranny',
+  NEW = 'Ingestion_New',
+  UPDATE = 'Ingestion_Update',
 }
 
 export enum TaskAction {
-  SPLIT_TILES = 'tilesSplitting_Ranny',
-  MERGE_TILES = 'tilesMerging_Ranny',
+  SPLIT_TILES = 'tilesSplitting',
+  MERGE_TILES = 'tilesMerging',
 }
 
 export enum SourceType {

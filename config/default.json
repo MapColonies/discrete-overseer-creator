@@ -51,11 +51,11 @@
   "shouldSync": true,
   "linkTemplatesPath": "config/linkTemplates.template",
   "jobDomain": "RASTER",
-  "ingestionNewJobType": "Ingestion_New_Ranny",
-  "ingestionUpdateJobType": "Ingestion_Update_Ranny",
+  "ingestionNewJobType": "Ingestion_New",
+  "ingestionUpdateJobType": "Ingestion_Update",
   "ingestionTaskType": {
-    "tileMergeTask": "tilesMerging_Ranny",
-    "tileSplitTask": "tilesSplitting_Ranny"
+    "tileMergeTask": "tilesMerging",
+    "tileSplitTask": "tilesSplitting"
   },
   "ingestionMergeTiles": {
     "mergeBatchSize": 10000,
