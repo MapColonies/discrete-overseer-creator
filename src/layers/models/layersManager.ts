@@ -337,7 +337,7 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    await this.fileValidator.validateInfoData(fileNames, originDirectory);
+    await this.fileValidator.validateInfoData(fileNames, originDirectory, data);
     //this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }
 
@@ -498,10 +498,5 @@ export class LayersManager {
       return true;
     }
     return false;
-  }
-
-  private compareRawDataToRequestParams(metadata: LayerMetadata): void {
-    const footprint = metadata.footprint as GeoJSON;
-    const maxResolutionDeg = metadata.maxResolutionDeg;
   }
 }
