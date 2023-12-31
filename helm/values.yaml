@@ -15,12 +15,12 @@ rasterCommon:
     jobDomain: RASTER
     ingestion:
       new: 
-        jobType: Ingestion_New
-        splitTilesTaskType: tilesSplitting
-        mergeTilesTaskType: tilesMerging
+        jobType: Ingestion_New_Ranny
+        splitTilesTaskType: tilesSplitting_Ranny
+        mergeTilesTaskType: tilesMerging_Ranny
       update: 
-        jobType: Ingestion_Update
-        mergeTilesTaskType: tilesMerging
+        jobType: Ingestion_Update_Ranny
+        mergeTilesTaskType: tilesMerging_Ranny
   storage:
     tilesStorageProvider: "FS"
     fs:
