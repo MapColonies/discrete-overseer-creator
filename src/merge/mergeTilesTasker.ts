@@ -6,6 +6,8 @@ import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import client from 'prom-client';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
 import { Grid } from '../layers/interfaces';
@@ -23,6 +25,7 @@ export class MergeTilesTasker {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly jobManagerClient: JobManagerWrapper,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
@@ -39,6 +42,87 @@ export class MergeTilesTasker {
         registers: [registry],
       });
     }
+  }
+
+  @withSpanAsyncV4
+  public async createMergeTilesTasks(
+    data: IngestionParams,
+    layerRelativePath: string,
+    taskType: string,
+    jobType: string,
+    grids: Grid[],
+    extent: BBox,
+    managerCallbackUrl: string,
+    isNew?: boolean
+  ): Promise<string> {
+    const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
+      const fileRelativePath = join(data.originDirectory, fileName);
+      const footprint = data.metadata.footprint;
+      return {
+        fileName: fileName,
+        tilesPath: fileRelativePath,
+        footprint: footprint,
+      };
+    });
+    const maxZoom = degreesPerPixelToZoomLevel(data.metadata.maxResolutionDeg as number);
+    const params: IMergeParameters = {
+      layers: layers,
+      destPath: layerRelativePath,
+      maxZoom: maxZoom,
+      grids: grids,
+      extent,
+      targetFormat: data.metadata.tileOutputFormat as TileOutputFormat,
+    };
+    const mergeTasksParams = this.createBatchedTasks(params, isNew);
+    let mergeTaskBatch: IMergeTaskParams[] = [];
+    let jobId: string | undefined = undefined;
+
+    let fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+      operationType: 'taskBatchFill',
+      configurationBatchSize: this.mergeTaskBatchSize,
+    });
+
+    for await (const mergeTask of mergeTasksParams) {
+      mergeTaskBatch.push(mergeTask);
+      if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
+        if (fetchTimerTaskBatchFill) {
+          fetchTimerTaskBatchFill();
+        }
+        fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
+          operationType: 'taskBatchFill',
+          configurationBatchSize: this.mergeTaskBatchSize,
+        });
+        if (jobId === undefined) {
+          jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+        } else {
+          try {
+            await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
+          } catch (err) {
+            await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
+            throw err;
+          }
+        }
+        mergeTaskBatch = [];
+      }
+    }
+    if (mergeTaskBatch.length !== 0) {
+      if (jobId === undefined) {
+        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+      } else {
+        // eslint-disable-next-line no-useless-catch
+        try {
+          await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
+          if (fetchTimerTaskBatchFill) {
+            fetchTimerTaskBatchFill();
+          }
+        } catch (err) {
+          //TODO: properly handle errors
+          await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
+          throw err;
+        }
+      }
+    }
+    return jobId as string;
   }
 
   public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
@@ -126,85 +210,5 @@ export class MergeTilesTasker {
         }
       }
     }
-  }
-
-  public async createMergeTilesTasks(
-    data: IngestionParams,
-    layerRelativePath: string,
-    taskType: string,
-    jobType: string,
-    grids: Grid[],
-    extent: BBox,
-    managerCallbackUrl: string,
-    isNew?: boolean
-  ): Promise<string> {
-    const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
-      const fileRelativePath = join(data.originDirectory, fileName);
-      const footprint = data.metadata.footprint;
-      return {
-        fileName: fileName,
-        tilesPath: fileRelativePath,
-        footprint: footprint,
-      };
-    });
-    const maxZoom = degreesPerPixelToZoomLevel(data.metadata.maxResolutionDeg as number);
-    const params: IMergeParameters = {
-      layers: layers,
-      destPath: layerRelativePath,
-      maxZoom: maxZoom,
-      grids: grids,
-      extent,
-      targetFormat: data.metadata.tileOutputFormat as TileOutputFormat,
-    };
-    const mergeTasksParams = this.createBatchedTasks(params, isNew);
-    let mergeTaskBatch: IMergeTaskParams[] = [];
-    let jobId: string | undefined = undefined;
-
-    let fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
-      operationType: 'taskBatchFill',
-      configurationBatchSize: this.mergeTaskBatchSize,
-    });
-
-    for await (const mergeTask of mergeTasksParams) {
-      mergeTaskBatch.push(mergeTask);
-      if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
-        if (fetchTimerTaskBatchFill) {
-          fetchTimerTaskBatchFill();
-        }
-        fetchTimerTaskBatchFill = this.fillMergeTaskBatch?.startTimer({
-          operationType: 'taskBatchFill',
-          configurationBatchSize: this.mergeTaskBatchSize,
-        });
-        if (jobId === undefined) {
-          jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
-        } else {
-          try {
-            await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
-          } catch (err) {
-            await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
-            throw err;
-          }
-        }
-        mergeTaskBatch = [];
-      }
-    }
-    if (mergeTaskBatch.length !== 0) {
-      if (jobId === undefined) {
-        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
-      } else {
-        // eslint-disable-next-line no-useless-catch
-        try {
-          await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
-          if (fetchTimerTaskBatchFill) {
-            fetchTimerTaskBatchFill();
-          }
-        } catch (err) {
-          //TODO: properly handle errors
-          await this.jobManagerClient.updateJobById(jobId, OperationStatus.FAILED);
-          throw err;
-        }
-      }
-    }
-    return jobId as string;
   }
 }

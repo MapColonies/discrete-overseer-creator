@@ -1,6 +1,7 @@
 import { inspect } from 'node:util';
 import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
+import { withSpanAsyncV4, handleSpanOnError, handleSpanOnSuccess } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
@@ -16,7 +17,6 @@ import { OperationTypeEnum, SyncClient } from '../../serviceClients/syncClient';
 import { MetadataMerger } from '../../update/metadataMerger';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { ICompletedJobs } from '../interfaces';
-import { asyncCallInSpan, handleSpanOnError, handleSpanOnSuccess } from '../../common/tracing';
 import { ILinkBuilderData, LinkBuilder } from './linksBuilder';
 
 interface IngestionTaskTypes {
@@ -36,7 +36,7 @@ export class JobsManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.TRACER) private readonly tracer: Tracer,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     @inject(SyncClient) private readonly syncClient: SyncClient,
     private readonly jobManager: JobManagerWrapper,
     private readonly mapPublisher: MapPublisherClient,
@@ -53,11 +53,134 @@ export class JobsManager {
     this.cacheType = this.getCacheType(mapServerCacheType);
   }
 
+  @withSpanAsyncV4
+  private async handleUpdateIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
+    if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
+      await this.abortJobWithStatusFailed(job.id, `Failed to update ingestion`);
+      job.status = OperationStatus.FAILED;
+    } else if (task.status === OperationStatus.COMPLETED) {
+      this.logger.info({
+        jobId: job.id,
+        taskId: task.id,
+        msg: `task completed - merge job metadata to record`,
+      });
+      const highestVersion = await this.catalogClient.getHighestLayerVersion(job.metadata.productId as string, job.metadata.productType as string);
+      if (highestVersion === undefined) {
+        throw new InternalServerError(
+          `Could not find highestVersion for: productId ${job.metadata.productId as string}, productType: ${job.metadata.productType as string}`
+        );
+      }
+      const highestVersionToString = Number.isInteger(highestVersion) ? highestVersion.toFixed(1) : String(highestVersion);
+      this.logger.debug({
+        jobId: job.id,
+        taskId: task.id,
+        productId: job.metadata.productId,
+        productType: job.metadata.productType,
+        highestVersion: highestVersionToString,
+        msg: `Getting catalog record with version: ${highestVersionToString}, productId ${job.metadata.productId as string}, productType: ${
+          job.metadata.productType as string
+        }`,
+      });
+
+      const catalogRecord = await this.catalogClient.findRecord(
+        job.metadata.productId as string,
+        highestVersionToString,
+        job.metadata.productType as string
+      );
+
+      if (catalogRecord === undefined) {
+        throw new InternalServerError(
+          `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
+            job.metadata.productType as string
+          }, version: ${highestVersionToString} to merge data into`
+        );
+      }
+
+      this.logger.debug({
+        jobId: job.id,
+        taskId: task.id,
+        catalogRecordMetadata: inspect(catalogRecord),
+        jobMetadata: inspect(job.metadata),
+        msg: `Merging catalog record ${catalogRecord.metadata.id as string} with new metadata`,
+      });
+
+      if (job.isSuccessful) {
+        const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
+        this.logger.debug({
+          jobId: job.id,
+          taskId: task.id,
+          internalId: catalogRecord.metadata.id,
+          mergedData: inspect(mergedData),
+          msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
+        });
+        await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
+
+        const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
+        this.logger.info({
+          jobId: job.id,
+          taskId: task.id,
+          msg: message,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord.id);
+        job.status = OperationStatus.COMPLETED;
+      }
+    }
+  }
+
+  @withSpanAsyncV4
+  private async handleNewIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
+    if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
+      await this.abortJobWithStatusFailed(job.id, `Failed to generate tiles`);
+      job.status = OperationStatus.FAILED;
+    } else if (job.isSuccessful) {
+      const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
+
+      this.logger.debug({
+        productId: job.metadata.productId,
+        productType: job.metadata.productType,
+        version: job.metadata.productVersion,
+        msg: `[TasksManager][handleNewIngestion] Publishing layer name: "${layerName}" in map services`,
+      });
+
+      await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath);
+      const catalogId = await this.publishToCatalog(job.id, job.metadata, layerName);
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogId);
+      job.status = OperationStatus.COMPLETED;
+
+      if (this.shouldSync) {
+        try {
+          await this.syncClient.triggerSync(
+            job.id,
+            job.metadata.productId as string,
+            job.metadata.productVersion as string,
+            job.metadata.productType as ProductType,
+            OperationTypeEnum.ADD,
+            job.relativePath
+          );
+        } catch (err) {
+          const message = `[TasksManager][handleNewIngestion] Failed to trigger sync productId ${job.metadata.productId as string} productVersion ${
+            job.metadata.productVersion as string
+          }. error=${(err as Error).message}`;
+
+          this.logger.error({
+            jobId: job.id,
+            productId: job.metadata.productId,
+            productType: job.metadata.productType,
+            version: job.metadata.productVersion,
+            msg: message,
+          });
+        }
+      }
+    }
+  }
+
   public async completeJob(jobId: string, taskId: string): Promise<void> {
     const rootSpan = this.tracer.startSpan('completeJobRoot');
 
-    const job = await asyncCallInSpan(async () => this.jobManager.getJobById(jobId), this.tracer, 'getJobById');
-    const task = await asyncCallInSpan(async () => this.jobManager.getTaskById(jobId, taskId), this.tracer, 'getTaskById');
+    const job = await this.jobManager.getJobById(jobId);
+    const task = await this.jobManager.getTaskById(jobId, taskId);
 
     if (job.type === this.ingestionUpdateJobType && task.type === this.ingestionTaskType.tileMergeTask) {
       const message = `[TasksManager][completeJob] Completing Ingestion-Update job with jobId ${jobId} and taskId ${taskId}`;
@@ -66,7 +189,7 @@ export class JobsManager {
         taskId: taskId,
         msg: message,
       });
-      await asyncCallInSpan(async () => this.handleUpdateIngestion(job, task), this.tracer, 'handleUpdateIngestion');
+      await this.handleUpdateIngestion(job, task);
     } else if (
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
       job.type === this.ingestionNewJobType
@@ -77,7 +200,7 @@ export class JobsManager {
         taskId: taskId,
         msg: message,
       });
-      await asyncCallInSpan(async () => this.handleNewIngestion(job, task), this.tracer, 'handleNewIngestion');
+      await this.handleNewIngestion(job, task);
     } else {
       const message = `[TasksManager][completeJob] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
       this.logger.error({
@@ -91,11 +214,7 @@ export class JobsManager {
     }
 
     if (job.status === OperationStatus.IN_PROGRESS) {
-      await asyncCallInSpan(
-        async () => this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage),
-        this.tracer,
-        'updateJobById'
-      );
+      await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
     }
     handleSpanOnSuccess(rootSpan);
   }
@@ -195,126 +314,5 @@ export class JobsManager {
       msg: updateJobMessage,
     });
     await this.jobManager.updateJobById(jobId, OperationStatus.FAILED, undefined, reason);
-  }
-
-  private async handleUpdateIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
-    if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
-      await this.abortJobWithStatusFailed(job.id, `Failed to update ingestion`);
-      job.status = OperationStatus.FAILED;
-    } else if (task.status === OperationStatus.COMPLETED) {
-      this.logger.info({
-        jobId: job.id,
-        taskId: task.id,
-        msg: `task completed - merge job metadata to record`,
-      });
-      const highestVersion = await this.catalogClient.getHighestLayerVersion(job.metadata.productId as string, job.metadata.productType as string);
-      if (highestVersion === undefined) {
-        throw new InternalServerError(
-          `Could not find highestVersion for: productId ${job.metadata.productId as string}, productType: ${job.metadata.productType as string}`
-        );
-      }
-      const highestVersionToString = Number.isInteger(highestVersion) ? highestVersion.toFixed(1) : String(highestVersion);
-      this.logger.debug({
-        jobId: job.id,
-        taskId: task.id,
-        productId: job.metadata.productId,
-        productType: job.metadata.productType,
-        highestVersion: highestVersionToString,
-        msg: `Getting catalog record with version: ${highestVersionToString}, productId ${job.metadata.productId as string}, productType: ${
-          job.metadata.productType as string
-        }`,
-      });
-
-      const catalogRecord = await this.catalogClient.findRecord(
-        job.metadata.productId as string,
-        highestVersionToString,
-        job.metadata.productType as string
-      );
-
-      if (catalogRecord === undefined) {
-        throw new InternalServerError(
-          `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
-            job.metadata.productType as string
-          }, version: ${highestVersionToString} to merge data into`
-        );
-      }
-
-      this.logger.debug({
-        jobId: job.id,
-        taskId: task.id,
-        catalogRecordMetadata: inspect(catalogRecord),
-        jobMetadata: inspect(job.metadata),
-        msg: `Merging catalog record ${catalogRecord.metadata.id as string} with new metadata`,
-      });
-
-      if (job.isSuccessful) {
-        const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata);
-        this.logger.debug({
-          jobId: job.id,
-          taskId: task.id,
-          internalId: catalogRecord.metadata.id,
-          mergedData: inspect(mergedData),
-          msg: `Updating catalog record ${catalogRecord.metadata.id as string} with merged metadata`,
-        });
-        await this.catalogClient.update(catalogRecord.metadata.id as string, mergedData);
-
-        const message = `Updating status of job ${job.id} to be ${OperationStatus.COMPLETED}`;
-        this.logger.info({
-          jobId: job.id,
-          taskId: task.id,
-          msg: message,
-        });
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogRecord.id);
-        job.status = OperationStatus.COMPLETED;
-      }
-    }
-  }
-
-  private async handleNewIngestion(job: ICompletedJobs, task: TaskResponse): Promise<void> {
-    if (task.status === OperationStatus.FAILED && job.status !== OperationStatus.FAILED) {
-      await this.abortJobWithStatusFailed(job.id, `Failed to generate tiles`);
-      job.status = OperationStatus.FAILED;
-    } else if (job.isSuccessful) {
-      const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
-
-      this.logger.debug({
-        productId: job.metadata.productId,
-        productType: job.metadata.productType,
-        version: job.metadata.productVersion,
-        msg: `[TasksManager][handleNewIngestion] Publishing layer name: "${layerName}" in map services`,
-      });
-
-      await this.publishToMappingServer(job.id, job.metadata, layerName, job.relativePath);
-      const catalogId = await this.publishToCatalog(job.id, job.metadata, layerName);
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, catalogId);
-      job.status = OperationStatus.COMPLETED;
-
-      if (this.shouldSync) {
-        try {
-          await this.syncClient.triggerSync(
-            job.id,
-            job.metadata.productId as string,
-            job.metadata.productVersion as string,
-            job.metadata.productType as ProductType,
-            OperationTypeEnum.ADD,
-            job.relativePath
-          );
-        } catch (err) {
-          const message = `[TasksManager][handleNewIngestion] Failed to trigger sync productId ${job.metadata.productId as string} productVersion ${
-            job.metadata.productVersion as string
-          }. error=${(err as Error).message}`;
-
-          this.logger.error({
-            jobId: job.id,
-            productId: job.metadata.productId,
-            productType: job.metadata.productType,
-            version: job.metadata.productVersion,
-            msg: message,
-          });
-        }
-      }
-    }
   }
 }
