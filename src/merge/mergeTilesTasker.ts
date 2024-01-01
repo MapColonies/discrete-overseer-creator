@@ -9,7 +9,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
-import { IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
+import { ICleanupData, IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
 import { Grid } from '../layers/interfaces';
 import { JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
 
@@ -53,7 +53,8 @@ export class MergeTilesTasker {
     grids: Grid[],
     extent: BBox,
     managerCallbackUrl: string,
-    isNew?: boolean
+    isNew?: boolean,
+    cleanupData?: ICleanupData
   ): Promise<string> {
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
       const fileRelativePath = join(data.originDirectory, fileName);
@@ -93,7 +94,15 @@ export class MergeTilesTasker {
           configurationBatchSize: this.mergeTaskBatchSize,
         });
         if (jobId === undefined) {
-          jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+          jobId = await this.jobManagerClient.createLayerJob(
+            data,
+            layerRelativePath,
+            jobType,
+            taskType,
+            mergeTaskBatch,
+            managerCallbackUrl,
+            cleanupData
+          );
         } else {
           try {
             await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
@@ -107,11 +116,20 @@ export class MergeTilesTasker {
     }
     if (mergeTaskBatch.length !== 0) {
       if (jobId === undefined) {
-        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, mergeTaskBatch, managerCallbackUrl);
+        jobId = await this.jobManagerClient.createLayerJob(
+          data,
+          layerRelativePath,
+          jobType,
+          taskType,
+          mergeTaskBatch,
+          managerCallbackUrl,
+          cleanupData
+        );
       } else {
         // eslint-disable-next-line no-useless-catch
         try {
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
+
           if (fetchTimerTaskBatchFill) {
             fetchTimerTaskBatchFill();
           }

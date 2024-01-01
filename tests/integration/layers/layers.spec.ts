@@ -9,11 +9,13 @@ import { getApp } from '../../../src/app';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { getJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
-import { catalogExistsMock, getHighestLayerVersionMock } from '../../mocks/clients/catalogClient';
+import { catalogExistsMock, getHighestLayerVersionMock, findRecordMock } from '../../mocks/clients/catalogClient';
 import { setValue, clear as clearConfig } from '../../mocks/config';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
 import { getProjectionMock } from '../../mocks/gdalUtilitiesMock';
+import { LayersManager } from '../../../src/layers/models/layersManager';
+import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
 
 const validPolygon = {
@@ -303,8 +305,11 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     it('should return 200 status code for update layer operation with higher version on exists', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
+      const generateRecordIdsSpy = jest.spyOn(LayersManager.prototype as any, 'generateRecordIds');
+      const createMergeTilesTaskspy = jest.spyOn(MergeTilesTasker.prototype as any, 'createMergeTilesTasks');
       getJobsMock.mockResolvedValue([]);
       getHighestLayerVersionMock.mockResolvedValue(1.0);
       mapExistsMock.mockResolvedValue(true);
@@ -322,6 +327,69 @@ describe('layers', function () {
       expect(catalogExistsMock).toHaveBeenCalledTimes(0);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
       expect(createTasksMock).toHaveBeenCalledTimes(0);
+      expect(generateRecordIdsSpy).toHaveBeenCalledTimes(0);
+      expect(createMergeTilesTaskspy).toHaveBeenCalledTimes(1);
+      expect(createMergeTilesTaskspy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        'Ingestion_Update',
+        expect.anything(),
+        expect.anything(),
+        expect.anything(), // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        true,
+        undefined
+      );
+    });
+
+    it('should return 200 status code for update layer with swap operation', async function () {
+      const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
+      const generateRecordIdsSpy = jest.spyOn(LayersManager.prototype as any, 'generateRecordIds');
+      const createMergeTilesTaskspy = jest.spyOn(MergeTilesTasker.prototype as any, 'createMergeTilesTasks');
+      setValue('supportedIngestionSwapTypes', [{ productType: 'RasterVectorBest', productSubType: 'testProductSubType' }]);
+      getJobsMock.mockResolvedValue([]);
+      getHighestLayerVersionMock.mockResolvedValue(1.0);
+      mapExistsMock.mockResolvedValue(true);
+      getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+      const higherVersionMetadata = {
+        ...validTestData.metadata,
+        productVersion: '3.0',
+        productType: ProductType.RASTER_VECTOR_BEST,
+        productSubType: 'testProductSubType',
+        displayPath: 'test',
+      };
+      const validHigherVersionRecord = {
+        ...validTestData,
+        fileNames: ['indexed.gpkg'],
+        originDirectory: 'files',
+        metadata: { ...higherVersionMetadata, productVersion: '1.23', displayPath: 'test' },
+      };
+      findRecordMock.mockResolvedValue(validHigherVersionRecord);
+
+      const response = await requestSender.createLayer(validHigherVersionRecord);
+
+      expect(response).toSatisfyApiSpec();
+      expect(response.status).toBe(httpStatusCodes.OK);
+      expect(getJobsMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(mapExistsMock).toHaveBeenCalledTimes(1);
+      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(createTasksMock).toHaveBeenCalledTimes(0);
+      expect(generateRecordIdsSpy).toHaveBeenCalledTimes(0);
+      expect(createMergeTilesTaskspy).toHaveBeenCalledTimes(1);
+      expect(createMergeTilesTaskspy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        'Ingestion_Swap_Update',
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        true,
+        { previousRelativePath: 'test', previousProductVersion: '1.23' }
+      );
+      expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
 
     it('should return 200 status code with valid layer polygon parts', async function () {
@@ -387,7 +455,6 @@ describe('layers', function () {
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: transparencyOpaqueMetadata };
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
-
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();
@@ -417,7 +484,8 @@ describe('layers', function () {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
+        undefined
       );
     });
 
@@ -457,7 +525,8 @@ describe('layers', function () {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
+        undefined
       );
     });
 

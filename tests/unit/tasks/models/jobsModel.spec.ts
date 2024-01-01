@@ -3,7 +3,7 @@ import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobsManager } from '../../../../src/jobs/models/jobsManager';
 import { jobManagerClientMock, getJobByIdMock, getTaskByIdMock, abortJobMock, updateJobByIdMock } from '../../../mocks/clients/jobManagerClient';
-import { mapPublisherClientMock, publishLayerMock } from '../../../mocks/clients/mapPublisherClient';
+import { mapPublisherClientMock, publishLayerMock, updateLayerMock } from '../../../mocks/clients/mapPublisherClient';
 import {
   catalogClientMock,
   findRecordMock,
@@ -27,6 +27,7 @@ const taskId = '517059cc-f60b-4542-8a41-fdd163358d74';
 describe('JobsManager', () => {
   const ingestionNewJobType = 'Ingestion_New';
   const ingestionUpdateJobType = 'Ingestion_Update';
+  const ingestionSwapUpdateJobType = 'Ingestion_Swap_Update';
   const tileSplitTask = 'tilesSplitting';
   const tileMergeTask = 'tilesMerging';
   beforeEach(function () {
@@ -48,6 +49,7 @@ describe('JobsManager', () => {
 
   describe('completeWorkerTask', () => {
     const testMetadata = {
+      id: 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23',
       description: 'test desc',
       productType: ProductType.ORTHOPHOTO_HISTORY,
       productName: 'test',
@@ -186,7 +188,7 @@ describe('JobsManager', () => {
 
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
-
+      mergeMock.mockReturnValue(rasterMapTestData);
       getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,
@@ -218,7 +220,54 @@ describe('JobsManager', () => {
 
       expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
       expect(mergeMock).toHaveBeenCalledTimes(1);
+      expect(mergeMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), false);
       expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updateLayerMock).toHaveBeenCalledTimes(0);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(findRecordMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should complete job once all tasks are successful for update-swap-merge job-task', async function () {
+      setValue('ingestionSwapUpdateJobType', ingestionSwapUpdateJobType);
+      setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
+
+      const rasterMapTestData = { ...testMetadata };
+      rasterMapTestData.productType = ProductType.RASTER_MAP;
+      mergeMock.mockReturnValue(rasterMapTestData);
+      getJobByIdMock.mockReturnValue({
+        id: jobId,
+        isCompleted: true,
+        isSuccessful: true,
+        percentage: 90,
+        relativePath: `test/${ProductType.RASTER_MAP}`,
+        metadata: rasterMapTestData,
+        type: ingestionSwapUpdateJobType,
+        successTasksCount: 3,
+        status: OperationStatus.IN_PROGRESS,
+      });
+
+      getTaskByIdMock.mockReturnValue({
+        id: taskId,
+        jobId: jobId,
+        type: tileMergeTask,
+        status: OperationStatus.COMPLETED,
+      });
+
+      const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
+      findRecordMock.mockResolvedValue({
+        id: catalogRecordId,
+        metadata: {},
+      });
+
+      getHighestLayerVersionMock.mockResolvedValue(['1.0']);
+
+      await jobsManager.completeJob(jobId, taskId);
+
+      expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
+      expect(mergeMock).toHaveBeenCalledTimes(1);
+      expect(mergeMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), true);
+      expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updateLayerMock).toHaveBeenCalledTimes(1);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
@@ -303,8 +352,8 @@ describe('JobsManager', () => {
       expect(updateJobByIdMock).toHaveBeenCalledTimes(0);
       expect(mergeMock).toHaveBeenCalledTimes(0);
       expect(updateMock).toHaveBeenCalledTimes(0);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
-      expect(findRecordMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
+      expect(findRecordMock).toHaveBeenCalledTimes(0);
     });
   });
 });
