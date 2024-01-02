@@ -3,9 +3,6 @@ import { join, extname } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import { BadRequestError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
-import { IngestionParams } from '@map-colonies/mc-model-types';
-import booleanContains from '@turf/boolean-contains';
-import { Geometry } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { PixelRange } from '../interfaces';
@@ -107,7 +104,7 @@ export class FileValidator {
     }
   }
 
-  public async validateInfoData(files: string[], originDirectory: string, data: IngestionParams): Promise<void> {
+  public async validateInfoData(files: string[], originDirectory: string): Promise<void> {
     try {
       await Promise.all(
         files.map(async (file) => {
@@ -115,19 +112,13 @@ export class FileValidator {
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if (infoData.crs !== this.validCRS) {
-            message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}`;
+            message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
           }
           if (infoData.fileFormat !== this.validFileFormat) {
-            message += `Unsupported file format: ${infoData.fileFormat}, for input file: ${filePath}, must have valid crs: ${this.validProjection}`;
+            message += `Unsupported file format: ${infoData.fileFormat}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
           }
           if (infoData.pixelSize > this.validPixelSizeRange.max || infoData.pixelSize < this.validPixelSizeRange.min) {
-            message += `Unsupported pixel size: ${infoData.pixelSize}, for input file: ${filePath}, not in the range of: ${this.validPixelSizeRange.min} to ${this.validPixelSizeRange.max}`;
-          }
-          if ((data.metadata.maxResolutionDeg as number) > infoData.pixelSize) {
-            message += `Provided ResolutionDegree is bigger than pixel size from GeoPackage`;
-          }
-          if (!booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)) {
-            message += `Provided footprint isn't contained in the extent from GeoPackage `;
+            message += `Unsupported pixel size: ${infoData.pixelSize}, for input file: ${filePath}, not in the range of: ${this.validPixelSizeRange.min} to ${this.validPixelSizeRange.max}.`;
           }
           if (message !== '') {
             this.logger.error({

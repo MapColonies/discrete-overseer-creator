@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +10,7 @@ import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getIssues } from '@placemarkio/check-geojson';
+import booleanContains from '@turf/boolean-contains';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds } from '../../common/interfaces';
@@ -22,6 +24,8 @@ import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
+import { InfoData } from '../../utils/interfaces';
+import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { FileValidator } from './fileValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
@@ -30,6 +34,7 @@ export class LayersManager {
   private readonly tileSplitTask: string;
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
+  private readonly sourceMount: string;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -45,10 +50,13 @@ export class LayersManager {
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
     private readonly fileValidator: FileValidator,
+    private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
+
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
+    this.sourceMount = this.config.get<string>('layerSourceDir');
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
@@ -337,7 +345,8 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    await this.fileValidator.validateInfoData(fileNames, originDirectory, data);
+    await this.fileValidator.validateInfoData(fileNames, originDirectory);
+    await this.validateInfoDataToParams(fileNames, originDirectory, data);
     //this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }
 
@@ -403,10 +412,10 @@ export class LayersManager {
   private validateGeoJsons(metadata: LayerMetadata): void {
     const footprint = metadata.footprint as Geometry;
     // TODO: consider split footprint type and footprint coordinates condition to prevent misundestand error log.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (
-      (footprint.type != 'Polygon' && footprint.type != 'MultiPolygon') ||
-      footprint.coordinates == undefined ||
+      (footprint.type !== 'Polygon' && footprint.type !== 'MultiPolygon') ||
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      footprint.coordinates === undefined ||
       !this.validateGeometry(footprint) ||
       !isValidGeoJson(footprint)
     ) {
@@ -430,9 +439,9 @@ export class LayersManager {
       }
       featureCollection.features.forEach((feature) => {
         if (
-          (feature.geometry.type != 'Polygon' && feature.geometry.type != 'MultiPolygon') ||
+          (feature.geometry.type !== 'Polygon' && feature.geometry.type !== 'MultiPolygon') ||
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          feature.geometry.coordinates == undefined ||
+          feature.geometry.coordinates === undefined ||
           !this.validateGeometry(footprint) ||
           !isValidGeoJson(feature)
         ) {
@@ -498,5 +507,53 @@ export class LayersManager {
       return true;
     }
     return false;
+  }
+
+  private async validateInfoDataToParams(files: string[], originDirectory: string, data: IngestionParams): Promise<void> {
+    try {
+      await Promise.all(
+        files.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
+          let message = '';
+          if ((data.metadata.maxResolutionDeg as number) > infoData.pixelSize) {
+            message += `Provided ResolutionDegree is bigger than pixel size from GeoPackage.`;
+          }
+          if (data.metadata.footprint?.type === 'MultiPolygon') {
+            data.metadata.footprint.coordinates.forEach((coords) => {
+              const polygon = { type: 'Polygon', coordinates: coords };
+              if (!booleanContains(infoData.footprint as Geometry, polygon as Geometry)) {
+                message += `Provided footprint isn't contained in the extent from GeoPackage.`;
+              }
+            });
+          } else if (!booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)) {
+            message += `Provided footprint isn't contained in the extent from GeoPackage.`;
+          }
+          if (message !== '') {
+            this.logger.error({
+              filePath: filePath,
+              msg: message,
+            });
+            throw new BadRequestError(message);
+          }
+        })
+      );
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        this.logger.error({
+          msg: err.message,
+          err: err,
+        });
+        throw new BadRequestError(err.message);
+      } else {
+        const message = `Failed to Compare data to request: ${(err as Error).message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
+    }
   }
 }

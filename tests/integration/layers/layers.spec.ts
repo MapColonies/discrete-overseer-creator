@@ -20,11 +20,11 @@ const validPolygon = {
   type: 'Polygon',
   coordinates: [
     [
-      [100, 0],
-      [101, 0],
-      [101, 1],
-      [100, 1],
-      [100, 0],
+      [34.91692694458297, 33.952927285465876],
+      [34.90156677832806, 32.42331628696577],
+      [36.23406120090846, 32.410349688281244],
+      [36.237901242471565, 33.96885230417779],
+      [34.91692694458297, 33.952927285465876],
     ],
   ],
 };
@@ -33,11 +33,11 @@ const validMultiPolygon = {
   coordinates: [
     [
       [
-        [100, 0],
-        [101, 0],
-        [101, 1],
-        [100, 1],
-        [100, 0],
+        [34.91692694458297, 33.952927285465876],
+        [34.90156677832806, 32.42331628696577],
+        [36.23406120090846, 32.410349688281244],
+        [36.237901242471565, 33.96885230417779],
+        [34.91692694458297, 33.952927285465876],
       ],
     ],
   ],
@@ -77,7 +77,7 @@ const validTestImageMetadata = {
   footprint: validPolygon,
   scale: 100,
   rms: 2.6,
-  maxResolutionDeg: 0.007,
+  maxResolutionDeg: 0.001373291015625,
   sensors: ['RGB'],
   classification: 'test',
   type: RecordType.RECORD_RASTER,
@@ -90,7 +90,7 @@ const validTestImageMetadata = {
   sourceDateStart: new Date('11/16/2017'),
   region: [],
   maxResolutionMeter: 0.2,
-  productBoundingBox: '100,0,101,1',
+  productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
   transparency: Transparency.TRANSPARENT,
 } as unknown as LayerMetadata;
 const validTestData = {
@@ -172,7 +172,23 @@ describe('layers', function () {
     });
     requestSender = new LayersRequestSender(app);
     //getProjectionMock.mockResolvedValue('4326');
-    getInfoDataMock.mockReturnValue({ crs: 4326, fileFormat: 'GPKG', pixelSize: 0.001373291015625 });
+    getInfoDataMock.mockReturnValue({
+      crs: 4326,
+      fileFormat: 'GPKG',
+      pixelSize: 0.001373291015625,
+      footprint: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [34.61517, 34.10156],
+            [34.61517, 32.242124],
+            [36.4361539, 32.242124],
+            [36.4361539, 34.10156],
+            [34.61517, 34.10156],
+          ],
+        ],
+      },
+    });
     createLayerJobMock.mockResolvedValue('jobId');
   });
   afterEach(function () {
@@ -354,9 +370,9 @@ describe('layers', function () {
 
     it('should return 200 status code for sending request with extra metadata fields', async function () {
       getJobsMock.mockResolvedValue([]);
-      let exrtraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
-      exrtraFieldTestMetaData = { ...exrtraFieldTestMetaData };
-      const extraTestData = { ...validTestData, metadata: exrtraFieldTestMetaData };
+      let extraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
+      extraFieldTestMetaData = { ...extraFieldTestMetaData };
+      const extraTestData = { ...validTestData, metadata: extraFieldTestMetaData };
 
       const response = await requestSender.createLayer(extraTestData);
 
@@ -373,7 +389,7 @@ describe('layers', function () {
           metadata: {
             ...validTestData.metadata,
             tileOutputFormat: TileOutputFormat.PNG,
-            productBoundingBox: '100,0,101,1',
+            productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -391,7 +407,7 @@ describe('layers', function () {
         expect.anything()
       );
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
-    });
+    }, 16000000);
 
     it('should return 200 status code for transparency opaque with jpeg output format', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');

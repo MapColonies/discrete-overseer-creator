@@ -149,7 +149,23 @@ describe('FileValidator', () => {
 
   describe('validateInfoData', () => {
     it('should not fail if infoData details are all correct', async function () {
-      getInfoDataMock.mockReturnValue({ crs: 4326, fileFormat: 'GPKG', pixelSize: 0.001373291015625 });
+      getInfoDataMock.mockReturnValue({
+        crs: 4326,
+        fileFormat: 'GPKG',
+        pixelSize: 0.001373291015625,
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.61517, 34.10156],
+              [34.61517, 32.242124],
+              [36.4361539, 32.242124],
+              [36.4361539, 34.10156],
+              [34.61517, 34.10156],
+            ],
+          ],
+        },
+      });
       setValue({ layerSourceDir: 'tests/mocks' });
       const testData: string[] = ['indexed.gpkg'];
       const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);

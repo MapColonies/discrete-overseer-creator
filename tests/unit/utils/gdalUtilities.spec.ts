@@ -14,7 +14,7 @@ describe('gdalUtilities', () => {
   });
 
   describe('getInfoData', () => {
-    it('should extract CRS, fileFormat and pixelSize', async () => {
+    it('should extract CRS, fileFormat, pixelSize and footprint', async () => {
       const filePath = 'tests/mocks/files/indexed.gpkg';
       const result = await gdalUtilities.getInfoData(filePath);
       const expected = {
