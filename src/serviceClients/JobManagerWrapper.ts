@@ -4,7 +4,7 @@ import { IngestionParams } from '@map-colonies/mc-model-types';
 import { ICreateJobBody, ICreateJobResponse, IJobResponse, OperationStatus, ITaskResponse, JobManagerClient } from '@map-colonies/mc-priority-queue';
 import { NotFoundError } from '@map-colonies/error-types';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
-import { IConfig, IMergeTaskParams } from '../common/interfaces';
+import { ICleanupData, IConfig, IMergeTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
 import { ICompletedJobs } from '../jobs/interfaces';
@@ -31,7 +31,8 @@ export class JobManagerWrapper extends JobManagerClient {
     jobType: string,
     taskType: string,
     taskParams?: (ITaskParameters | IMergeTaskParams)[],
-    managerCallbackUrl?: string
+    managerCallbackUrl?: string,
+    cleanupData?: ICleanupData
   ): Promise<string> {
     const resourceId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -42,7 +43,7 @@ export class JobManagerWrapper extends JobManagerClient {
       version: version,
       type: jobType,
       status: OperationStatus.IN_PROGRESS,
-      parameters: { ...data, layerRelativePath, managerCallbackUrl } as unknown as Record<string, unknown>,
+      parameters: { ...data, layerRelativePath, managerCallbackUrl, cleanupData } as unknown as Record<string, unknown>,
       producerName: data.metadata.producerName,
       productName: data.metadata.productName,
       productType: data.metadata.productType,

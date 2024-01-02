@@ -21,7 +21,11 @@ rasterCommon:
       update: 
         jobType: Ingestion_Update
         mergeTilesTaskType: tilesMerging
-  storage:
+      updateSwap:
+        jobType: Ingestion_Swap_Update
+        supportedIngestionSwapTypes: 
+        - productType: RasterVectorBest
+          productSubType: testProductSubType
     tilesStorageProvider: "FS"
     fs:
       ingestionSourcePvc:
@@ -58,6 +62,7 @@ env:
   forbiddenTypesForParallelIngesion:
     - Ingestion_New
     - Ingestion_Update
+    - Ingestion_Swap_Update
   port: 80
   targetPort: 8080
   protocol: TCP

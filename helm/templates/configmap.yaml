@@ -33,12 +33,14 @@ data:
   INGESTION_SPLIT_TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.new.splitTilesTaskType | quote }}
   INGESTION_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.jobType | quote }}
   INGESTION_MERGE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.mergeTilesTaskType | quote }}
+  INGESTION_SWAP_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.jobType | quote }}
+  SUPPORTED_iNGESTION_SWAP_TYPES: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}
   BBOX_SIZE_TILES: {{ .Values.env.bboxSizeTiles | quote }}
   MERGE_BATCH_SIZE: {{ .Values.env.mergeBatchSize | quote }}
   USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}
   SPLITTER_TASKS_BATCH_SIZE: {{ .Values.env.splitterTasksBatchSize | quote }}
   MERGER_TASKS_BATCH_SIZE: {{ .Values.env.mergerTasksBatchSize | quote }}
-  FORBBIDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
+  FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
   {{ if .Values.env.tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}

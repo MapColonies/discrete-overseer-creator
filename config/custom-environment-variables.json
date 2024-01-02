@@ -88,6 +88,11 @@
   "jobDomain": "JOB_DOMAIN",
   "ingestionNewJobType": "INGESTION_NEW_JOB_TYPE",
   "ingestionUpdateJobType": "INGESTION_UPDATE_JOB_TYPE",
+  "ingestionSwapUpdateJobType": "INGESTION_SWAP_UPDATE_JOB_TYPE",
+  "supportedIngestionSwapTypes": {
+    "__name": "SUPPORTED_iNGESTION_SWAP_TYPES",
+    "__format": "json"
+  },
   "ingestionTaskType": {
     "tileMergeTask": "INGESTION_MERGE_TASK_TYPE",
     "tileSplitTask": "INGESTION_SPLIT_TILES_TASK_TYPE"
@@ -131,7 +136,7 @@
       "__format":"number"} 
     },
   "forbiddenTypesForParallelIngesion": {
-    "__name": "FORBBIDEN_TYPES_FOR_PARALLEL_INGESTION",
+    "__name": "FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"
   }
 }

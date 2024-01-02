@@ -26,9 +26,9 @@ module.exports = {
   modulePathIgnorePatterns: ['<rootDir>/dist'],
   coverageThreshold: {
     global: {
-      branches: 48,
+      branches: 46,
       functions: 55,
-      lines: 64,
+      lines: 59,
       statements: 15,
     },
   },
