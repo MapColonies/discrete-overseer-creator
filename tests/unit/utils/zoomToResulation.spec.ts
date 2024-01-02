@@ -1,5 +1,6 @@
 import { ZoomLevelCalculator } from '../../../src/utils/zoomToResolution';
 import { init as initMockConfig, setValue, configMock } from '../../mocks/config';
+import { tracerMock } from '../../mocks/tracer';
 
 let zoomLevelCalculator: ZoomLevelCalculator;
 
@@ -9,7 +10,7 @@ describe('zoomToResulation', () => {
     initMockConfig();
     // eslint-disable-next-line @typescript-eslint/naming-convention
     setValue({ 'tiling.zoomGroups': ['0-10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'] });
-    zoomLevelCalculator = new ZoomLevelCalculator(configMock);
+    zoomLevelCalculator = new ZoomLevelCalculator(configMock, tracerMock);
   });
 
   describe('check zoom ranges by resolution and config zoom ranges', () => {

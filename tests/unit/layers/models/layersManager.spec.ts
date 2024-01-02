@@ -74,7 +74,7 @@ describe('LayersManager', () => {
     jest.restoreAllMocks();
     clearMockConfig();
     initMockConfig();
-    const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
+    const zoomLevelCalculator = new ZoomLevelCalculator(configMock, tracerMock);
     layersManager = new LayersManager(
       configMock,
       jsLogger({ enabled: false }),
@@ -111,7 +111,7 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
 
-      const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
+      const zoomLevelCalculator = new ZoomLevelCalculator(configMock, tracerMock);
       layersManager = new LayersManager(
         configMock,
         jsLogger({ enabled: false }),
