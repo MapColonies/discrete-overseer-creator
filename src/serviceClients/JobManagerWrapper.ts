@@ -88,6 +88,7 @@ export class JobManagerWrapper extends JobManagerClient {
     await this.updateJob(jobId, updateJobBody);
   }
 
+  @withSpanAsyncV4
   public async createLayerJob(
     data: IngestionParams,
     layerRelativePath: string,
@@ -122,6 +123,7 @@ export class JobManagerWrapper extends JobManagerClient {
     return res.id;
   }
 
+  @withSpanAsyncV4
   public async createTasks(jobId: string, taskParams: ITaskParameters[] | IMergeTaskParams[], taskType: string): Promise<void> {
     const createTasksUrl = `/jobs/${jobId}/tasks`;
     const parmas = taskParams as (ITaskParameters | IMergeTaskParams)[];

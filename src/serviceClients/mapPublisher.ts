@@ -2,13 +2,19 @@ import { Logger } from '@map-colonies/js-logger';
 import { NotFoundError } from '@map-colonies/error-types';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { IConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { IPublishMapLayerRequest } from '../layers/interfaces';
 
 @injectable()
 export class MapPublisherClient extends HttpClient {
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
       config.get<string>('mapPublishingServiceURL'),
@@ -18,16 +24,19 @@ export class MapPublisherClient extends HttpClient {
     );
   }
 
+  @withSpanAsyncV4
   public async publishLayer(publishReq: IPublishMapLayerRequest): Promise<IPublishMapLayerRequest> {
     const saveMetadataUrl = '/layer';
     return this.post(saveMetadataUrl, publishReq);
   }
 
+  @withSpanAsyncV4
   public async updateLayer(updateReq: IPublishMapLayerRequest): Promise<IPublishMapLayerRequest> {
     const saveMetadataUrl = `/layer/${updateReq.name}`;
     return this.put(saveMetadataUrl, updateReq);
   }
 
+  @withSpanAsyncV4
   public async exists(name: string): Promise<boolean> {
     const saveMetadataUrl = `/layer/${encodeURIComponent(name)}`;
     try {
