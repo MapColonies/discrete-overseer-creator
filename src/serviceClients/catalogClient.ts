@@ -49,6 +49,7 @@ export class CatalogClient extends HttpClient {
     return res[0];
   }
 
+  @withSpanAsyncV4
   public async exists(productId: string, productVersion?: string, productType?: string): Promise<boolean> {
     const req = {
       metadata: {
@@ -61,17 +62,20 @@ export class CatalogClient extends HttpClient {
     return res.length > 0;
   }
 
+  @withSpanAsyncV4
   public async existsByRecordId(recordId: string): Promise<boolean> {
     const res = await this.get<boolean>(`/records/exists/${recordId}`);
 
     return res;
   }
 
+  @withSpanAsyncV4
   public async publish(record: IRasterCatalogUpsertRequestBody): Promise<string> {
     const res = await this.post<ICreateRecordResponse>('/records', record);
     return res.id;
   }
 
+  @withSpanAsyncV4
   public async update(id: string, metadata: LayerMetadata): Promise<IUpdateRecordResponse> {
     const req = {
       metadata,
@@ -81,6 +85,7 @@ export class CatalogClient extends HttpClient {
     return res;
   }
 
+  @withSpanAsyncV4
   public async getHighestLayerVersion(productId: string, productType: string): Promise<number | undefined> {
     this.logger.debug({
       productId,
@@ -105,6 +110,7 @@ export class CatalogClient extends HttpClient {
     return undefined;
   }
 
+  @withSpanAsyncV4
   private async getLayerVersions(productId: string, productType: string): Promise<number[] | undefined> {
     const req = {
       metadata: {

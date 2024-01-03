@@ -1,7 +1,5 @@
 import { inject, singleton } from 'tsyringe';
 import { degreesPerPixelToZoomLevel } from '@map-colonies/mc-utils';
-import { Tracer } from '@opentelemetry/api';
-import { withSpanV4 } from '@map-colonies/telemetry';
 import { ITaskZoomRange } from '../jobs/interfaces';
 import { SERVICES } from '../common/constants';
 import { IConfig } from '../common/interfaces';
@@ -10,12 +8,11 @@ import { IConfig } from '../common/interfaces';
 export class ZoomLevelCalculator {
   private readonly zoomRanges: ITaskZoomRange[];
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.TRACER) public readonly tracer: Tracer) {
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {
     const batches = config.get<string[]>('tiling.zoomGroups');
     this.zoomRanges = this.getZoomRanges(batches);
   }
 
-  @withSpanV4
   public createLayerZoomRanges(resolution: number): ITaskZoomRange[] {
     const maxZoom = degreesPerPixelToZoomLevel(resolution);
     const layerZoomRanges = this.zoomRanges
