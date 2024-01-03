@@ -278,10 +278,11 @@ describe('layers', function () {
           originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything(),
-        expect.anything()
+        undefined
       );
       //expect(createTasksMock).toHaveBeenCalledTimes(3); - isnt called at all- now it is merge not split
       expect(response.status).toBe(httpStatusCodes.OK);
@@ -319,10 +320,11 @@ describe('layers', function () {
           originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything(),
-        expect.anything()
+        undefined
       );
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
@@ -331,6 +333,8 @@ describe('layers', function () {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     it('should return 200 status code for update layer operation with higher version on exists', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
+      const generateRecordIdsSpy = jest.spyOn(LayersManager.prototype as any, 'generateRecordIds');
+      const createMergeTilesTaskspy = jest.spyOn(MergeTilesTasker.prototype as any, 'createMergeTilesTasks');
       //const getGpkgTileWidthAndHeightSpy = jest.spyOn(SQLiteClient.prototype, 'getGpkgTileWidthAndHeight');
       //const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       getJobsMock.mockResolvedValue([]);
@@ -467,13 +471,14 @@ describe('layers', function () {
           originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything(),
-        expect.anything()
+        undefined
       );
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
-    }, 16000000);
+    });
 
     it('should return 200 status code for transparency opaque with jpeg output format', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
