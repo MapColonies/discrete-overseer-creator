@@ -129,8 +129,15 @@
     "fileFormat":"FILE_FORMAT",
     "pixelSizeRange" : 
       { 
-      "__name":"PIXEL_SIZE_RANGE",
-      "__format":"json"},
+      "min":{
+        "__name":"PIXEL_SIZE_RANGE_MIN",
+        "__format":"number"
+      },
+      "max":{
+        "__name":"PIXEL_SIZE_RANGE_MAX",
+        "__format":"number"
+      }
+    },
     "tileSize" : {
       "__name": "TILE_SIZE", 
       "__format":"number"} 
