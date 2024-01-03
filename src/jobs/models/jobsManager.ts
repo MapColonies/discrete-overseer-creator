@@ -1,7 +1,7 @@
 import { inspect } from 'node:util';
 import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
-import { withSpanAsyncV4, handleSpanOnError, handleSpanOnSuccess } from '@map-colonies/telemetry';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { inject, injectable } from 'tsyringe';
@@ -53,6 +53,50 @@ export class JobsManager {
     this.ingestionSwapUpdateJobType = config.get<string>('ingestionSwapUpdateJobType');
     this.ingestionTaskType = config.get<IngestionTaskTypes>('ingestionTaskType');
     this.cacheType = this.getCacheType(mapServerCacheType);
+  }
+
+  @withSpanAsyncV4
+  public async completeJob(jobId: string, taskId: string): Promise<void> {
+    const job = await this.jobManager.getJobById(jobId);
+    const task = await this.jobManager.getTaskById(jobId, taskId);
+
+    if (
+      (job.type === this.ingestionUpdateJobType || job.type === this.ingestionSwapUpdateJobType) &&
+      task.type === this.ingestionTaskType.tileMergeTask
+    ) {
+      const message = `[TasksManager][completeJob] Completing Update of ${job.type} job with jobId ${jobId} and taskId ${taskId}`;
+      this.logger.info({
+        jobId: jobId,
+        taskId: taskId,
+        msg: message,
+      });
+
+      const isSwap = job.type === this.ingestionSwapUpdateJobType; // validate if it is update with swap
+      await this.handleUpdateIngestion(job, task, isSwap);
+    } else if (
+      (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
+      job.type === this.ingestionNewJobType
+    ) {
+      const message = `[TasksManager][completeJob] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}`;
+      this.logger.info({
+        jobId: jobId,
+        taskId: taskId,
+        msg: message,
+      });
+      await this.handleNewIngestion(job, task);
+    } else {
+      const message = `[TasksManager][completeJob] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
+      this.logger.error({
+        jobId: jobId,
+        taskId: taskId,
+        msg: message,
+      });
+      throw new BadRequestError(message);
+    }
+
+    if (job.status === OperationStatus.IN_PROGRESS) {
+      await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
+    }
   }
 
   @withSpanAsyncV4
@@ -126,54 +170,6 @@ export class JobsManager {
         }
       }
     }
-  }
-
-  public async completeJob(jobId: string, taskId: string): Promise<void> {
-    const rootSpan = this.tracer.startSpan('completeJobRoot');
-
-    const job = await this.jobManager.getJobById(jobId);
-    const task = await this.jobManager.getTaskById(jobId, taskId);
-
-    if (
-      (job.type === this.ingestionUpdateJobType || job.type === this.ingestionSwapUpdateJobType) &&
-      task.type === this.ingestionTaskType.tileMergeTask
-    ) {
-      const message = `[TasksManager][completeJob] Completing Update of ${job.type} job with jobId ${jobId} and taskId ${taskId}`;
-      this.logger.info({
-        jobId: jobId,
-        taskId: taskId,
-        msg: message,
-      });
-
-      const isSwap = job.type === this.ingestionSwapUpdateJobType; // validate if it is update with swap
-      await this.handleUpdateIngestion(job, task, isSwap);
-    } else if (
-      (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
-      job.type === this.ingestionNewJobType
-    ) {
-      const message = `[TasksManager][completeJob] Completing Ingestion-New job with jobId ${jobId} and taskId ${taskId}`;
-      this.logger.info({
-        jobId: jobId,
-        taskId: taskId,
-        msg: message,
-      });
-      await this.handleNewIngestion(job, task);
-    } else {
-      const message = `[TasksManager][completeJob] Could not complete job id: ${job.id}. Job type "${job.type}" and task type "${task.type}" combination isn't supported`;
-      this.logger.error({
-        jobId: jobId,
-        taskId: taskId,
-        msg: message,
-      });
-      const error = new BadRequestError(message);
-      handleSpanOnError(rootSpan, error);
-      throw error;
-    }
-
-    if (job.status === OperationStatus.IN_PROGRESS) {
-      await this.jobManager.updateJobById(job.id, OperationStatus.IN_PROGRESS, job.percentage);
-    }
-    handleSpanOnSuccess(rootSpan);
   }
 
   private async publishToCatalog(jobId: string, metadata: LayerMetadata, layerName: string): Promise<string> {
