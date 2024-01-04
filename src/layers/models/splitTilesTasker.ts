@@ -5,6 +5,8 @@ import { inject, injectable } from 'tsyringe';
 import client from 'prom-client';
 import { TileRanger, tileToBbox } from '@map-colonies/mc-utils';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { ITaskParameters } from '../interfaces';
@@ -22,6 +24,7 @@ export class SplitTilesTasker {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly jobManagerClient: JobManagerWrapper,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
@@ -39,6 +42,7 @@ export class SplitTilesTasker {
     }
   }
 
+  @withSpanAsyncV4
   public async createSplitTilesTasks(
     data: IngestionParams,
     layerRelativePath: string,

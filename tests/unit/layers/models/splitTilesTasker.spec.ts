@@ -5,6 +5,7 @@ import { SplitTilesTasker } from '../../../../src/layers/models/splitTilesTasker
 import { jobManagerClientMock } from '../../../mocks/clients/jobManagerClient';
 import { configMock, init as initConfig, setValue } from '../../../mocks/config';
 import { ITaskParameters } from '../../../../src/layers/interfaces';
+import { tracerMock } from '../../../mocks/tracer';
 
 describe('SplitTilesTasker', () => {
   let splitTilesTasker: SplitTilesTasker;
@@ -69,7 +70,7 @@ describe('SplitTilesTasker', () => {
 
   describe('createSplitTilesTasks', () => {
     it('split the tasks based on configuration', async function () {
-      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
+      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), tracerMock, jobManagerClientMock);
       generateTasksParametersSpy = jest.spyOn(SplitTilesTasker.prototype, 'generateTasksParameters');
 
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -104,7 +105,7 @@ describe('SplitTilesTasker', () => {
         { minZoom: 5, maxZoom: 8 },
         { minZoom: 2, maxZoom: 2 },
       ];
-      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
+      splitTilesTasker = new SplitTilesTasker(configMock, jsLogger({ enabled: false }), tracerMock, jobManagerClientMock);
 
       const gen = splitTilesTasker.generateTasksParameters(testData, layerRelativePath, zoomRanges);
       const params: ITaskParameters[] = [];

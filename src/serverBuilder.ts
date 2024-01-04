@@ -8,7 +8,7 @@ import getStorageExplorerMiddleware from '@map-colonies/storage-explorer-middlew
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
-import { metricsMiddleware } from '@map-colonies/telemetry';
+import { metricsMiddleware } from '@map-colonies/telemetry/dist/metrics/middleware/metrics';
 import { Registry } from 'prom-client';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';

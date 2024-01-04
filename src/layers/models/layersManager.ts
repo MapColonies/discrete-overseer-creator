@@ -8,6 +8,8 @@ import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFo
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { Tracer } from '@opentelemetry/api';
+import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds, ISupportedIngestionSwapTypes } from '../../common/interfaces';
@@ -39,6 +41,7 @@ export class LayersManager {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer,
     private readonly zoomLevelCalculator: ZoomLevelCalculator,
     private readonly db: JobManagerWrapper,
     private readonly catalog: CatalogClient,
@@ -70,6 +73,7 @@ export class LayersManager {
     }
   }
 
+  @withSpanAsyncV4
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
@@ -80,6 +84,7 @@ export class LayersManager {
     const files = data.fileNames;
     const polygon = data.metadata.footprint;
     this.validateGeoJsons(data.metadata);
+
     // polygon to bbox
     const extent = bbox(polygon as GeoJSON);
     if (convertedData.id !== undefined) {
@@ -89,6 +94,7 @@ export class LayersManager {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
     await this.validateFiles(data);
+
     await this.validateJobNotRunning(productId, productType);
 
     const jobType = await this.getJobType(data);
@@ -98,6 +104,7 @@ export class LayersManager {
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
 
     this.validateCorrectProductVersion(data);
+
     const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
       data.metadata.productId as string
     } productType: ${productType}`;
@@ -257,6 +264,7 @@ export class LayersManager {
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }
 
+  @withSpanAsyncV4
   private async getJobType(data: IngestionParams): Promise<JobAction> {
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -299,6 +307,7 @@ export class LayersManager {
     }
   }
 
+  @withSpanV4
   private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
     const validGpkgFiles = this.fileValidator.validateGpkgFiles(files, originDirectory);
     if (validGpkgFiles) {
@@ -328,6 +337,7 @@ export class LayersManager {
     }
   }
 
+  @withSpanAsyncV4
   private async validateFiles(data: IngestionParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
@@ -352,12 +362,14 @@ export class LayersManager {
     await this.fileValidator.validateProjections(fileNames, originDirectory);
   }
 
+  @withSpanAsyncV4
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
     const layerName = getMapServingLayerName(productId, productType);
     const existsInMapServer = await this.mapPublisher.exists(layerName);
     return existsInMapServer;
   }
 
+  @withSpanAsyncV4
   private async validateJobNotRunning(productId: string, productType: ProductType): Promise<void> {
     const findJobParameters: IFindJobsRequest = {
       resourceId: productId,
@@ -380,6 +392,7 @@ export class LayersManager {
     });
   }
 
+  @withSpanAsyncV4
   private async validateNotExistsInCatalog(productId: string, version?: string, productType?: string): Promise<void> {
     const existsInCatalog = await this.catalog.exists(productId, version, productType);
     if (existsInCatalog) {
@@ -394,23 +407,7 @@ export class LayersManager {
     }
   }
 
-  private setDefaultValues(data: IngestionParams): void {
-    data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;
-    data.metadata.srsName = data.metadata.srsName === undefined ? 'WGS84GEO' : data.metadata.srsName;
-    data.metadata.productBoundingBox = createBBoxString(data.metadata.footprint as GeoJSON);
-    if (!data.metadata.layerPolygonParts) {
-      data.metadata.layerPolygonParts = layerMetadataToPolygonParts(data.metadata);
-    }
-  }
-
-  // validate productVersion will have decimal value
-  private validateCorrectProductVersion(data: IngestionParams): void {
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    if (data.metadata.productVersion?.indexOf('.') === -1) {
-      data.metadata.productVersion = `${data.metadata.productVersion}.0`;
-    }
-  }
-
+  @withSpanV4
   private validateGeoJsons(metadata: LayerMetadata): void {
     const footprint = metadata.footprint as Geometry;
     // TODO: consider split footprint type and footprint coordinates condition to prevent misundestand error log.
@@ -447,6 +444,7 @@ export class LayersManager {
     }
   }
 
+  @withSpanAsyncV4
   private async generateRecordIds(): Promise<IRecordIds> {
     let id: string;
     let isExists: boolean;
@@ -482,6 +480,14 @@ export class LayersManager {
     }
   }
 
+  // validate productVersion will have decimal value
+  private validateCorrectProductVersion(data: IngestionParams): void {
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    if (data.metadata.productVersion?.indexOf('.') === -1) {
+      data.metadata.productVersion = `${data.metadata.productVersion}.0`;
+    }
+  }
+
   private getTileOutputFormat(taskType: string, transparency: Transparency): TileOutputFormat {
     let tileOutputFormat: TileOutputFormat;
     if (transparency === Transparency.OPAQUE) {
@@ -494,5 +500,14 @@ export class LayersManager {
       tileOutputFormat = TileOutputFormat.PNG;
     }
     return tileOutputFormat;
+  }
+
+  private setDefaultValues(data: IngestionParams): void {
+    data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;
+    data.metadata.srsName = data.metadata.srsName === undefined ? 'WGS84GEO' : data.metadata.srsName;
+    data.metadata.productBoundingBox = createBBoxString(data.metadata.footprint as GeoJSON);
+    if (!data.metadata.layerPolygonParts) {
+      data.metadata.layerPolygonParts = layerMetadataToPolygonParts(data.metadata);
+    }
   }
 }

@@ -20,6 +20,7 @@ import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaske
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
 import { Grid } from '../../../../src/layers/interfaces';
+import { tracerMock } from '../../../mocks/tracer';
 
 let layersManager: LayersManager;
 
@@ -77,6 +78,7 @@ describe('LayersManager', () => {
     layersManager = new LayersManager(
       configMock,
       jsLogger({ enabled: false }),
+      tracerMock,
       zoomLevelCalculator,
       jobManagerClientMock,
       catalogClientMock,
@@ -113,6 +115,7 @@ describe('LayersManager', () => {
       layersManager = new LayersManager(
         configMock,
         jsLogger({ enabled: false }),
+        tracerMock,
         zoomLevelCalculator,
         jobManagerClientMock,
         catalogClientMock,
