@@ -21,6 +21,7 @@ import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/merg
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
 import { Grid } from '../../../../src/layers/interfaces';
 import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilitiesMock';
+import { tracerMock } from '../../../mocks/tracer';
 
 let layersManager: LayersManager;
 
@@ -78,6 +79,7 @@ describe('LayersManager', () => {
     layersManager = new LayersManager(
       configMock,
       jsLogger({ enabled: false }),
+      tracerMock,
       zoomLevelCalculator,
       jobManagerClientMock,
       catalogClientMock,
@@ -127,8 +129,6 @@ describe('LayersManager', () => {
       getJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
-
-      // /const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);

@@ -2,6 +2,8 @@ import { Logger } from '@map-colonies/js-logger';
 import { ProductType } from '@map-colonies/mc-model-types';
 import { HttpClient, IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
+import { withSpanAsyncV4 } from '@map-colonies/telemetry';
+import { Tracer } from '@opentelemetry/api';
 import { IConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 
@@ -21,7 +23,11 @@ export enum OperationTypeEnum {
 
 @injectable()
 export class SyncClient extends HttpClient {
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) protected readonly logger: Logger) {
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) protected readonly logger: Logger,
+    @inject(SERVICES.TRACER) public readonly tracer: Tracer
+  ) {
     super(
       logger,
       config.get<string>('syncServiceURL'),
@@ -31,6 +37,7 @@ export class SyncClient extends HttpClient {
     );
   }
 
+  @withSpanAsyncV4
   public async triggerSync(
     jobId: string,
     resourceId: string,

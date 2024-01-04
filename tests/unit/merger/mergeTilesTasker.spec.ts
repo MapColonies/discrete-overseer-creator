@@ -6,6 +6,7 @@ import { Grid } from '../../../src/layers/interfaces';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { jobManagerClientMock } from '../../mocks/clients/jobManagerClient';
 import { configMock, init as initConfig, setValue as setConfigValue, clear as clearConfig } from '../../mocks/config';
+import { tracerMock } from '../../mocks/tracer';
 
 describe('MergeTilesTasker', () => {
   let mergeTilesTasker: MergeTilesTasker;
@@ -15,7 +16,7 @@ describe('MergeTilesTasker', () => {
     setConfigValue('ingestionMergeTiles.mergeBatchSize', 1);
     setConfigValue('ingestionMergeT', 1);
     setConfigValue('ingestionMergeTiles.useNewTargetFlagInUpdateTasks', true);
-    mergeTilesTasker = new MergeTilesTasker(configMock, jsLogger({ enabled: false }), jobManagerClientMock);
+    mergeTilesTasker = new MergeTilesTasker(configMock, jsLogger({ enabled: false }), tracerMock, jobManagerClientMock);
   });
 
   afterEach(() => {
