@@ -115,7 +115,7 @@ spec:
         {{- end }}
         - name: link-templates
           configMap:
-            name: {{ $releaseName }}-configmap
+            name: {{ $configmapName }}
             items:
               - key: LINK_TEMPLATE
                 path: {{ .Values.env.linksTemplate.fileName }}
