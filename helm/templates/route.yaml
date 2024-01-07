@@ -2,11 +2,12 @@
 {{- $chartName := include "discrete-overseer-creator.name" . -}}
 {{- $cloudProviderFlavor := include "discrete-overseer-creator.cloudProviderFlavor" . -}}
 {{- $serviceName := include "service.fullname" . -}}
+{{- $routeName := include "route.fullname" . }}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ $releaseName }}-route
+  name: {{ $routeName }}
   annotations:
     haproxy.router.openshift.io/rewrite-target: /
     {{- if .Values.route.timeout.enabled }}

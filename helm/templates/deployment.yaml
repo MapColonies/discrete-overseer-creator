@@ -1,20 +1,23 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "discrete-overseer-creator.name" . -}}
+{{- $deploymentName := include "deployment.fullname" . }}
+{{- $configmapName := include "configmap.fullname" . }}
 {{- $cloudProviderFlavor := include "discrete-overseer-creator.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "discrete-overseer-creator.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "discrete-overseer-creator.cloudProviderImagePullSecretName" . -}}
+{{- $fs := (include "common.fs.merged" .) | fromYaml }}
 {{- $imageTag := include "discrete-overseer-creator.tag" . -}}
 {{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $releaseName }}-deployment
+  name: {{ $deploymentName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
     environment: {{ include "discrete-overseer-creator.environment" . }}
     release: {{ $releaseName }}
-    {{- if .Values.rasterCommon.useNodeAffinity }}
+    {{- if .Values.global.useNodeAffinity }}
     nodeAffinity: nodeAffinityPod
     {{- end }}
     {{- include "discrete-overseer-creator.labels" . | nindent 4 }}
@@ -25,7 +28,7 @@ spec:
       app: {{ $chartName }}
       release: {{ $releaseName }}
       run: {{ $releaseName }}-{{ $chartName }}
-      {{- if .Values.rasterCommon.useNodeAffinity }}
+      {{- if .Values.global.useNodeAffinity }}
       nodeAffinity: nodeAffinityPod
       {{- end }}
       {{- include "discrete-overseer-creator.selectorLabels" . | nindent 6 }}
@@ -35,7 +38,7 @@ spec:
         app: {{ $chartName }}
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
-        {{- if .Values.rasterCommon.useNodeAffinity }}
+        {{- if .Values.global.useNodeAffinity }}
         nodeAffinity: nodeAffinityPod
         {{- end }}
         {{- include "discrete-overseer-creator.selectorLabels" . | nindent 8 }}
@@ -58,33 +61,33 @@ spec:
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}
           volumeMounts:
-          {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.enabled }}
+          {{- if $fs.ingestionSourcePvc.enabled }}
             - name: ingestion-storage
               mountPath: /layerSources
-              {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.subPath }}
-              subPath: {{ .Values.rasterCommon.storage.fs.ingestionSourcePvc.subPath }}
+              {{- if $fs.ingestionSourcePvc.subPath }}
+              subPath: {{ $fs.ingestionSourcePvc.subPath }}
               {{- end }}
           {{- end }}
             - name: link-templates
               mountPath: {{ .Values.env.linksTemplate.mountPath }}/{{ .Values.env.linksTemplate.fileName }}
               subPath: {{ .Values.env.linksTemplate.fileName }}
-            {{- if .Values.rasterCommon.ca.secretName }}
-            - mountPath: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
+            {{- if .Values.global.ca.secretName }}
+            - mountPath: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
               name: root-ca
-              subPath: {{ quote .Values.rasterCommon.ca.key }}
+              subPath: {{ quote .Values.global.ca.key }}
             {{- end }}
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
-            {{- if .Values.rasterCommon.ca.secretName }}
+            {{- if .Values.global.ca.secretName }}
             - name: REQUESTS_CA_BUNDLE
-              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
+              value: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
             - name: NODE_EXTRA_CA_CERTS
-              value: {{ printf "%s/%s" .Values.rasterCommon.ca.path .Values.rasterCommon.ca.key | quote }}
+              value: {{ printf "%s/%s" .Values.global.ca.path .Values.global.ca.key | quote }}
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ $releaseName }}-configmap
+                name: {{ $configmapName  }}
           ports:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
@@ -100,15 +103,15 @@ spec:
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
       volumes:
-        {{- if .Values.rasterCommon.ca.secretName }}
+        {{- if .Values.global.ca.secretName }}
         - name: root-ca
           secret:
-            secretName: {{ .Values.rasterCommon.ca.secretName }}
+            secretName: {{ .Values.global.ca.secretName }}
         {{- end }}
-        {{- if .Values.rasterCommon.storage.fs.ingestionSourcePvc.enabled }}
+        {{- if $fs.ingestionSourcePvc.enabled }}
         - name: ingestion-storage
           persistentVolumeClaim:
-            claimName: {{ quote .Values.rasterCommon.storage.fs.ingestionSourcePvc.name }}
+            claimName: {{ quote $fs.ingestionSourcePvc.name }}
         {{- end }}
         - name: link-templates
           configMap:
