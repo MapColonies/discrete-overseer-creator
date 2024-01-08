@@ -40,11 +40,11 @@ data:
   USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}
   SPLITTER_TASKS_BATCH_SIZE: {{ .Values.env.splitterTasksBatchSize | quote }}
   MERGER_TASKS_BATCH_SIZE: {{ .Values.env.mergerTasksBatchSize | quote }}
-  CRS: {{ .Values.env.validationValues.crs | toJson | quote}}
-  FILE_FORMAT: {{ .Values.env.validationValues.fileFormat | toJson | quote}}
-  PIXEL_SIZE_RANGE_MIN: {{ .Values.env.validationValues.pixelSizeRange.min | quote}}
-  PIXEL_SIZE_RANGE_MAX: {{ .Values.env.validationValues.pixelSizeRange.max | quote}}
-  TILE_SIZE: {{ .Values.env.validationValues.tileSize | quote}}
+  CRS: {{ .Values.env.validationValuesByInfo.crs | toJson | quote}}
+  FILE_FORMAT: {{ .Values.env.validationValuesByInfo.fileFormat | toJson | quote}}
+  PIXEL_SIZE_RANGE_MIN: {{ .Values.env.validationValuesByInfo.pixelSizeRange.min | quote}}
+  PIXEL_SIZE_RANGE_MAX: {{ .Values.env.validationValuesByInfo.pixelSizeRange.max | quote}}
+  TILE_SIZE: {{ .Values.env.validationValuesByInfo.tileSize | quote}}
   FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
   {{ if .Values.env.tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'

@@ -25,10 +25,10 @@ export class FileValidator {
     private readonly gdalUtilities: GdalUtilities
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
-    this.validCRS = this.config.get<number[]>('validationValues.crs');
-    this.validFileFormat = this.config.get<string[]>('validationValues.fileFormat');
-    this.validTileSize = this.config.get<number>('validationValues.tileSize');
-    this.validPixelSizeRange = this.config.get<PixelRange>('validationValues.pixelSizeRange');
+    this.validCRS = this.config.get<number[]>('validationValuesByInfo.crs');
+    this.validFileFormat = this.config.get<string[]>('validationValuesByInfo.fileFormat');
+    this.validTileSize = this.config.get<number>('validationValuesByInfo.tileSize');
+    this.validPixelSizeRange = this.config.get<PixelRange>('validationValuesByInfo.pixelSizeRange');
   }
 
   public validateSourceDirectory(srcDir: string): boolean {

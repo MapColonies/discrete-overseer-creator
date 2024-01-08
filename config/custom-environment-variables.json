@@ -121,7 +121,7 @@
       "__format": "number"
     }
   },
-  "validationValues": {
+  "validationValuesByInfo": {
     "crs":{
       "__name":"CRS",
       "__format":"json"

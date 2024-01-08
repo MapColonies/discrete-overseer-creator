@@ -94,7 +94,7 @@ env:
   useNewTargetFlagInUpdateTasks: true
   splitterTasksBatchSize: 100
   mergerTasksBatchSize: 100
-  validationValues:
+  validationValuesByInfo:
     crs: 
     - 4326
     fileFormat: 

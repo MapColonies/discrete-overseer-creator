@@ -68,7 +68,7 @@
     "bboxSizeTiles": 10000,
     "tasksBatchSize": 5
   },
-  "validationValues": {
+  "validationValuesByInfo": {
     "crs":[4326],
     "fileFormat":["GPKG"],
     "pixelSizeRange" : { "min": 0.000000335276,"max": 0.703125 },
