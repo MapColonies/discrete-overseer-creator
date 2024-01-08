@@ -124,9 +124,12 @@
   "validationValues": {
     "crs":{
       "__name":"CRS",
-      "__format":"number"
+      "__format":"json"
     },
-    "fileFormat":"FILE_FORMAT",
+    "fileFormat":{
+      "__name":"FILE_FORMAT",
+      "__format":"json"
+    },
     "pixelSizeRange" : 
       { 
       "min":{

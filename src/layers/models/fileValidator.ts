@@ -15,8 +15,8 @@ import { InfoData } from '../../utils/interfaces';
 export class FileValidator {
   private readonly sourceMount: string;
   private readonly validProjection = '4326';
-  private readonly validCRS: number;
-  private readonly validFileFormat: string;
+  private readonly validCRS: number[];
+  private readonly validFileFormat: string[];
   private readonly validPixelSizeRange: PixelRange;
   private readonly validTileSize: number;
   public constructor(
@@ -25,8 +25,8 @@ export class FileValidator {
     private readonly gdalUtilities: GdalUtilities
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
-    this.validCRS = this.config.get<number>('validationValues.crs');
-    this.validFileFormat = this.config.get<string>('validationValues.fileFormat');
+    this.validCRS = this.config.get<number[]>('validationValues.crs');
+    this.validFileFormat = this.config.get<string[]>('validationValues.fileFormat');
     this.validTileSize = this.config.get<number>('validationValues.tileSize');
     this.validPixelSizeRange = this.config.get<PixelRange>('validationValues.pixelSizeRange');
   }
@@ -111,10 +111,10 @@ export class FileValidator {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          if (infoData.crs !== this.validCRS) {
+          if (!this.validCRS.includes(infoData.crs)) {
             message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
           }
-          if (infoData.fileFormat !== this.validFileFormat) {
+          if (!this.validFileFormat.includes(infoData.fileFormat)) {
             message += `Unsupported file format: ${infoData.fileFormat}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
           }
           if (infoData.pixelSize > this.validPixelSizeRange.max || infoData.pixelSize < this.validPixelSizeRange.min) {

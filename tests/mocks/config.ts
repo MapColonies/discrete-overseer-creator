@@ -69,7 +69,7 @@ const registerDefaultConfig = (): void => {
     layerSourceDir: 'tests/mockssfs',
     mapServerCacheType: 'FS',
     displayNameDir: '\\layerSources',
-    validFileExtensions: ['tif', 'tiff', 'gpkg', 'jp2', 'jpc', 'j2k'],
+    validFileExtensions: ['gpkg'],
     jobManagerURL: 'http://localhost:8088',
     syncServiceURL: 'http://localhost:8082',
     mapPublishingServiceURL: 'http://localhost:8083',
