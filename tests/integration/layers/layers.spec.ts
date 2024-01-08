@@ -81,7 +81,7 @@ const validTestImageMetadata = {
   rms: 2.6,
   maxResolutionDeg: 0.001373291015625,
   sensors: ['RGB'],
-  classification: 'test',
+  classification: '4',
   type: RecordType.RECORD_RASTER,
   productType: ProductType.ORTHOPHOTO_HISTORY,
   srsId: '4326',
