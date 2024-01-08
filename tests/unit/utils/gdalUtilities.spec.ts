@@ -14,7 +14,7 @@ describe('gdalUtilities', () => {
   });
 
   describe('getInfoData', () => {
-    it('should extract CRS, fileFormat, pixelSize and footprint', async () => {
+    it('should extract CRS, fileFormat, pixelSize and footprint from gpkg file', async () => {
       const filePath = 'tests/mocks/files/indexed.gpkg';
       const result = await gdalUtilities.getInfoData(filePath);
       const expected = {
@@ -37,8 +37,37 @@ describe('gdalUtilities', () => {
       expect(result).toStrictEqual(expected);
     });
 
+    it('should extract CRS, fileFormat, pixelSize and footprint from tiff file', async () => {
+      const filePath = 'tests/mocks/files/bluemarble_4km.tif';
+      const result = await gdalUtilities.getInfoData(filePath);
+      const expected = {
+        crs: 4326,
+        fileFormat: 'GTiff',
+        pixelSize: 0.0333333333333333,
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-180, 90],
+              [-180, -90],
+              [180, -90],
+              [180, 90],
+              [-180, 90],
+            ],
+          ],
+        },
+      };
+      expect(result).toStrictEqual(expected);
+    });
+    //TODO: add a test of j2k file
+
     it('should throw error when fails to extract data', async () => {
       const filePath = 'tests/mocks/files/text.gpkg';
+      const action = async () => gdalUtilities.getInfoData(filePath);
+      await expect(action).rejects.toThrow(Error);
+    });
+    it('should throw error when recieves ecw file', async () => {
+      const filePath = 'tests/mocks/files/test.ecw';
       const action = async () => gdalUtilities.getInfoData(filePath);
       await expect(action).rejects.toThrow(Error);
     });
