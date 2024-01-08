@@ -87,12 +87,7 @@ env:
   layerSourceDir: '/layerSources'
   displayNameDir: "\\layerSources"
   validFileExtensions: 
-  - 'tif'
-  - 'tiff'
   - 'gpkg'
-  - 'jp2'
-  - 'jpc'
-  - 'j2k'
   mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
