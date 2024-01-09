@@ -90,6 +90,14 @@ image:
   tag: 'latest'
 
 enableWMS: true
+
+# add pod annotations
+# example:
+# podAnnotations:
+  # annotation1: annotation-value-1
+  # annotation2: annotation-value-2
+podAnnotations: {}
+
 env:
   forbiddenTypesForParallelIngesion:
     - Ingestion_New
