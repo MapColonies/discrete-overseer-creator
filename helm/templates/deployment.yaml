@@ -42,8 +42,8 @@ spec:
         nodeAffinity: nodeAffinityPod
         {{- end }}
         {{- include "discrete-overseer-creator.selectorLabels" . | nindent 8 }}
-      {{- if .Values.resetOnConfigChange }}
       annotations:
+        {{- if .Values.resetOnConfigChange }}
         checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.env.metrics.enabled }}
         prometheus.io/port: {{ .Values.env.metrics.prometheus.port | quote }}
