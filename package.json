@@ -4,6 +4,7 @@
   "description": "Service that responsible for validating and ingesting discrete layers",
   "main": "./src/index.ts",
   "scripts": {
+    "test:avi": "jest --config=./tests/configurations/unit/jest.config.js -- gpkgValidator.spec.ts",
     "test:unit": "jest --config=./tests/configurations/unit/jest.config.js",
     "test:integration": "jest --config=./tests/configurations/integration/jest.config.js",
     "format": "prettier --check .",
@@ -49,7 +50,7 @@
     "@map-colonies/error-types": "^1.1.5",
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
-    "@map-colonies/mc-model-types": "^15.0.5",
+    "@map-colonies/mc-model-types": "^15.2.0",
     "@map-colonies/mc-priority-queue": "^6.1.0",
     "@map-colonies/mc-utils": "^2.0.0",
     "@map-colonies/openapi-express-viewer": "^3.0.0",

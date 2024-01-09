@@ -28,7 +28,8 @@ import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
-import { FileValidator } from './fileValidator';
+//import { FileValidator } from './fileValidator';
+import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
 @injectable()
@@ -52,7 +53,7 @@ export class LayersManager {
     private readonly db: JobManagerWrapper,
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
-    private readonly fileValidator: FileValidator,
+    private readonly ingestionValidator: IngestionValidator,
     private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
@@ -319,7 +320,7 @@ export class LayersManager {
   @withSpanV4
   private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
     //TODO: check if necessary - this function is called after
-    const validGpkgFiles = this.fileValidator.validateGpkgFiles(files, originDirectory);
+    const validGpkgFiles = this.ingestionValidator.validateGpkgFiles(files, originDirectory);
     if (validGpkgFiles) {
       const grids: Grid[] = [];
       files.forEach((file) => {
@@ -360,15 +361,15 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    const originDirectoryExists = this.fileValidator.validateSourceDirectory(originDirectory);
+    const originDirectoryExists = this.ingestionValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
       throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
     }
-    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(originDirectory);
+    const originDirectoryNotWatch = this.ingestionValidator.validateNotWatchDir(originDirectory);
     if (!originDirectoryNotWatch) {
       throw new BadRequestError(`"originDirectory" can't be with same name as watch directory`);
     }
-    const filesExists = await this.fileValidator.validateExists(originDirectory, fileNames);
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
     if (!filesExists) {
       const message = `Invalid files list, some files are missing`;
       this.logger.error({
@@ -378,7 +379,7 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    await this.fileValidator.validateInfoData(fileNames, originDirectory);
+    await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
     await this.validateInfoDataToParams(fileNames, originDirectory, data);
     //this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }

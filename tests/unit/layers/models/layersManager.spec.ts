@@ -8,12 +8,12 @@ import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findR
 import { mapPublisherClientMock, mapExistsMock } from '../../../mocks/clients/mapPublisherClient';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../../mocks/config';
 import {
-  fileValidatorValidateExistsMock,
+  validateGpkgFilesMock,
   validateSourceDirectoryMock,
   validateNotWatchDirMock,
-  validateGpkgFilesMock,
-  fileValidatorMock,
-} from '../../../mocks/fileValidator';
+  fileValidatorValidateExistsMock,
+  ingestionValidatorMock,
+} from '../../../mocks/ingestionValidator';
 import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
 import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaskerMock } from '../../../mocks/splitTilesTasker';
@@ -84,7 +84,7 @@ describe('LayersManager', () => {
       jobManagerClientMock,
       catalogClientMock,
       mapPublisherClientMock,
-      fileValidatorMock,
+      ingestionValidatorMock,
       gdalUtilitiesMock,
       splitTilesTaskerMock,
       mergeTilesTasker
