@@ -11,9 +11,8 @@ import { InfoData } from '../../utils/interfaces';
 @injectable()
 export class GdalInfoValidator {
   private readonly sourceMount: string;
-  private readonly validProjection = '4326';
-  private readonly validCRS: number[];
-  private readonly validFileFormat: string[];
+  private readonly validCRSs: number[];
+  private readonly validFileFormats: string[];
   private readonly validPixelSizeRange: PixelRange;
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -21,8 +20,10 @@ export class GdalInfoValidator {
     private readonly gdalUtilities: GdalUtilities
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
-    this.validCRS = this.config.get<number[]>('validationValuesByInfo.crs');
-    this.validFileFormat = this.config.get<string[]>('validationValuesByInfo.fileFormat');
+    this.validCRSs = this.config.get<number[]>('validationValuesByInfo.crs');
+    this.validFileFormats = this.config.get<string[]>('validationValuesByInfo.fileFormat').map((format) => {
+      return format.toLowerCase();
+    });
     this.validPixelSizeRange = this.config.get<PixelRange>('validationValuesByInfo.pixelSizeRange');
   }
 
@@ -33,11 +34,13 @@ export class GdalInfoValidator {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          if (!this.validCRS.includes(infoData.crs)) {
-            message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
+          if (!this.validCRSs.includes(infoData.crs)) {
+            message = `Unsupported crs: ${infoData.crs}, for input file: ${filePath}, must have valid crs: ${this.validCRSs.toString()}.`;
           }
-          if (!this.validFileFormat.includes(infoData.fileFormat)) {
-            message += `Unsupported file format: ${infoData.fileFormat}, for input file: ${filePath}, must have valid crs: ${this.validProjection}.`;
+          if (!this.validFileFormats.includes(infoData.fileFormat.toLowerCase())) {
+            message += `Unsupported file format: ${
+              infoData.fileFormat
+            }, for input file: ${filePath}, must have valid file format: ${this.validFileFormats.toString()}.`;
           }
           if (infoData.pixelSize > this.validPixelSizeRange.max || infoData.pixelSize < this.validPixelSizeRange.min) {
             message += `Unsupported pixel size: ${infoData.pixelSize}, for input file: ${filePath}, not in the range of: ${this.validPixelSizeRange.min} to ${this.validPixelSizeRange.max}.`;

@@ -26,14 +26,11 @@ export class GpkgValidator {
 
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     try {
-      const isExtensionValid = this.validateGpkgExtension(files);
-      if (files.length !== 1 || !isExtensionValid) {
-        const message = `Must provide only one file in a format of GeoPackage file`;
-        this.logger.error({
-          msg: message,
-        });
-        throw new BadRequestError(message);
-      }
+      //TODO: add gpkg file validation once we remove the inforcment from swagger
+      const message = 'Staring validating gpkg in GPKGValidator';
+      this.logger.info({
+        msg: message,
+      });
       this.validateGpkgIndex(files, originDirectory);
       this.validateGpkgGrid(files, originDirectory);
       this.validateTilesWidthAndHeight(files, originDirectory);
@@ -74,7 +71,7 @@ export class GpkgValidator {
     });
   }
 
-  private validateGpkgExtension(files: string[]): boolean {
+  private isGpkg(files: string[]): boolean {
     if (!Array.isArray(files) || !files.length) {
       return false;
     }

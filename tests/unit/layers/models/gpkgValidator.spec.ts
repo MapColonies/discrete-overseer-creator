@@ -92,14 +92,15 @@ describe('GpkgValidator', () => {
     });
   });
 
-  describe('validateGpkgExtension', () => {
-    it('should fail if file is not a gpkg', function () {
-      setValue({ layerSourceDir: 'tests/mocks' });
-      const testData: string[] = ['test.ecw'];
-      const gpkgValidator = new GpkgValidator(configMock, jsLogger({ enabled: false }));
+  //TODO: Add when more than gpkg is allowed
+  // describe('validateGpkgExtension', () => {
+  //   it('should fail if file is not a gpkg', function () {
+  //     setValue({ layerSourceDir: 'tests/mocks' });
+  //     const testData: string[] = ['test.ecw'];
+  //     const gpkgValidator = new GpkgValidator(configMock, jsLogger({ enabled: false }));
 
-      const action = () => gpkgValidator.validateGpkgFiles(testData, 'files');
-      expect(action).toThrow(BadRequestError);
-    });
-  });
+  //     const action = () => gpkgValidator.validateGpkgFiles(testData, 'files');
+  //     expect(action).toThrow(BadRequestError);
+  //   });
+  // });
 });

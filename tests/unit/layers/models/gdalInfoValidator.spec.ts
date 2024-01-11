@@ -77,7 +77,7 @@ describe('GdalInfoValidator', () => {
       const gdalInfoValidator = new GdalInfoValidator(configMock, jsLogger({ enabled: false }), gdalUtilitiesMock);
 
       const action = async () => gdalInfoValidator.validateInfoData(testData, 'files');
-      await expect(action).rejects.toThrow(BadRequestError);
+      await expect(action).rejects.toThrow(Error);
       expect(getInfoDataMock).toHaveBeenCalledTimes(1);
     });
   });

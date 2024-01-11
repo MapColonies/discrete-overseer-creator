@@ -28,7 +28,6 @@ import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
-//import { FileValidator } from './fileValidator';
 import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
@@ -319,7 +318,6 @@ export class LayersManager {
 
   @withSpanV4
   private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
-    //TODO: check if necessary - this function is called after
     const validGpkgFiles = this.ingestionValidator.validateGpkgFiles(files, originDirectory);
     if (validGpkgFiles) {
       const grids: Grid[] = [];
@@ -381,7 +379,6 @@ export class LayersManager {
     }
     await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
     await this.validateInfoDataToParams(fileNames, originDirectory, data);
-    //this.fileValidator.validateGpkgFiles(fileNames, originDirectory);
   }
 
   @withSpanAsyncV4

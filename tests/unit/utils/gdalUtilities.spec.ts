@@ -59,13 +59,37 @@ describe('gdalUtilities', () => {
       };
       expect(result).toStrictEqual(expected);
     });
-    //TODO: add a test of j2k file
+
+    // it.only('should extract CRS, fileFormat, pixelSize and footprint from j2k file', async () => {
+    //   const filePath = 'tests/mocks/files/sail.j2k';
+    //   const result = await gdalUtilities.getInfoData(filePath);
+    //   const expected = {
+    //     crs: 4326,
+    //     fileFormat: 'GTiff',
+    //     pixelSize: 0.0333333333333333,
+    //     footprint: {
+    //       type: 'Polygon',
+    //       coordinates: [
+    //         [
+    //           [-180, 90],
+    //           [-180, -90],
+    //           [180, -90],
+    //           [180, 90],
+    //           [-180, 90],
+    //         ],
+    //       ],
+    //     },
+    //   };
+    //   expect(result).toStrictEqual(expected);
+    // });
 
     it('should throw error when fails to extract data', async () => {
-      const filePath = 'tests/mocks/files/text.gpkg';
+      const filePath = 'tests/mocks/files/invalidFile.gpkg';
       const action = async () => gdalUtilities.getInfoData(filePath);
       await expect(action).rejects.toThrow(Error);
     });
+
+    //TODO: This test should pass when we have appropriate GDAL version with ECW licence
     it('should throw error when recieves ecw file', async () => {
       const filePath = 'tests/mocks/files/test.ecw';
       const action = async () => gdalUtilities.getInfoData(filePath);
