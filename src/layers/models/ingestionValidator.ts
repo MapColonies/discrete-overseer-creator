@@ -6,7 +6,6 @@ import { PixelRange } from '../interfaces';
 import { GpkgValidator } from './gpkgValidator';
 import { GdalInfoValidator } from './gdalInfoValidator';
 import { FileValidator } from './fileValidator';
-import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 
 @injectable()
 export class IngestionValidator {
@@ -30,11 +29,10 @@ export class IngestionValidator {
     this.validPixelSizeRange = this.config.get<PixelRange>('validationValuesByInfo.pixelSizeRange');
   }
 
-
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     return this.gpkgValidator.validateGpkgFiles(files, originDirectory);
   }
-  
+
   public async validateGdalInfo(files: string[], originDirectory: string): Promise<boolean> {
     return this.gdalInfoValidator.validateInfoData(files, originDirectory);
   }
