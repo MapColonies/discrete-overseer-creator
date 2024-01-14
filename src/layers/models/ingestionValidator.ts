@@ -23,6 +23,7 @@ export class IngestionValidator {
     return this.gpkgValidator.validateGpkgFiles(files, originDirectory);
   }
 
+  @withSpanV4
   public async validateGdalInfo(files: string[], originDirectory: string): Promise<boolean> {
     return this.gdalInfoValidator.validateInfoData(files, originDirectory);
   }

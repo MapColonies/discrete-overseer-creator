@@ -69,7 +69,6 @@ describe('GdalInfoValidator', () => {
       expect(getInfoDataMock).toHaveBeenCalledTimes(1);
     });
 
-    //TODO: wait for shaziri to give good ecw file
     it('should fail when ecw file  - invalid format', async function () {
       getInfoDataMock.mockReturnValue(new Error());
       setValue({ layerSourceDir: 'tests/mocks' });

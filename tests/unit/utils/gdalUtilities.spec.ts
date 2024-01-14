@@ -60,29 +60,6 @@ describe('gdalUtilities', () => {
       expect(result).toStrictEqual(expected);
     });
 
-    // it.only('should extract CRS, fileFormat, pixelSize and footprint from j2k file', async () => {
-    //   const filePath = 'tests/mocks/files/sail.j2k';
-    //   const result = await gdalUtilities.getInfoData(filePath);
-    //   const expected = {
-    //     crs: 4326,
-    //     fileFormat: 'GTiff',
-    //     pixelSize: 0.0333333333333333,
-    //     footprint: {
-    //       type: 'Polygon',
-    //       coordinates: [
-    //         [
-    //           [-180, 90],
-    //           [-180, -90],
-    //           [180, -90],
-    //           [180, 90],
-    //           [-180, 90],
-    //         ],
-    //       ],
-    //     },
-    //   };
-    //   expect(result).toStrictEqual(expected);
-    // });
-
     it('should throw error when fails to extract data', async () => {
       const filePath = 'tests/mocks/files/invalidFile.gpkg';
       const action = async () => gdalUtilities.getInfoData(filePath);
