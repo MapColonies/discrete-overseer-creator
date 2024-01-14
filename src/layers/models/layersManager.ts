@@ -535,6 +535,7 @@ export class LayersManager {
     return false;
   }
 
+  @withSpanAsyncV4
   private async validateInfoDataToParams(files: string[], originDirectory: string, data: IngestionParams): Promise<void> {
     try {
       await Promise.all(
