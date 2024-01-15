@@ -14,6 +14,7 @@ import {
   fileValidatorValidateExistsMock,
   ingestionValidatorMock,
   validateIsGpkgMock,
+  getGridsMock,
 } from '../../../mocks/ingestionValidator';
 import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
@@ -162,6 +163,7 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
       validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -196,6 +198,7 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
       validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -241,6 +244,7 @@ describe('LayersManager', () => {
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
       validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 

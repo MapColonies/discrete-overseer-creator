@@ -37,6 +37,7 @@ export class SQLiteClient {
       this.logger.error({
         msg: message,
         filePath: this.fullPath,
+        err: err,
       });
       throw new BadRequestError(message);
     }

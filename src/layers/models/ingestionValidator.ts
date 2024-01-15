@@ -4,6 +4,7 @@ import { Tracer } from '@opentelemetry/api';
 import { withSpanV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
+import { Grid } from '../interfaces';
 import { GpkgValidator } from './gpkgValidator';
 import { GdalInfoValidator } from './gdalInfoValidator';
 import { FileValidator } from './fileValidator';
@@ -31,6 +32,9 @@ export class IngestionValidator {
 
   public validateIsGpkg(files: string[]): boolean {
     return this.gpkgValidator.isGpkg(files);
+  }
+  public getGrids(files: string[], originDirectory: string): Grid[] {
+    return this.gpkgValidator.getGrids(files, originDirectory);
   }
 
   public validateSourceDirectory(srcDir: string): boolean {
