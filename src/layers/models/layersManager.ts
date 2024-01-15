@@ -142,6 +142,7 @@ export class LayersManager {
         const layerRelativePath = `${id}/${displayPath}`;
 
         if (taskType === TaskAction.MERGE_TILES) {
+          console.log("CREATE LAYER ZOOM@@@@@@@@@@@@@@@@@@@")
           jobId = await this.mergeTilesTasker.createMergeTilesTasks(
             data,
             layerRelativePath,
@@ -152,6 +153,7 @@ export class LayersManager {
             overseerUrl,
             true
           );
+          console.log("CREATE LAYER ZOOM ENDDDDDDD")
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);

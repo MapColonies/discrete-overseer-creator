@@ -75,6 +75,7 @@ export class MergeTilesTasker {
       targetFormat: data.metadata.tileOutputFormat as TileOutputFormat,
     };
     const mergeTasksParams = this.createBatchedTasks(params, isNew);
+    console.log("AFTEER tileBatchGenerator ########################################################## ")
     let mergeTaskBatch: IMergeTaskParams[] = [];
     let jobId: string | undefined = undefined;
 
@@ -84,6 +85,7 @@ export class MergeTilesTasker {
     });
 
     for await (const mergeTask of mergeTasksParams) {
+      console.log("MERGE TASK",mergeTask)
       mergeTaskBatch.push(mergeTask);
       if (mergeTaskBatch.length === this.mergeTaskBatchSize) {
         if (fetchTimerTaskBatchFill) {
@@ -116,6 +118,7 @@ export class MergeTilesTasker {
     }
     if (mergeTaskBatch.length !== 0) {
       if (jobId === undefined) {
+        console.log("JOB ID IS UNDEFINED TIS OK MERGE TASK ABASTHC", mergeTaskBatch)
         jobId = await this.jobManagerClient.createLayerJob(
           data,
           layerRelativePath,
@@ -143,10 +146,10 @@ export class MergeTilesTasker {
     return jobId as string;
   }
 
-  public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
+  public async *createLayerOverlaps(layers: ILayerMergeData[]): AsyncIterable<IMergeOverlaps> {
     let totalIntersection = undefined;
     const subGroups = subGroupsGen(layers, layers.length);
-    for (const subGroup of subGroups) {
+    for await(const subGroup of subGroups) {
       const subGroupFootprints = subGroup.map((layer) => layer.footprint as Footprint);
       try {
         let intersection = multiIntersect(subGroupFootprints);
@@ -166,7 +169,7 @@ export class MergeTilesTasker {
           intersection,
           layers: subGroup,
         };
-        yield task;
+        yield await Promise.resolve(task);
       } catch (err) {
         const error = err as Error;
         const message = `failed to calculate overlaps, error: ${error.message}, failing footprints: ${JSON.stringify(subGroupFootprints)}`;
@@ -181,6 +184,7 @@ export class MergeTilesTasker {
   }
 
   public async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
+    console.log("CREATE BATHCED TASKS")
     const sourceType = this.config.get<string>('mapServerCacheType');
     for (let zoom = params.maxZoom; zoom >= 0; zoom--) {
       const mappedLayers = params.layers.map((layer) => {
@@ -192,12 +196,15 @@ export class MergeTilesTasker {
       });
 
       // TODO: as we send the original footprints (instead of BBOX) some tiles can be repeated in several groups (if order matters between sources they should be ingested separatedly)
+      console.log("CREATE LAYER OVERLAPS")
       const overlaps = this.createLayerOverlaps(mappedLayers);
-      for (const overlap of overlaps) {
+      for await(const overlap of overlaps) {
         const rangeGen = this.tileRanger.encodeFootprint(overlap.intersection as Feature<Polygon>, zoom);
+        console.log("CREATE tileBatchGenerator ")
         const batches = tileBatchGenerator(this.batchSize, rangeGen);
+        console.log("SAFSADSFSDF tileBatchGenerator ", batches)
         for await (const batch of batches) {
-          yield {
+          yield await Promise.resolve({
             targetFormat: params.targetFormat,
             isNewTarget: isNew,
             batches: batch,
@@ -224,7 +231,7 @@ export class MergeTilesTasker {
                 return sourceParams;
               })
             ),
-          };
+          });
         }
       }
     }

@@ -3,8 +3,8 @@ FROM node:18 as build
 
 WORKDIR /tmp/buildApp
 
+COPY ./map-colonies-mc-utils-2.0.0.tgz ./
 COPY ./package*.json ./
-
 RUN npm install
 COPY . .
 RUN npm run build
