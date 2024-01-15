@@ -18,7 +18,7 @@ export class IngestionValidator {
     private readonly gdalInfoValidator: GdalInfoValidator,
     private readonly fileValidator: FileValidator
   ) {}
-  
+
   @withSpanV4
   public validateGpkgFiles(files: string[], originDirectory: string): boolean {
     return this.gpkgValidator.validateGpkgFiles(files, originDirectory);
