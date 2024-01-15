@@ -1,4 +1,5 @@
 import jsLogger from '@map-colonies/js-logger';
+import { BadRequestError } from '@map-colonies/error-types';
 import { GdalUtilities } from '../../../src/utils/GDAL/gdalUtilities';
 import { init as initMockConfig } from '../../mocks/config';
 
@@ -60,8 +61,14 @@ describe('gdalUtilities', () => {
       expect(result).toStrictEqual(expected);
     });
 
-    it('should throw error when fails to extract data', async () => {
+    it('should throw error when fails to create dataset', async () => {
       const filePath = 'tests/mocks/files/invalidFile.gpkg';
+      const action = async () => gdalUtilities.getInfoData(filePath);
+      await expect(action).rejects.toThrow(BadRequestError);
+    });
+
+    it('should throw error when fails to extract data', async () => {
+      const filePath = 'tests/mocks/files/world.jp2';
       const action = async () => gdalUtilities.getInfoData(filePath);
       await expect(action).rejects.toThrow(Error);
     });

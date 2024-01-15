@@ -2,6 +2,7 @@ import { join } from 'path';
 import Database, { Database as SQLiteDB } from 'better-sqlite3';
 import { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
+import { BadRequestError } from '@map-colonies/error-types';
 import { IConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { Grid } from '../layers/interfaces';
@@ -28,10 +29,23 @@ export class SQLiteClient {
     this.fullPath = join(this.layerSourcesPath, originDirectory, this.packageName);
   }
 
+  public getDB(fileMustExistFlag: boolean): SQLiteDB {
+    try {
+      return new Database(this.fullPath, { fileMustExist: fileMustExistFlag });
+    } catch (err) {
+      const message = `cant create SQLiteDB`;
+      this.logger.error({
+        msg: message,
+        filePath: this.fullPath,
+      });
+      throw new BadRequestError(message);
+    }
+  }
+
   public getGpkgIndex(): boolean {
     let db: SQLiteDB | undefined = undefined;
     try {
-      db = new Database(this.fullPath, { fileMustExist: true });
+      db = this.getDB(true);
       const tableName = this.getGpkgTableName(db);
       return this.getGpkgUniqueConstraintIndex(db, tableName) || this.getGpkgManualIndex(db, tableName);
     } catch (err) {
@@ -55,8 +69,7 @@ export class SQLiteClient {
   public getGrid(): Grid | undefined {
     let db: SQLiteDB | undefined = undefined;
     try {
-      db = new Database(this.fullPath, { fileMustExist: true });
-
+      db = this.getDB(true);
       // get the matrix_width and matrix_height
       const matrixQuery = 'SELECT MAX(matrix_width) as matrixWidth, MAX(matrix_height) as matrixHeight FROM gpkg_tile_matrix';
       const matrixValues = db.prepare(matrixQuery).get() as IMatrixValues;
@@ -88,7 +101,7 @@ export class SQLiteClient {
   public getGpkgTileWidthAndHeight(): { tileWidth: number; tileHeight: number } {
     let db: SQLiteDB | undefined = undefined;
     try {
-      db = new Database(this.fullPath, { fileMustExist: true });
+      db = this.getDB(true);
       const sql = `SELECT tile_width,tile_height FROM "gpkg_tile_matrix" group by tile_width,tile_height;`;
       this.logger.debug({ msg: `Executing query ${sql} on DB ${this.fullPath}` });
       // eslint-disable-next-line @typescript-eslint/naming-convention

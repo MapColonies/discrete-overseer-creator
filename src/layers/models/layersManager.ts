@@ -106,8 +106,20 @@ export class LayersManager {
 
     await this.validateJobNotRunning(productId, productType);
 
+    const isGpkg = this.ingestionValidator.validateIsGpkg(files);
+    if (isGpkg) {
+      this.ingestionValidator.validateGpkgFiles(files, originDirectory);
+      const grids: Grid[] = [];
+      files.forEach((file) => {
+        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+        const grid: Grid = sqliteClient.getGrid() as Grid;
+        grids.push(grid);
+      });
+      this.grids = grids;
+    }
+
     const jobType = await this.getJobType(data);
-    const taskType = this.getTaskType(jobType, files, originDirectory);
+    const taskType = this.getTaskType(jobType, isGpkg);
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
@@ -317,24 +329,14 @@ export class LayersManager {
   }
 
   @withSpanV4
-  private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
-    const validGpkgFiles = this.ingestionValidator.validateGpkgFiles(files, originDirectory);
-    if (validGpkgFiles) {
-      const grids: Grid[] = [];
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const grid = sqliteClient.getGrid();
-        grids.push(grid as Grid);
-      });
-      this.grids = grids;
-    }
+  private getTaskType(jobType: JobAction, isGpkg: boolean): string {
     if (jobType === JobAction.NEW) {
-      if (validGpkgFiles) {
+      if (isGpkg) {
         return this.tileMergeTask;
       } else {
         return this.tileSplitTask;
       }
-    } else if (validGpkgFiles) {
+    } else if (isGpkg) {
       return this.tileMergeTask;
     } else {
       const message = `Failed to create job type: ${jobType} - does not support Mixed/TIFF/TIF/J2k etc.. (GPKG support only)`;
@@ -505,36 +507,6 @@ export class LayersManager {
     }
   }
 
-  // validate productVersion will have decimal value
-  private validateCorrectProductVersion(data: IngestionParams): void {
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    if (data.metadata.productVersion?.indexOf('.') === -1) {
-      data.metadata.productVersion = `${data.metadata.productVersion}.0`;
-    }
-  }
-
-  private getTileOutputFormat(taskType: string, transparency: Transparency): TileOutputFormat {
-    let tileOutputFormat: TileOutputFormat;
-    if (transparency === Transparency.OPAQUE) {
-      if (taskType === TaskAction.MERGE_TILES) {
-        tileOutputFormat = TileOutputFormat.JPEG;
-      } else {
-        tileOutputFormat = TileOutputFormat.PNG;
-      }
-    } else {
-      tileOutputFormat = TileOutputFormat.PNG;
-    }
-    return tileOutputFormat;
-  }
-
-  private validateGeometry(footprint: Geometry): boolean {
-    const footprintIssues = getIssues(JSON.stringify(footprint));
-    if (footprintIssues.length === 0) {
-      return true;
-    }
-    return false;
-  }
-
   @withSpanAsyncV4
   private async validateInfoDataToParams(files: string[], originDirectory: string, data: IngestionParams): Promise<void> {
     try {
@@ -582,6 +554,36 @@ export class LayersManager {
         throw new Error(message);
       }
     }
+  }
+
+  // validate productVersion will have decimal value
+  private validateCorrectProductVersion(data: IngestionParams): void {
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    if (data.metadata.productVersion?.indexOf('.') === -1) {
+      data.metadata.productVersion = `${data.metadata.productVersion}.0`;
+    }
+  }
+
+  private getTileOutputFormat(taskType: string, transparency: Transparency): TileOutputFormat {
+    let tileOutputFormat: TileOutputFormat;
+    if (transparency === Transparency.OPAQUE) {
+      if (taskType === TaskAction.MERGE_TILES) {
+        tileOutputFormat = TileOutputFormat.JPEG;
+      } else {
+        tileOutputFormat = TileOutputFormat.PNG;
+      }
+    } else {
+      tileOutputFormat = TileOutputFormat.PNG;
+    }
+    return tileOutputFormat;
+  }
+
+  private validateGeometry(footprint: Geometry): boolean {
+    const footprintIssues = getIssues(JSON.stringify(footprint));
+    if (footprintIssues.length === 0) {
+      return true;
+    }
+    return false;
   }
 
   private setDefaultValues(data: IngestionParams): void {

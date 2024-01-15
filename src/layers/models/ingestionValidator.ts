@@ -28,6 +28,10 @@ export class IngestionValidator {
     return this.gdalInfoValidator.validateInfoData(files, originDirectory);
   }
 
+  public validateIsGpkg(files: string[]): boolean {
+    return this.gpkgValidator.isGpkg(files);
+  }
+
   public validateSourceDirectory(srcDir: string): boolean {
     return this.fileValidator.validateSourceDirectory(srcDir);
   }

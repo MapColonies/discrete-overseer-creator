@@ -33,7 +33,32 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Test Spec File",
+      "name": "Integration Tests",
+      "protocol": "inspector",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+      "args": [
+        "--collectCoverage=false",
+        "--colors",
+        "--config",
+        "${workspaceRoot}/tests/configurations/integration/jest.config.js",
+        "--runInBand",
+        /*"--runTestsByPath",
+        "${relativeFile}",
+        "--testPathPattern=${fileDirname}",*/
+        "--testTimeout=10000000"
+      ],
+      "outputCapture": "std",
+      "internalConsoleOptions": "openOnSessionStart",
+      "envFile": "${workspaceRoot}/.env",
+      "skipFiles": ["${workspaceRoot}/../../node_modules/**/*", "<node_internals>/**/*"],
+      "windows": {
+        "skipFiles": ["C:\\**\\node_modules\\**\\*", "<node_internals>/**/*"]
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Unit Tests",
       "protocol": "inspector",
       "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
       "args": [

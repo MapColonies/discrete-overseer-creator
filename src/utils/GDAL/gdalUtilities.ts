@@ -2,6 +2,7 @@ import { Logger } from '@map-colonies/js-logger';
 import * as gdal from 'gdal-async';
 import { inject, singleton } from 'tsyringe';
 import { GeoJSON } from 'geojson';
+import { BadRequestError } from '@map-colonies/error-types';
 import { SERVICES } from '../../common/constants';
 import { InfoData } from '../interfaces';
 
@@ -15,7 +16,7 @@ export class GdalUtilities {
         filePath: filePath,
         msg: `get gdal info for path: ${filePath}`,
       });
-      const dataset: gdal.Dataset = await gdal.openAsync(filePath);
+      const dataset: gdal.Dataset = (await this.getDataset(filePath)) as gdal.Dataset;
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
       //eslint-disable-next-line @typescript-eslint/naming-convention
       const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string; wgs84Extent: GeoJSON };
@@ -33,13 +34,31 @@ export class GdalUtilities {
       dataset.close();
       return infoData;
     } catch (err) {
-      const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on file';
+      if (err instanceof BadRequestError) {
+        throw new BadRequestError(err.message);
+      } else {
+        const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on file';
+        this.logger.error({
+          filePath: filePath,
+          msg: `[GdalUtilities][GetInfoData] error occurred: ${message}`,
+          err: err,
+        });
+        throw new Error(message);
+      }
+    }
+  }
+
+  private async getDataset(filePath: string): Promise<gdal.Dataset | undefined> {
+    try {
+      return await gdal.openAsync(filePath);
+    } catch (err) {
+      const message = 'failed to open dataset';
       this.logger.error({
         filePath: filePath,
-        msg: `[GdalUtilities][GetInfoData] error occurred: ${message}`,
+        msg: `[GdalUtilities][getDataset] error occurred: ${message}`,
         err: err,
       });
-      throw new Error(message);
+      throw new BadRequestError(message);
     }
   }
 }

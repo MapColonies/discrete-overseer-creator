@@ -13,6 +13,7 @@ import {
   validateNotWatchDirMock,
   fileValidatorValidateExistsMock,
   ingestionValidatorMock,
+  validateIsGpkgMock,
 } from '../../../mocks/ingestionValidator';
 import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
@@ -129,6 +130,7 @@ describe('LayersManager', () => {
       getJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(false);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -159,6 +161,7 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -192,6 +195,7 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -236,6 +240,7 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
