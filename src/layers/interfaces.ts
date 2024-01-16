@@ -40,3 +40,8 @@ export interface PixelRange {
   min: number;
   max: number;
 }
+
+export interface SourcesValidationParams {
+  fileNames: string[];
+  originDirectory: string;
+}
