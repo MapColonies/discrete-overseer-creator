@@ -8,18 +8,21 @@ import { catalogExistsMock, catalogClientMock, getHighestLayerVersionMock, findR
 import { mapPublisherClientMock, mapExistsMock } from '../../../mocks/clients/mapPublisherClient';
 import { init as initMockConfig, configMock, setValue, clear as clearMockConfig } from '../../../mocks/config';
 import {
-  fileValidatorValidateExistsMock,
+  validateGpkgFilesMock,
   validateSourceDirectoryMock,
   validateNotWatchDirMock,
-  validateGpkgFilesMock,
-  fileValidatorMock,
-} from '../../../mocks/fileValidator';
+  fileValidatorValidateExistsMock,
+  ingestionValidatorMock,
+  validateIsGpkgMock,
+  getGridsMock,
+} from '../../../mocks/ingestionValidator';
 import { JobAction, TaskAction } from '../../../../src/common/enums';
 import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
 import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaskerMock } from '../../../mocks/splitTilesTasker';
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
 import { Grid } from '../../../../src/layers/interfaces';
+import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilitiesMock';
 import { tracerMock } from '../../../mocks/tracer';
 
 let layersManager: LayersManager;
@@ -30,7 +33,7 @@ const testImageMetadata = {
   productName: 'test name',
   description: 'test desc',
   minHorizontalAccuracyCE90: 3,
-  maxResolutionDeg: 2.68220901489258e-6,
+  maxResolutionDeg: 0.001373291015625,
   rms: 0.5,
   scale: 3,
   sensors: ['OTHER', 'Test'],
@@ -38,11 +41,11 @@ const testImageMetadata = {
     type: 'Polygon',
     coordinates: [
       [
-        [0, 0],
-        [0, 1],
-        [1, 1],
-        [1, 0],
-        [0, 0],
+        [34.91692694458297, 33.952927285465876],
+        [34.90156677832806, 32.42331628696577],
+        [36.23406120090846, 32.410349688281244],
+        [36.237901242471565, 33.96885230417779],
+        [34.91692694458297, 33.952927285465876],
       ],
     ],
   },
@@ -83,10 +86,28 @@ describe('LayersManager', () => {
       jobManagerClientMock,
       catalogClientMock,
       mapPublisherClientMock,
-      fileValidatorMock,
+      ingestionValidatorMock,
+      gdalUtilitiesMock,
       splitTilesTaskerMock,
       mergeTilesTasker
     );
+    getInfoDataMock.mockResolvedValue({
+      crs: 4326,
+      fileFormat: 'GPKG',
+      pixelSize: 0.001373291015625,
+      footprint: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [34.61517, 34.10156],
+            [34.61517, 32.242124],
+            [36.4361539, 32.242124],
+            [36.4361539, 34.10156],
+            [34.61517, 34.10156],
+          ],
+        ],
+      },
+    });
   });
 
   describe('createLayer', () => {
@@ -94,11 +115,11 @@ describe('LayersManager', () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
-
+      setValue('layerSourceDir', 'tests/mocks');
       const testData: IngestionParams = {
-        fileNames: ['test.tif'],
+        fileNames: ['indexed.gpkg'],
         metadata: { ...testImageMetadata },
-        originDirectory: '/here',
+        originDirectory: '/files',
       };
 
       getHighestLayerVersionMock.mockResolvedValue(undefined);
@@ -110,20 +131,7 @@ describe('LayersManager', () => {
       getJobsMock.mockResolvedValue([]);
       createLayerJobMock.mockResolvedValue('testJobId');
       createSplitTilesTasksMock.mockResolvedValue(undefined);
-
-      const zoomLevelCalculator = new ZoomLevelCalculator(configMock);
-      layersManager = new LayersManager(
-        configMock,
-        jsLogger({ enabled: false }),
-        tracerMock,
-        zoomLevelCalculator,
-        jobManagerClientMock,
-        catalogClientMock,
-        mapPublisherClientMock,
-        fileValidatorMock,
-        splitTilesTaskerMock,
-        mergeTilesTasker
-      );
+      validateIsGpkgMock.mockReturnValue(false);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
@@ -136,10 +144,11 @@ describe('LayersManager', () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      setValue('layerSourceDir', 'tests/mocks');
       const testData: IngestionParams = {
-        fileNames: ['test.gpkg'],
+        fileNames: ['indexed.gpkg'],
         metadata: { ...testImageMetadata },
-        originDirectory: '/here',
+        originDirectory: '/files',
       };
 
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
@@ -153,6 +162,8 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -186,6 +197,8 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -211,10 +224,12 @@ describe('LayersManager', () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
       setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      setValue('layerSourceDir', 'tests/mocks');
+
       const testData: IngestionParams = {
-        fileNames: ['test.gpkg'],
+        fileNames: ['indexed.gpkg'],
         metadata: { ...testImageMetadata },
-        originDirectory: '/here',
+        originDirectory: '/files',
       };
 
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
@@ -228,6 +243,8 @@ describe('LayersManager', () => {
       validateGpkgFilesMock.mockReturnValue(true);
       createLayerJobMock.mockResolvedValue('testJobId');
       createMergeTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(true);
+      getGridsMock.mockReturnValue([Grid.TWO_ON_ONE]);
 
       await layersManager.createLayer(testData, managerCallbackUrl);
 
@@ -248,7 +265,7 @@ describe('LayersManager', () => {
         TaskAction.MERGE_TILES,
         JobAction.NEW,
         [Grid.TWO_ON_ONE],
-        [0, 0, 1, 1],
+        [34.90156677832806, 32.410349688281244, 36.237901242471565, 33.96885230417779],
         managerCallbackUrl,
         true
       );

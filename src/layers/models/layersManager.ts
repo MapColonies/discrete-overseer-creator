@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +9,8 @@ import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFo
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
+import { getIssues } from '@placemarkio/check-geojson';
+import booleanContains from '@turf/boolean-contains';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4, withSpanV4 } from '@map-colonies/telemetry';
 import { getMapServingLayerName } from '../../utils/layerNameGenerator';
@@ -21,9 +24,10 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
-import { FileValidator } from './fileValidator';
+import { InfoData } from '../../utils/interfaces';
+import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
+import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
 
 @injectable()
@@ -31,6 +35,7 @@ export class LayersManager {
   private readonly tileSplitTask: string;
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
+  private readonly sourceMount: string;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -46,11 +51,14 @@ export class LayersManager {
     private readonly db: JobManagerWrapper,
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
-    private readonly fileValidator: FileValidator,
+    private readonly ingestionValidator: IngestionValidator,
+    private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
+
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
+    this.sourceMount = this.config.get<string>('layerSourceDir');
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
@@ -97,8 +105,14 @@ export class LayersManager {
 
     await this.validateJobNotRunning(productId, productType);
 
+    const isGpkg = this.ingestionValidator.validateIsGpkg(files);
+    if (isGpkg) {
+      this.ingestionValidator.validateGpkgFiles(files, originDirectory);
+      this.grids = this.ingestionValidator.getGrids(files, originDirectory);
+    }
+
     const jobType = await this.getJobType(data);
-    const taskType = this.getTaskType(jobType, files, originDirectory);
+    const taskType = this.getTaskType(jobType, isGpkg);
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
@@ -308,24 +322,14 @@ export class LayersManager {
   }
 
   @withSpanV4
-  private getTaskType(jobType: JobAction, files: string[], originDirectory: string): string {
-    const validGpkgFiles = this.fileValidator.validateGpkgFiles(files, originDirectory);
-    if (validGpkgFiles) {
-      const grids: Grid[] = [];
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const grid = sqliteClient.getGrid();
-        grids.push(grid as Grid);
-      });
-      this.grids = grids;
-    }
+  private getTaskType(jobType: JobAction, isGpkg: boolean): string {
     if (jobType === JobAction.NEW) {
-      if (validGpkgFiles) {
+      if (isGpkg) {
         return this.tileMergeTask;
       } else {
         return this.tileSplitTask;
       }
-    } else if (validGpkgFiles) {
+    } else if (isGpkg) {
       return this.tileMergeTask;
     } else {
       const message = `Failed to create job type: ${jobType} - does not support Mixed/TIFF/TIF/J2k etc.. (GPKG support only)`;
@@ -341,15 +345,24 @@ export class LayersManager {
   private async validateFiles(data: IngestionParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
-    const originDirectoryExists = this.fileValidator.validateSourceDirectory(originDirectory);
+    if (fileNames.length !== 1) {
+      const message = `Invalid files list, can contain only one file`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new BadRequestError(message);
+    }
+    const originDirectoryExists = this.ingestionValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
       throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
     }
-    const originDirectoryNotWatch = this.fileValidator.validateNotWatchDir(originDirectory);
+    const originDirectoryNotWatch = this.ingestionValidator.validateNotWatchDir(originDirectory);
     if (!originDirectoryNotWatch) {
       throw new BadRequestError(`"originDirectory" can't be with same name as watch directory`);
     }
-    const filesExists = await this.fileValidator.validateExists(originDirectory, fileNames);
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
     if (!filesExists) {
       const message = `Invalid files list, some files are missing`;
       this.logger.error({
@@ -359,7 +372,8 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-    await this.fileValidator.validateProjections(fileNames, originDirectory);
+    await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
+    await this.validateInfoDataToParams(fileNames, originDirectory, data);
   }
 
   @withSpanAsyncV4
@@ -411,9 +425,14 @@ export class LayersManager {
   private validateGeoJsons(metadata: LayerMetadata): void {
     const footprint = metadata.footprint as Geometry;
     // TODO: consider split footprint type and footprint coordinates condition to prevent misundestand error log.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if ((footprint.type != 'Polygon' && footprint.type != 'MultiPolygon') || footprint.coordinates == undefined || !isValidGeoJson(footprint)) {
-      const message = `Received invalid footprint: ${JSON.stringify(footprint)}`;
+    if (
+      (footprint.type !== 'Polygon' && footprint.type !== 'MultiPolygon') ||
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      footprint.coordinates === undefined ||
+      !this.validateGeometry(footprint) ||
+      !isValidGeoJson(footprint)
+    ) {
+      const message = `Received invalid footprint: ${JSON.stringify(footprint)} `;
       this.logger.error({
         productId: metadata.productId,
         productType: metadata.productType,
@@ -433,9 +452,10 @@ export class LayersManager {
       }
       featureCollection.features.forEach((feature) => {
         if (
-          (feature.geometry.type != 'Polygon' && feature.geometry.type != 'MultiPolygon') ||
+          (feature.geometry.type !== 'Polygon' && feature.geometry.type !== 'MultiPolygon') ||
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          feature.geometry.coordinates == undefined ||
+          feature.geometry.coordinates === undefined ||
+          !this.validateGeometry(footprint) ||
           !isValidGeoJson(feature)
         ) {
           throw new BadRequestError(`received invalid footprint for layerPolygonParts feature, it must be valid Polygon or MultiPolygon`);
@@ -480,6 +500,55 @@ export class LayersManager {
     }
   }
 
+  @withSpanAsyncV4
+  private async validateInfoDataToParams(files: string[], originDirectory: string, data: IngestionParams): Promise<void> {
+    try {
+      await Promise.all(
+        files.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
+          let message = '';
+          if ((data.metadata.maxResolutionDeg as number) > infoData.pixelSize) {
+            message += `Provided ResolutionDegree is bigger than pixel size from GeoPackage.`;
+          }
+          if (data.metadata.footprint?.type === 'MultiPolygon') {
+            data.metadata.footprint.coordinates.forEach((coords) => {
+              const polygon = { type: 'Polygon', coordinates: coords };
+              if (!booleanContains(infoData.footprint as Geometry, polygon as Geometry)) {
+                message += `Provided footprint isn't contained in the extent from GeoPackage.`;
+              }
+            });
+          } else if (!booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)) {
+            message += `Provided footprint isn't contained in the extent from GeoPackage.`;
+          }
+          if (message !== '') {
+            this.logger.error({
+              filePath: filePath,
+              msg: message,
+            });
+            throw new BadRequestError(message);
+          }
+        })
+      );
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        this.logger.error({
+          msg: err.message,
+          err: err,
+        });
+        throw new BadRequestError(err.message);
+      } else {
+        const message = `Failed to Compare data to request: ${(err as Error).message}`;
+        this.logger.error({
+          msg: message,
+          err: err,
+        });
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
+    }
+  }
+
   // validate productVersion will have decimal value
   private validateCorrectProductVersion(data: IngestionParams): void {
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -500,6 +569,14 @@ export class LayersManager {
       tileOutputFormat = TileOutputFormat.PNG;
     }
     return tileOutputFormat;
+  }
+
+  private validateGeometry(footprint: Geometry): boolean {
+    const footprintIssues = getIssues(JSON.stringify(footprint));
+    if (footprintIssues.length === 0) {
+      return true;
+    }
+    return false;
   }
 
   private setDefaultValues(data: IngestionParams): void {

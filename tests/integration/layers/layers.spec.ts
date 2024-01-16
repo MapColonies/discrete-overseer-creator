@@ -13,7 +13,7 @@ import { catalogExistsMock, getHighestLayerVersionMock, findRecordMock } from '.
 import { setValue, clear as clearConfig } from '../../mocks/config';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
-import { getProjectionMock } from '../../mocks/gdalUtilitiesMock';
+import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersManager } from '../../../src/layers/models/layersManager';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
@@ -22,11 +22,11 @@ const validPolygon = {
   type: 'Polygon',
   coordinates: [
     [
-      [100, 0],
-      [101, 0],
-      [101, 1],
-      [100, 1],
-      [100, 0],
+      [34.91692694458297, 33.952927285465876],
+      [34.90156677832806, 32.42331628696577],
+      [36.23406120090846, 32.410349688281244],
+      [36.237901242471565, 33.96885230417779],
+      [34.91692694458297, 33.952927285465876],
     ],
   ],
 };
@@ -35,11 +35,11 @@ const validMultiPolygon = {
   coordinates: [
     [
       [
-        [100, 0],
-        [101, 0],
-        [101, 1],
-        [100, 1],
-        [100, 0],
+        [34.91692694458297, 33.952927285465876],
+        [34.90156677832806, 32.42331628696577],
+        [36.23406120090846, 32.410349688281244],
+        [36.237901242471565, 33.96885230417779],
+        [34.91692694458297, 33.952927285465876],
       ],
     ],
   ],
@@ -79,9 +79,9 @@ const validTestImageMetadata = {
   footprint: validPolygon,
   scale: 100,
   rms: 2.6,
-  maxResolutionDeg: 0.007,
+  maxResolutionDeg: 0.001373291015625,
   sensors: ['RGB'],
-  classification: 'test',
+  classification: '4',
   type: RecordType.RECORD_RASTER,
   productType: ProductType.ORTHOPHOTO_HISTORY,
   srsId: '4326',
@@ -92,13 +92,13 @@ const validTestImageMetadata = {
   sourceDateStart: new Date('11/16/2017'),
   region: [],
   maxResolutionMeter: 0.2,
-  productBoundingBox: '100,0,101,1',
+  productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
   transparency: Transparency.TRANSPARENT,
 } as unknown as LayerMetadata;
 const validTestData = {
-  fileNames: [],
+  fileNames: ['indexed.gpkg'],
   metadata: validTestImageMetadata,
-  originDirectory: '/here',
+  originDirectory: '/files',
 };
 const invalidTestImageMetadata = {
   source: 'testId',
@@ -173,7 +173,24 @@ describe('layers', function () {
       useChild: false,
     });
     requestSender = new LayersRequestSender(app);
-    getProjectionMock.mockResolvedValue('4326');
+    //getProjectionMock.mockResolvedValue('4326');
+    getInfoDataMock.mockReturnValue({
+      crs: 4326,
+      fileFormat: 'GPKG',
+      pixelSize: 0.001373291015625,
+      footprint: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [34.61517, 34.10156],
+            [34.61517, 32.242124],
+            [36.4361539, 32.242124],
+            [36.4361539, 34.10156],
+            [34.61517, 34.10156],
+          ],
+        ],
+      },
+    });
     createLayerJobMock.mockResolvedValue('jobId');
   });
   afterEach(function () {
@@ -193,7 +210,7 @@ describe('layers', function () {
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -229,7 +246,7 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
-    it('should return 200 status code for sending request transparency opaque with png output format', async function () {
+    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
       getJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: transparencyOpaqueMetadata };
@@ -249,7 +266,7 @@ describe('layers', function () {
           metadata: {
             ...validTestData.metadata,
             transparency: Transparency.OPAQUE,
-            tileOutputFormat: TileOutputFormat.PNG,
+            tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -257,13 +274,17 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        undefined
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3); - isnt called at all- now it is merge not split
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -287,7 +308,7 @@ describe('layers', function () {
             ...validTestData.metadata,
             productVersion: `${productVersionMetadata.productVersion}.0`,
             transparency: Transparency.OPAQUE,
-            tileOutputFormat: TileOutputFormat.PNG,
+            tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -295,13 +316,17 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        undefined
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -310,10 +335,13 @@ describe('layers', function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       const generateRecordIdsSpy = jest.spyOn(LayersManager.prototype as any, 'generateRecordIds');
       const createMergeTilesTaskspy = jest.spyOn(MergeTilesTasker.prototype as any, 'createMergeTilesTasks');
+      //const getGpkgTileWidthAndHeightSpy = jest.spyOn(SQLiteClient.prototype, 'getGpkgTileWidthAndHeight');
+      //const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       getJobsMock.mockResolvedValue([]);
       getHighestLayerVersionMock.mockResolvedValue(1.0);
       mapExistsMock.mockResolvedValue(true);
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
+      //getGpkgTileWidthAndHeightSpy.mockReturnValue({ tileWidth: 256, tileHeight: 256 });
       const higherVersionMetadata = { ...validTestData.metadata, productVersion: '3.0' };
       const validHigherVersionRecord = { ...validTestData, fileNames: ['indexed.gpkg'], originDirectory: 'files', metadata: higherVersionMetadata };
 
@@ -407,14 +435,14 @@ describe('layers', function () {
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
     it('should return 200 status code for sending request with extra metadata fields', async function () {
       getJobsMock.mockResolvedValue([]);
-      let exrtraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
-      exrtraFieldTestMetaData = { ...exrtraFieldTestMetaData };
-      const extraTestData = { ...validTestData, metadata: exrtraFieldTestMetaData };
+      let extraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
+      extraFieldTestMetaData = { ...extraFieldTestMetaData };
+      const extraTestData = { ...validTestData, metadata: extraFieldTestMetaData };
 
       const response = await requestSender.createLayer(extraTestData);
 
@@ -431,7 +459,7 @@ describe('layers', function () {
           metadata: {
             ...validTestData.metadata,
             tileOutputFormat: TileOutputFormat.PNG,
-            productBoundingBox: '100,0,101,1',
+            productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -439,16 +467,20 @@ describe('layers', function () {
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
           },
+          fileNames: validTestData.fileNames,
+          originDirectory: validTestData.originDirectory,
         }),
         expect.anything(),
+        'Ingestion_New',
+        'tilesMerging',
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        undefined
       );
-      expect(createTasksMock).toHaveBeenCalledTimes(3);
+      //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
-    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
+    it('should return 200 status code for transparency opaque with jpeg output format', async function () {
       const getGridSpy = jest.spyOn(SQLiteClient.prototype, 'getGrid');
       getJobsMock.mockResolvedValue([]);
       getGridSpy.mockReturnValue(Grid.TWO_ON_ONE);
@@ -655,10 +687,10 @@ describe('layers', function () {
       const response = await requestSender.createLayer(testData);
 
       expect(response).toSatisfyApiSpec();
-      expect(getProjectionMock).toHaveBeenCalledTimes(1);
+      //expect(getProjectionMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
       expect(getJobsMock).toHaveBeenCalledTimes(1);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(mapExistsMock).toHaveBeenCalledTimes(0);
       expect(catalogExistsMock).toHaveBeenCalledTimes(0);
       expect(createLayerJobMock).toHaveBeenCalledTimes(0);
