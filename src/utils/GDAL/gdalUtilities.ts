@@ -52,7 +52,7 @@ export class GdalUtilities {
     try {
       return await gdal.openAsync(filePath);
     } catch (err) {
-      const message = 'failed to open dataset';
+      const message = `failed to open file: ${filePath}`;
       this.logger.error({
         filePath: filePath,
         msg: `[GdalUtilities][getDataset] error occurred: ${message}`,

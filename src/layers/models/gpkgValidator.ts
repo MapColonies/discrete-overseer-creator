@@ -56,6 +56,20 @@ export class GpkgValidator {
     return allValid;
   }
 
+  public getGrids(files: string[], originDirectory: string): Grid[] {
+    const grids: Grid[] = [];
+    try {
+      files.forEach((file) => {
+        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
+        const grid: Grid = sqliteClient.getGrid() as Grid;
+        grids.push(grid);
+      });
+      return grids;
+    } catch (err) {
+      throw new Error(`${(err as Error).message}`);
+    }
+  }
+
   private validateGpkgIndex(files: string[], originDirectory: string): void {
     files.forEach((file) => {
       const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);

@@ -6,6 +6,7 @@ const validateSourceDirectoryMock = jest.fn();
 const validateNotWatchDirMock = jest.fn();
 const fileValidatorValidateExistsMock = jest.fn();
 const validateIsGpkgMock = jest.fn();
+const getGridsMock = jest.fn();
 
 const ingestionValidatorMock = {
   validateGpkgFiles: validateGpkgFilesMock,
@@ -14,6 +15,7 @@ const ingestionValidatorMock = {
   validateNotWatchDir: validateNotWatchDirMock,
   validateExists: fileValidatorValidateExistsMock,
   validateIsGpkg: validateIsGpkgMock,
+  getGrids: getGridsMock,
 } as unknown as IngestionValidator;
 
 export {
@@ -23,5 +25,6 @@ export {
   validateNotWatchDirMock,
   fileValidatorValidateExistsMock,
   validateIsGpkgMock,
+  getGridsMock,
   ingestionValidatorMock,
 };

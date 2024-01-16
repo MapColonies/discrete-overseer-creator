@@ -24,7 +24,6 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { SQLiteClient } from '../../serviceClients/sqliteClient';
 import { Grid, ITaskParameters } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
@@ -109,13 +108,7 @@ export class LayersManager {
     const isGpkg = this.ingestionValidator.validateIsGpkg(files);
     if (isGpkg) {
       this.ingestionValidator.validateGpkgFiles(files, originDirectory);
-      const grids: Grid[] = [];
-      files.forEach((file) => {
-        const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-        const grid: Grid = sqliteClient.getGrid() as Grid;
-        grids.push(grid);
-      });
-      this.grids = grids;
+      this.grids = this.ingestionValidator.getGrids(files, originDirectory);
     }
 
     const jobType = await this.getJobType(data);

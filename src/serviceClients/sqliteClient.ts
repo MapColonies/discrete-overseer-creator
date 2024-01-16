@@ -33,10 +33,11 @@ export class SQLiteClient {
     try {
       return new Database(this.fullPath, { fileMustExist: fileMustExistFlag });
     } catch (err) {
-      const message = `cant create SQLiteDB`;
+      const message = `Can't open file ${this.fullPath} as SQLiteDB`;
       this.logger.error({
         msg: message,
         filePath: this.fullPath,
+        err: err,
       });
       throw new BadRequestError(message);
     }
