@@ -24,7 +24,7 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { Grid, ITaskParameters } from '../interfaces';
+import { SourcesValidationParams, Grid, ITaskParameters } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
@@ -101,7 +101,9 @@ export class LayersManager {
     if (data.metadata.ingestionDate !== undefined) {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
-    await this.validateFiles(data);
+    const filesData: SourcesValidationParams = { fileNames: files, originDirectory: originDirectory };
+    await this.validateFiles(filesData);
+    await this.validateInfoDataToParams(data.fileNames, data.originDirectory, data);
 
     await this.validateJobNotRunning(productId, productType);
 
@@ -278,6 +280,27 @@ export class LayersManager {
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }
 
+  //TODO: decide what the function will return -void or boolean
+  @withSpanAsyncV4
+  public async checkFiles(data: SourcesValidationParams): Promise<void> {
+    try {
+      const files: string[] = data.fileNames;
+      const originDirectory: string = data.originDirectory;
+      this.logger.info({
+        files: files,
+        originDirectory: originDirectory,
+        msg: 'validating files',
+      });
+      await this.validateFiles(data);
+      const isGpkg = this.ingestionValidator.validateIsGpkg(files);
+      if (isGpkg) {
+        this.ingestionValidator.validateGpkgFiles(files, originDirectory);
+      }
+    } catch (err) {
+      //TODO: catch
+    }
+  }
+
   @withSpanAsyncV4
   private async getJobType(data: IngestionParams): Promise<JobAction> {
     const productId = data.metadata.productId as string;
@@ -342,7 +365,7 @@ export class LayersManager {
   }
 
   @withSpanAsyncV4
-  private async validateFiles(data: IngestionParams): Promise<void> {
+  private async validateFiles(data: SourcesValidationParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
     if (fileNames.length !== 1) {
@@ -373,7 +396,6 @@ export class LayersManager {
       throw new BadRequestError(message);
     }
     await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
-    await this.validateInfoDataToParams(fileNames, originDirectory, data);
   }
 
   @withSpanAsyncV4
