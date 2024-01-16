@@ -33,7 +33,7 @@ export class IngestionValidator {
   public validateIsGpkg(files: string[]): boolean {
     return this.gpkgValidator.isGpkg(files);
   }
-  
+
   public getGrids(files: string[], originDirectory: string): Grid[] {
     return this.gpkgValidator.getGrids(files, originDirectory);
   }
