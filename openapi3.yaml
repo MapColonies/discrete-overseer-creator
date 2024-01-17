@@ -73,7 +73,7 @@ paths:
                     pattern: ^.+\.[Gg][Pp][Kk][Gg]$
               required:
                 - originDirectory
-                - productVersion
+                - fileNames
             example:
               originDirectory: string
               fileNames:
@@ -81,12 +81,16 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/filesCheckResponse'
         '400':
           description: Invalid request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/errorMessage'
+                $ref: '#/components/schemas/filesCheckResponse'
         '500':
           description: Internal Server Error
           content:
@@ -204,6 +208,16 @@ components:
           type: string
       required:
         - message
+    filesCheckResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        reason:
+          type: string
+      required:
+        - isValid
+        - reason
     tocResponse:
       type: object
       properties:
