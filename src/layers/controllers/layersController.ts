@@ -2,13 +2,13 @@ import { IngestionParams } from '@map-colonies/mc-model-types';
 import { RequestHandler } from 'express';
 import httpStatus from 'http-status-codes';
 import { injectable, inject } from 'tsyringe';
-import { SourcesValidationParams } from '../interfaces';
+import { SourcesValidationParams, SourcesValidationResponse } from '../interfaces';
 import { filterLayerMetadata } from '../../common/utils/ingestionParamExtractor';
 
 import { LayersManager } from '../models/layersManager';
 
 type CreateLayerHandler = RequestHandler<undefined, undefined, IngestionParams>;
-type CheckFilesHandler = RequestHandler<undefined, undefined, SourcesValidationParams>;
+type CheckFilesHandler = RequestHandler<undefined, SourcesValidationResponse, SourcesValidationParams>;
 
 @injectable()
 export class LayersController {
@@ -30,14 +30,15 @@ export class LayersController {
       next(err);
     }
   };
+
   public validateSources: CheckFilesHandler = async (req, res, next) => {
     try {
       const sourceRequest: SourcesValidationParams = {
         originDirectory: req.body.originDirectory,
         fileNames: req.body.fileNames,
       };
-      await this.manager.checkFiles(sourceRequest);
-      return res.sendStatus(httpStatus.OK);
+      const filesCheckResponse: SourcesValidationResponse = await this.manager.checkFiles(sourceRequest);
+      res.status(httpStatus.OK).send(filesCheckResponse);
     } catch (err) {
       next(err);
     }

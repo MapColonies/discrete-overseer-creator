@@ -24,7 +24,7 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { SourcesValidationParams, Grid, ITaskParameters } from '../interfaces';
+import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
@@ -282,7 +282,7 @@ export class LayersManager {
 
   //TODO: decide what the function will return -void or boolean
   @withSpanAsyncV4
-  public async checkFiles(data: SourcesValidationParams): Promise<void> {
+  public async checkFiles(data: SourcesValidationParams): Promise<SourcesValidationResponse> {
     try {
       const files: string[] = data.fileNames;
       const originDirectory: string = data.originDirectory;
@@ -296,8 +296,15 @@ export class LayersManager {
       if (isGpkg) {
         this.ingestionValidator.validateGpkgFiles(files, originDirectory);
       }
+      const validResponse: SourcesValidationResponse = { isValid: true, reason: 'files are valid' };
+      return validResponse;
     } catch (err) {
-      //TODO: catch
+      if (err instanceof BadRequestError) {
+        const response: SourcesValidationResponse = { isValid: false, reason: err.message };
+        return response;
+      } else {
+        throw err;
+      }
     }
   }
 

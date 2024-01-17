@@ -45,3 +45,8 @@ export interface SourcesValidationParams {
   fileNames: string[];
   originDirectory: string;
 }
+
+export interface SourcesValidationResponse {
+  isValid: boolean;
+  reason: string;
+}
