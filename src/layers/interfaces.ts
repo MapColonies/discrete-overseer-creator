@@ -35,3 +35,8 @@ export enum Grid {
   TWO_ON_ONE = '2X1',
   ONE_ON_ONE = '1X1',
 }
+
+export interface PixelRange {
+  min: number;
+  max: number;
+}

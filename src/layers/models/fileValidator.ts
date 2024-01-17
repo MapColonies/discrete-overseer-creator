@@ -1,22 +1,14 @@
-import { promises as fsPromises, constants as fsConstants } from 'fs';
-import { join, extname } from 'path';
+import { promises as fsPromises, constants as fsConstants } from 'node:fs';
+import { join } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
-import { BadRequestError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
-import { SQLiteClient } from '../../serviceClients/sqliteClient';
-import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 
 @injectable()
 export class FileValidator {
   private readonly sourceMount: string;
-  private readonly validProjection = '4326';
-  public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly gdalUtilities: GdalUtilities
-  ) {
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
   }
 
@@ -56,61 +48,6 @@ export class FileValidator {
         .catch(() => false);
     });
     const allValid = (await Promise.all(filePromises)).every((value) => value);
-    return allValid;
-  }
-
-  public validateGpkgFiles(files: string[], originDirectory: string): boolean {
-    const isExtensionValid = this.validateGpkgExtension(files);
-    if (!isExtensionValid) {
-      return false;
-    }
-    this.validateGpkgIndex(files, originDirectory);
-    return true;
-  }
-
-  public validateGpkgIndex(files: string[], originDirectory: string): void {
-    files.forEach((file) => {
-      const sqliteClient = new SQLiteClient(this.config, this.logger, file, originDirectory);
-      const index = sqliteClient.getGpkgIndex();
-      if (!index) {
-        const message = `Geopackage name: ${file} does not have a tiles index`;
-        this.logger.error({
-          originDirectory: originDirectory,
-          fileName: file,
-          msg: message,
-        });
-        throw new BadRequestError(message);
-      }
-    });
-  }
-
-  public async validateProjections(files: string[], originDirectory: string): Promise<void> {
-    await Promise.all(
-      files.map(async (file) => {
-        const filePath = join(this.sourceMount, originDirectory, file);
-        const projection = await this.gdalUtilities.getProjection(filePath);
-        if (projection !== this.validProjection) {
-          const message = `Unsupported projection: ${projection as string}, for input file: ${filePath}, must have valid projection: ${
-            this.validProjection
-          }`;
-          this.logger.error({
-            filePath: filePath,
-            msg: message,
-          });
-          throw new BadRequestError(message);
-        }
-      })
-    );
-  }
-
-  private validateGpkgExtension(files: string[]): boolean {
-    if (!Array.isArray(files) || !files.length) {
-      return false;
-    }
-    const validGpkgExt = '.gpkg';
-    const allValid = files.every((file) => {
-      return extname(file).toLowerCase() === validGpkgExt;
-    });
     return allValid;
   }
 }

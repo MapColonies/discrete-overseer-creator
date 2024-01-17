@@ -189,7 +189,7 @@ components:
       value:
         metadata:
           type: RECORD_RASTER
-          classification: string
+          classification: 3
           productId: string
           productName: string
           productVersion: '47.1'
@@ -228,4 +228,4 @@ components:
           productBoundingBox: '-180,-90,180,90'
         originDirectory: string
         fileNames:
-          - example.tif
+          - example.gpkg
