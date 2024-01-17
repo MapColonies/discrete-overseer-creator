@@ -2,43 +2,75 @@ global:
   cloudProvider: {}
   tracing: {}
   metrics: {}
-  environment: {}
-
-rasterCommon:
+  environment: ""
   useNodeAffinity: false
   serviceUrls:
-    syncManager: http://localhost:8081
-    mapproxyApi: http://localhost:8082
-    catalogManager: http://localhost:8083
-    jobManager: http://localhost:8084
+    syncManager: ""
+    mapproxyApi: ""
+    catalogManager: ""
+    jobManager: ""
+    mapServerPublicDNS: ""
+  ingestion:
+    watchDirectoryOptions:
+      directory: 'watch'
   jobManagement:
     jobDomain: RASTER
     ingestion:
       new: 
-        jobType: Ingestion_New
-        splitTilesTaskType: tilesSplitting
-        mergeTilesTaskType: tilesMerging
+        jobType: ""
+        splitTilesTaskType: ""
+        mergeTilesTaskType: ""
       update: 
-        jobType: Ingestion_Update
-        mergeTilesTaskType: tilesMerging
+        jobType: ""
+        mergeTilesTaskType: ""
       updateSwap:
-        jobType: Ingestion_Swap_Update
+        jobType: ""
         supportedIngestionSwapTypes: 
-        - productType: RasterVectorBest
-          productSubType: testProductSubType
-    tilesStorageProvider: "FS"
+        - productType: ""
+          productSubType: ""
+  storage:
+    tilesStorageProvider: ""
     fs:
       ingestionSourcePvc:
-        enabled: true
-        name: ingestion-source-pvc
-        subPath: ingestion-source
+        enabled: false
+        name: ""
+        subPath: ""
   ca:
     secretName: ''
     path: '/usr/local/share/ca-certificates'
     key: 'ca.crt'
+
+serviceUrls:
+  syncManager: ""
+  mapproxyApi: ""
+  catalogManager: ""
+  jobManager: ""
+  mapServerPublicDNS: ""
+jobManagement:
+  jobDomain: ""
   ingestion:
-    watchDirectoryOptions:
-      directory: 'watch'
+    new: 
+      jobType: ""
+      splitTilesTaskType: ""
+      mergeTilesTaskType: ""
+    update: 
+      jobType: ""
+      mergeTilesTaskType: ""
+    updateSwap:
+      jobType: ""
+      supportedIngestionSwapTypes: 
+      - productType: ""
+        productSubType: ""
+storage:
+  tilesStorageProvider: ""
+  fs:
+    ingestionSourcePvc:
+      enabled: false
+      name: ""
+      subPath: ""
+ingestion:
+  watchDirectoryOptions:
+    directory: 'watch'
 
 enabled: true
 environment: development
@@ -58,6 +90,14 @@ image:
   tag: 'latest'
 
 enableWMS: true
+
+# add pod annotations
+# example:
+# podAnnotations:
+  # annotation1: annotation-value-1
+  # annotation2: annotation-value-2
+podAnnotations: {}
+
 env:
   forbiddenTypesForParallelIngesion:
     - Ingestion_New
