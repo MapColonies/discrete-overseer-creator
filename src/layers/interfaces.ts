@@ -48,5 +48,5 @@ export interface SourcesValidationParams {
 
 export interface SourcesValidationResponse {
   isValid: boolean;
-  reason: string;
+  reason?: string;
 }

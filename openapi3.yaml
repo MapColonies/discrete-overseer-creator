@@ -90,7 +90,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/filesCheckResponse'
+                $ref: '#/components/schemas/errorMessage'
         '500':
           description: Internal Server Error
           content:
@@ -217,7 +217,6 @@ components:
           type: string
       required:
         - isValid
-        - reason
     tocResponse:
       type: object
       properties:

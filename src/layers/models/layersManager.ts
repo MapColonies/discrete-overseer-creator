@@ -286,7 +286,7 @@ export class LayersManager {
     try {
       const files: string[] = data.fileNames;
       const originDirectory: string = data.originDirectory;
-      this.logger.info({
+      this.logger.debug({
         files: files,
         originDirectory: originDirectory,
         msg: 'validating files',
@@ -296,7 +296,7 @@ export class LayersManager {
       if (isGpkg) {
         this.ingestionValidator.validateGpkgFiles(files, originDirectory);
       }
-      const validResponse: SourcesValidationResponse = { isValid: true, reason: 'files are valid' };
+      const validResponse: SourcesValidationResponse = { isValid: true };
       return validResponse;
     } catch (err) {
       if (err instanceof BadRequestError) {
