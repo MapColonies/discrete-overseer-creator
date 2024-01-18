@@ -157,6 +157,18 @@ const validLine: LineString = {
     [10, 10],
   ],
 };
+const validFiles = {
+  fileNames: ['indexed.gpkg'],
+  originDirectory: '/files',
+};
+const invalidFiles = {
+  fileNames: ['unindexed.gpkg'],
+  originDirectory: '/files',
+};
+const invalidFileFormat = {
+  fileNames: ['test.ecw'],
+  originDirectory: '/files',
+};
 
 describe('layers', function () {
   let requestSender: LayersRequestSender;
@@ -199,7 +211,7 @@ describe('layers', function () {
     jest.resetAllMocks();
   });
 
-  describe('Happy Path', function () {
+  describe('Happy Path on /layers', function () {
     it('should return 200 status code', async function () {
       getJobsMock.mockResolvedValue([]);
 
@@ -589,7 +601,7 @@ describe('layers', function () {
     });
   });
 
-  describe('Bad Path', function () {
+  describe('Bad Path on /layers', function () {
     // All requests with status code of 400
     it('should return 400 status code for invalid Test Data', async function () {
       const response = await requestSender.createLayer(invalidTestData);
@@ -817,7 +829,7 @@ describe('layers', function () {
     });
   });
 
-  describe('Sad Path', function () {
+  describe('Sad Path on /layers', function () {
     // All requests with status code 4XX-5XX
     it('should return 409 if tested layer is already being In-Progress', async function () {
       const jobs = [
@@ -921,6 +933,27 @@ describe('layers', function () {
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(createLayerJobMock).toHaveBeenCalledTimes(0);
       expect(createTasksMock).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('Happy path on /layers/validateSources', function () {
+    it('should return 200 status code with valid file', async function () {
+      const response = await requestSender.checkFiles(validFiles);
+      expect(response.status).toBe(httpStatusCodes.OK);
+      expect(response.body).toEqual(expect.objectContaining({ isValid: true }));
+    });
+
+    it('should return 200 status code with invalid file', async function () {
+      const response = await requestSender.checkFiles(invalidFiles);
+      expect(response.status).toBe(httpStatusCodes.OK);
+      expect(response.body).toEqual(expect.objectContaining({ isValid: false }));
+    });
+  });
+
+  describe('Sad path on /layers/validateSources', function () {
+    it('should return 400 status code with invalid file format', async function () {
+      const response = await requestSender.checkFiles(invalidFileFormat);
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
     });
   });
 });
