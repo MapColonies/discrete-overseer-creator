@@ -508,8 +508,10 @@ export class LayersManager {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          if ((data.metadata.maxResolutionDeg as number) > infoData.pixelSize) {
-            message += `Provided ResolutionDegree is bigger than pixel size from GeoPackage.`;
+          if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
+            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is bigger than pixel size: ${
+              infoData.pixelSize
+            } from GeoPackage.`;
           }
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
