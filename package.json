@@ -1,6 +1,6 @@
 {
   "name": "discrete-overseer-creator",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "description": "Service that responsible for validating and ingesting discrete layers",
   "main": "./src/index.ts",
   "scripts": {
@@ -51,7 +51,7 @@
     "@map-colonies/js-logger": "^1.0.1",
     "@map-colonies/mc-model-types": "^15.2.0",
     "@map-colonies/mc-priority-queue": "^6.1.0",
-    "@map-colonies/mc-utils": "^2.0.0",
+    "@map-colonies/mc-utils": "file:map-colonies-mc-utils-2.0.2.tgz",
     "@map-colonies/openapi-express-viewer": "^3.0.0",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/storage-explorer-middleware": "^1.2.7",

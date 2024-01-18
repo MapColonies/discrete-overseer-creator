@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.0...v4.4.1) (2024-01-18)
+
+
+### Bug Fixes
+
+* resolution deg condition & error log ([#39](https://github.com/MapColonies/discrete-overseer-creator/issues/39)) ([c84db5d](https://github.com/MapColonies/discrete-overseer-creator/commit/c84db5d0976198a33250c659b14465b18e36e2af))
+
 ## [4.4.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.3.0...v4.4.0) (2024-01-18)
 
 
