@@ -538,7 +538,7 @@ export class LayersManager {
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
-            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is bigger than pixel size: ${
+            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
               infoData.pixelSize
             } from GeoPackage.`;
           }
