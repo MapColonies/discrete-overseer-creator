@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { join } from 'path';
 import { degreesPerPixelToZoomLevel, Footprint, multiIntersect, subGroupsGen, tileBatchGenerator, TileRanger } from '@map-colonies/mc-utils';
 import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types';
@@ -14,6 +15,7 @@ import { Grid } from '../layers/interfaces';
 import { JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
 
 @injectable()
+// eslint-disable-next-line import/exports-last
 export class MergeTilesTasker {
   private readonly tileRanger: TileRanger;
   private readonly batchSize: number;
@@ -56,7 +58,9 @@ export class MergeTilesTasker {
     isNew?: boolean,
     cleanupData?: ICleanupData
   ): Promise<string> {
+    console.log("DATA", data)
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
+      console.log("####",fileName)
       const fileRelativePath = join(data.originDirectory, fileName);
       const footprint = data.metadata.footprint;
       return {
@@ -143,7 +147,7 @@ export class MergeTilesTasker {
     return jobId as string;
   }
 
-  public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
+  private *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
     let totalIntersection = undefined;
     const subGroups = subGroupsGen(layers, layers.length);
     for (const subGroup of subGroups) {
@@ -180,7 +184,7 @@ export class MergeTilesTasker {
     }
   }
 
-  public async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
+  private async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
     const sourceType = this.config.get<string>('mapServerCacheType');
     for (let zoom = params.maxZoom; zoom >= 0; zoom--) {
       const mappedLayers = params.layers.map((layer) => {

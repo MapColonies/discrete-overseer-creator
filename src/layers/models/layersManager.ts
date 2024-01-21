@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { join } from 'node:path';
 import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
@@ -7,7 +8,7 @@ import client from 'prom-client';
 import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
-import { inject, injectable } from 'tsyringe';
+import { container, inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getIssues } from '@placemarkio/check-geojson';
 import booleanContains from '@turf/boolean-contains';
@@ -23,12 +24,14 @@ import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
 import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
-import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
+import  {MergeTilesTasker}  from '../../merge/mergeTilesTasker';
 import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
+import { piscina } from '../../utils/piscina/piscina';
+import Piscina from "piscina";
 
 @injectable()
 export class LayersManager {
@@ -55,7 +58,7 @@ export class LayersManager {
     private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
-
+    @inject('PISCINA') private readonly piscina: Piscina,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
@@ -83,6 +86,9 @@ export class LayersManager {
 
   @withSpanAsyncV4
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    // const result = await piscina.run({string: "ASDF"});
+    // console.log("result",result);  // Prints 10
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -158,16 +164,20 @@ export class LayersManager {
         const layerRelativePath = `${id}/${displayPath}`;
 
         if (taskType === TaskAction.MERGE_TILES) {
-          jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+          const grids = this.grids;
+
+          // const piscina = container.resolve<Piscina>('PISCINA');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          jobId = await this.piscina.run({
             data,
             layerRelativePath,
             taskType,
             jobType,
-            this.grids,
+            grids,
             extent,
-            overseerUrl,
-            true
-          );
+            managerCallbackUrl: overseerUrl,
+            isNew: true
+        });
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
@@ -537,11 +547,11 @@ export class LayersManager {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
-            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
-              infoData.pixelSize
-            } from GeoPackage.`;
-          }
+          // if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
+          //   message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
+          //     infoData.pixelSize
+          //   } from GeoPackage.`;
+          // }
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
               const polygon = { type: 'Polygon', coordinates: coords };
