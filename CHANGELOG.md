@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.3...v4.4.4) (2024-01-18)
+
+
+### Bug Fixes
+
+* package lock ([#41](https://github.com/MapColonies/discrete-overseer-creator/issues/41)) ([fa7c31f](https://github.com/MapColonies/discrete-overseer-creator/commit/fa7c31f838c568163f9ddfc151dd70015bc3af8a))
+
+### [4.4.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.3...v4.4.2) (2024-01-18)
+
+
+### Bug Fixes
+
+* package lock ([#41](https://github.com/MapColonies/discrete-overseer-creator/issues/41)) ([fa7c31f](https://github.com/MapColonies/discrete-overseer-creator/commit/fa7c31f838c568163f9ddfc151dd70015bc3af8a))
+
+### [4.4.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.3...v4.4.1) (2024-01-18)
+
+
+### Bug Fixes
+
+* package lock ([#41](https://github.com/MapColonies/discrete-overseer-creator/issues/41)) ([fa7c31f](https://github.com/MapColonies/discrete-overseer-creator/commit/fa7c31f838c568163f9ddfc151dd70015bc3af8a))
+
+### [4.4.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.2...v4.4.3) (2024-01-18)
+
+### [4.4.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.1...v4.4.2) (2024-01-18)
+
+
+### Bug Fixes
+
+* mc utils version ([#40](https://github.com/MapColonies/discrete-overseer-creator/issues/40)) ([5b99be9](https://github.com/MapColonies/discrete-overseer-creator/commit/5b99be9d2e5ab32e9f341df7ad2ba2792697be19))
+
+### [4.4.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.0...v4.4.1) (2024-01-18)
+
+
+### Bug Fixes
+
+* resolution deg condition & error log ([#39](https://github.com/MapColonies/discrete-overseer-creator/issues/39)) ([c84db5d](https://github.com/MapColonies/discrete-overseer-creator/commit/c84db5d0976198a33250c659b14465b18e36e2af))
+
+## [4.4.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.3.0...v4.4.0) (2024-01-18)
+
+
+### Features
+
+* add gdal info to utils and upgrade validations (MAPCO-3761, MAPCO-3791, MAPCO-3839, MAPCO-3863) ([#33](https://github.com/MapColonies/discrete-overseer-creator/issues/33)) ([d227da8](https://github.com/MapColonies/discrete-overseer-creator/commit/d227da81f19d59eb68430ac1fd661daf020872a1))
+* update with swap - new flow ([#34](https://github.com/MapColonies/discrete-overseer-creator/issues/34)) ([4abf86c](https://github.com/MapColonies/discrete-overseer-creator/commit/4abf86ceb9f13d35ee55cfa9c6796a81f81fe563))
+
+
+### Bug Fixes
+
+* forbidden typo ([5a469ac](https://github.com/MapColonies/discrete-overseer-creator/commit/5a469acb99e165b32c6504b65eb66f134b8b0507))
+
 ## [4.3.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.1.12...v4.3.0) (2023-11-23)
 
 

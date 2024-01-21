@@ -1,23 +1,28 @@
 {{- $chartName := include "discrete-overseer-creator.name" . -}}
 {{- $tracingUrl := include "discrete-overseer-creator.tracingUrl" . -}}
 {{- $metricsUrl := include "discrete-overseer-creator.metricsUrl" . -}}
+{{- $configmapName := include "configmap.fullname" . }}
+{{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
+{{- $jobManagement := (include "common.jobManagement.merged" .) | fromYaml }}
+{{- $storage := (include "common.storage.merged" .) | fromYaml }}
+{{- $ingestion := (include "common.ingestion.merged" .) | fromYaml }}
 {{- if .Values.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ $configmapName  }}
 data:
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
-  WATCH_DIRECTORY: {{ .Values.rasterCommon.ingestion.watchDirectoryOptions.directory | quote }}
+  WATCH_DIRECTORY: {{ $ingestion.watchDirectoryOptions.directory | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
-  JOB_MANAGER_URL: {{ .Values.rasterCommon.serviceUrls.jobManager | quote }}
-  SYNC_SERVICE_URL: {{ .Values.rasterCommon.serviceUrls.syncManager | quote }}
-  MAP_PUBLISHING_SERVICE_URL: {{ .Values.rasterCommon.serviceUrls.mapproxyApi | quote }}
-  PUBLIC_MAP_SERVER_URL: {{ .Values.env.mapServerPublicDNS | quote }}
-  CATALOG_PUBLISHING_SERVICE_URL: {{ .Values.rasterCommon.serviceUrls.catalogManager | quote }}
-  MAP_SERVER_CACHE_TYPE: {{ .Values.rasterCommon.storage.tilesStorageProvider | quote }}
+  JOB_MANAGER_URL: {{ $serviceUrls.jobManager | quote }}
+  SYNC_SERVICE_URL: {{ $serviceUrls.syncManager | quote }}
+  MAP_PUBLISHING_SERVICE_URL: {{ $serviceUrls.mapproxyApi | quote }}
+  PUBLIC_MAP_SERVER_URL: {{ $serviceUrls.mapServerPublicDNS | quote }}
+  CATALOG_PUBLISHING_SERVICE_URL: {{ $serviceUrls.catalogManager | quote }}
+  MAP_SERVER_CACHE_TYPE: {{ $storage.tilesStorageProvider | quote }}
   DISPLAY_NAME_DIR: {{ .Values.env.displayNameDir | quote }}
   VALID_FILE_EXTENSIONS: {{ .Values.env.validFileExtensions | toJson | quote }}
   TILING_ZOOM_GROUPS: {{ .Values.env.tilingZoomGroups | toJson | quote }}
@@ -28,13 +33,13 @@ data:
   LINK_TEMPLATE: {{ tpl (.Files.Get "config/linkTemplates.template") . | quote }}
   LAYER_SOURCE_DIR: {{ .Values.env.layerSourceDir | quote }}
   SHOULD_SYNC: {{ .Values.env.shouldSync | quote }}
-  JOB_DOMAIN: {{ .Values.rasterCommon.jobManagement.jobDomain | quote }}
-  INGESTION_NEW_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.new.jobType | quote }}
-  INGESTION_SPLIT_TILES_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.new.splitTilesTaskType | quote }}
-  INGESTION_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.jobType | quote }}
-  INGESTION_MERGE_TASK_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.update.mergeTilesTaskType | quote }}
-  INGESTION_SWAP_UPDATE_JOB_TYPE: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.jobType | quote }}
-  SUPPORTED_iNGESTION_SWAP_TYPES: {{ .Values.rasterCommon.jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}
+  JOB_DOMAIN: {{ $jobManagement.jobDomain | quote }}
+  INGESTION_NEW_JOB_TYPE: {{ $jobManagement.ingestion.new.jobType | quote }}
+  INGESTION_SPLIT_TILES_TASK_TYPE: {{ $jobManagement.ingestion.new.splitTilesTaskType | quote }}
+  INGESTION_UPDATE_JOB_TYPE: {{ $jobManagement.ingestion.update.jobType | quote }}
+  INGESTION_MERGE_TASK_TYPE: {{ $jobManagement.ingestion.update.mergeTilesTaskType | quote }}
+  INGESTION_SWAP_UPDATE_JOB_TYPE: {{ $jobManagement.ingestion.updateSwap.jobType | quote }}
+  SUPPORTED_iNGESTION_SWAP_TYPES: {{ $jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}
   BBOX_SIZE_TILES: {{ .Values.env.bboxSizeTiles | quote }}
   MERGE_BATCH_SIZE: {{ .Values.env.mergeBatchSize | quote }}
   USE_NEW_TARGET_FLAG_IN_UPDATE_TASKS: {{ .Values.env.useNewTargetFlagInUpdateTasks | quote }}
