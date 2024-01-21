@@ -48,6 +48,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
+  /layers/validateSources:
+    post:
+      operationId: validateSources
+      tags:
+        - layers
+      summary: checks that all provided files have valid raw data
+      requestBody:
+        description: A json object containing array of files and origin source path
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                originDirectory:
+                  type: string
+                  description: layer source directory
+                fileNames:
+                  type: array
+                  description: layer sources
+                  items:
+                    type: string
+                    pattern: ^.+\.[Gg][Pp][Kk][Gg]$
+              required:
+                - originDirectory
+                - fileNames
+            example:
+              originDirectory: string
+              fileNames:
+                - example.gpkg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/filesCheckResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
   /jobs/{jobId}/{taskId}/completed:
     post:
       operationId: completeJob
@@ -159,6 +208,15 @@ components:
           type: string
       required:
         - message
+    filesCheckResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+        reason:
+          type: string
+      required:
+        - isValid
     tocResponse:
       type: object
       properties:

@@ -24,7 +24,7 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { Grid, ITaskParameters } from '../interfaces';
+import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
@@ -101,7 +101,9 @@ export class LayersManager {
     if (data.metadata.ingestionDate !== undefined) {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
-    await this.validateFiles(data);
+    const filesData: SourcesValidationParams = { fileNames: files, originDirectory: originDirectory };
+    await this.validateFiles(filesData);
+    await this.validateInfoDataToParams(data.fileNames, data.originDirectory, data);
 
     await this.validateJobNotRunning(productId, productType);
 
@@ -278,6 +280,34 @@ export class LayersManager {
     this.requestCreateLayerCounter?.inc({ requestType: 'CreateLayer', jobType });
   }
 
+  //TODO: decide what the function will return -void or boolean
+  @withSpanAsyncV4
+  public async checkFiles(data: SourcesValidationParams): Promise<SourcesValidationResponse> {
+    try {
+      const files: string[] = data.fileNames;
+      const originDirectory: string = data.originDirectory;
+      this.logger.debug({
+        files: files,
+        originDirectory: originDirectory,
+        msg: 'validating files',
+      });
+      await this.validateFiles(data);
+      const isGpkg = this.ingestionValidator.validateIsGpkg(files);
+      if (isGpkg) {
+        this.ingestionValidator.validateGpkgFiles(files, originDirectory);
+      }
+      const validResponse: SourcesValidationResponse = { isValid: true };
+      return validResponse;
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        const response: SourcesValidationResponse = { isValid: false, reason: err.message };
+        return response;
+      } else {
+        throw err;
+      }
+    }
+  }
+
   @withSpanAsyncV4
   private async getJobType(data: IngestionParams): Promise<JobAction> {
     const productId = data.metadata.productId as string;
@@ -342,7 +372,7 @@ export class LayersManager {
   }
 
   @withSpanAsyncV4
-  private async validateFiles(data: IngestionParams): Promise<void> {
+  private async validateFiles(data: SourcesValidationParams): Promise<void> {
     const fileNames = data.fileNames;
     const originDirectory = data.originDirectory;
     if (fileNames.length !== 1) {
@@ -373,7 +403,6 @@ export class LayersManager {
       throw new BadRequestError(message);
     }
     await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
-    await this.validateInfoDataToParams(fileNames, originDirectory, data);
   }
 
   @withSpanAsyncV4
@@ -509,7 +538,7 @@ export class LayersManager {
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
-            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is bigger than pixel size: ${
+            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
               infoData.pixelSize
             } from GeoPackage.`;
           }

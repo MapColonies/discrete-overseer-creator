@@ -51,12 +51,12 @@ export class SQLiteClient {
       return this.getGpkgUniqueConstraintIndex(db, tableName) || this.getGpkgManualIndex(db, tableName);
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      const message = `Failed to validate GPKG index: ${(err as Error).message}`;
+      const message = `Error when validating GPKG index: ${(err as Error).message}`;
       this.logger.error({
         msg: message,
         err: err,
       });
-      throw new Error(message);
+      throw new BadRequestError(message);
     } finally {
       this.logger.debug({
         msg: `Closing connection to GPKG in path ${this.fullPath}`,
@@ -82,13 +82,13 @@ export class SQLiteClient {
         return Grid.ONE_ON_ONE;
       }
     } catch (err) {
-      const message = `Failed to get grid type: ${(err as Error).message}`;
+      const message = `Error when getting grid type: ${(err as Error).message}`;
       this.logger.error({
         msg: message,
         err: err,
       });
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
+      throw new BadRequestError(message);
     } finally {
       this.logger.debug({
         msg: `Closing connection to GPKG in path ${this.fullPath}`,
@@ -113,20 +113,20 @@ export class SQLiteClient {
           tilesSizes: tilesSizes,
           msg: message,
         });
-        throw new Error(message);
+        throw new BadRequestError(message);
       }
       this.logger.debug({
         msg: `Extract tile sizes: ${tilesSizes[0].tile_width}, ${tilesSizes[0].tile_height}`,
       });
       return { tileWidth: tilesSizes[0].tile_width, tileHeight: tilesSizes[0].tile_height };
     } catch (err) {
-      const message = `Failed to get tiles sizes type: ${(err as Error).message}`;
+      const message = `Error when getting tiles sizes type: ${(err as Error).message}`;
       this.logger.error({
         msg: message,
         err: err,
       });
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      throw new Error(message);
+      throw new BadRequestError(message);
     } finally {
       this.logger.debug({
         msg: `Closing connection to GPKG in path ${this.fullPath}`,
@@ -181,7 +181,7 @@ export class SQLiteClient {
         tableNames: tableNames,
         msg: message,
       });
-      throw new Error(message);
+      throw new BadRequestError(message);
     }
     this.logger.debug({
       msg: `Extract table name: ${tableNames[0].table_name}`,
