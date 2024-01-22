@@ -1,33 +1,33 @@
 
 import 'reflect-metadata';
 import config from "config";
-import { container } from "tsyringe";
-import jsLogger, { Logger } from '@map-colonies/js-logger';
-import { JobManagerClient } from "@map-colonies/mc-priority-queue";
+import jsLogger from '@map-colonies/js-logger';
 import { BBox } from "@turf/turf";
-import { Tracer, trace } from "@opentelemetry/api";
+import { Tracer } from "@opentelemetry/api";
 import { IngestionParams } from "@map-colonies/mc-model-types";
-import { SERVICES } from "../../common/constants";
-import {MergeTilesTasker} from "../../merge/mergeTilesTasker";
+import { MergeTilesTasker } from "../../merge/mergeTilesTasker";
 import { JobManagerWrapper } from "../../serviceClients/JobManagerWrapper";
 import { ICleanupData } from "../../common/interfaces";
 import { Grid } from "../../layers/interfaces";
 
-type IParams = {
-    tracer: Tracer
-    data: IngestionParams,
-    layerRelativePath: string,
-    taskType: string,
-    jobType: string,
-    grids: Grid[],
-    extent: BBox,
-    managerCallbackUrl: string,
-    isNew?: boolean,
-    cleanupData?: ICleanupData
+// eslint-disable-next-line import/exports-last
+export interface IMergeTilesTaskParams {
+    tracer: Tracer;
+    data: IngestionParams;
+    layerRelativePath: string;
+    taskType: string;
+    jobType: string;
+    grids: Grid[];
+    extent: BBox;
+    managerCallbackUrl: string;
+    isNew?: boolean;
+    cleanupData?: ICleanupData;
 }
-const test2 = async (params: IParams): Promise<string> => {
-    //const tracer = trace.getTracer('AVI_LO_MESHANE_MA');
-    const mergeTilesTasker = new MergeTilesTasker(config, jsLogger({ enabled: true}), params.tracer, new JobManagerWrapper(config, jsLogger({ enabled: false}), params.tracer));
+
+const mergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> => {
+    const logger = jsLogger({ enabled: true });
+    const jobManager = new JobManagerWrapper(config, logger, params.tracer);
+    const mergeTilesTasker = new MergeTilesTasker(config, logger, params.tracer, jobManager);
     const jobId = await mergeTilesTasker.createMergeTilesTasks(
         params.data,
         params.layerRelativePath,
@@ -37,8 +37,8 @@ const test2 = async (params: IParams): Promise<string> => {
         params.extent,
         params.managerCallbackUrl,
         true
-      );
+    );
     return jobId
 }
-
-module.exports = test2;
+mergeTilesTasks.mergeTiles = mergeTilesTasks;
+module.exports = mergeTilesTasks;

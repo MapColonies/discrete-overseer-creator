@@ -31,7 +31,7 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
 
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: config } },
-    { token: 'PISCINA', provider: { useValue: piscina } },
+    { token: SERVICES.PISCINA, provider: { useValue: piscina } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },

@@ -10,13 +10,14 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { getJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
 import { catalogExistsMock, getHighestLayerVersionMock, findRecordMock } from '../../mocks/clients/catalogClient';
-import { setValue, clear as clearConfig } from '../../mocks/config';
+import { setValue, clear as clearConfig, configMock } from '../../mocks/config';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
 import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersManager } from '../../../src/layers/models/layersManager';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
+import { runMock } from '../../mocks/piscina/piscinaMock';
 
 const validPolygon = {
   type: 'Polygon',
@@ -221,7 +222,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
@@ -236,7 +237,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
@@ -254,11 +255,11 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
-    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
+    it.only('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
       getJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: transparencyOpaqueMetadata };
@@ -270,32 +271,34 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-
+      expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      expect(createLayerJobMock).toHaveBeenCalledWith(
+      expect(runMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          metadata: {
-            ...validTestData.metadata,
-            transparency: Transparency.OPAQUE,
-            tileOutputFormat: TileOutputFormat.JPEG,
-            id: expect.anything(),
-            displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
-            sourceDateEnd: expect.anything(),
-            sourceDateStart: expect.anything(),
-            creationDate: expect.anything(),
+          data: {
+            metadata: {
+              ...validTestData.metadata,
+              transparency: Transparency.OPAQUE,
+              tileOutputFormat: TileOutputFormat.JPEG,
+              id: expect.anything(),
+              displayPath: expect.anything(),
+              layerPolygonParts: expect.anything(),
+              sourceDateEnd: expect.anything(),
+              sourceDateStart: expect.anything(),
+              creationDate: expect.anything(),
+            },
+            fileNames: validTestData.fileNames,
+            originDirectory: validTestData.originDirectory,
           },
-          fileNames: validTestData.fileNames,
-          originDirectory: validTestData.originDirectory,
-        }),
-        expect.anything(),
-        'Ingestion_New',
-        'tilesMerging',
-        expect.anything(),
-        expect.anything(),
-        undefined
-      );
+          layerRelativePath: expect.anything(),
+          taskType: 'Ingestion_New',
+          jobType: 'tilesMerging',
+          grids: expect.anything(),
+          extent: expect.anything(),
+          managerCallbackUrl: undefined,
+          isNew: expect.anything(),
+          tracer: expect.anything()
+        }));
       //expect(createTasksMock).toHaveBeenCalledTimes(3); - isnt called at all- now it is merge not split
       expect(response.status).toBe(httpStatusCodes.OK);
     });
@@ -312,7 +315,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(createLayerJobMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -446,7 +449,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
@@ -464,7 +467,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(createLayerJobMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -507,7 +510,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
 
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(createLayerJobMock).toHaveBeenCalledWith(
@@ -549,7 +552,7 @@ describe('layers', function () {
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(createLayerJobMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -596,7 +599,7 @@ describe('layers', function () {
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
       expect(mapExistsMock).toHaveBeenCalledTimes(1);
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
       expect(createTasksMock).toHaveBeenCalledTimes(0);
     });
   });

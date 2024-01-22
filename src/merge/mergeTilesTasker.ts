@@ -147,7 +147,7 @@ export class MergeTilesTasker {
     return jobId as string;
   }
 
-  private *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
+  public *createLayerOverlaps(layers: ILayerMergeData[]): Generator<IMergeOverlaps> {
     let totalIntersection = undefined;
     const subGroups = subGroupsGen(layers, layers.length);
     for (const subGroup of subGroups) {
@@ -184,7 +184,7 @@ export class MergeTilesTasker {
     }
   }
 
-  private async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
+  public async *createBatchedTasks(params: IMergeParameters, isNew = false): AsyncGenerator<IMergeTaskParams> {
     const sourceType = this.config.get<string>('mapServerCacheType');
     for (let zoom = params.maxZoom; zoom >= 0; zoom--) {
       const mappedLayers = params.layers.map((layer) => {

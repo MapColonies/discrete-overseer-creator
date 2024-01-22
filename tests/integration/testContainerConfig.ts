@@ -18,6 +18,7 @@ import { GdalUtilities } from '../../src/utils/GDAL/gdalUtilities';
 import { gdalUtilitiesMock } from '../mocks/gdalUtilitiesMock';
 import { MetadataMerger } from '../../src/update/metadataMerger';
 import { metadataMergerMock } from '../mocks/metadataMerger';
+import { piscinaMock } from '../mocks/piscina/piscinaMock';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
   initConfig();
@@ -25,6 +26,7 @@ function getContainerConfig(): InjectionObject<unknown>[] {
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
     { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+    { token: SERVICES.PISCINA, provider: { useValue: piscinaMock } },
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
     { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
     { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },

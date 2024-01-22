@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { join } from 'node:path';
+import Piscina from "piscina";
 import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,7 +9,7 @@ import client from 'prom-client';
 import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
-import { container, inject, injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getIssues } from '@placemarkio/check-geojson';
 import booleanContains from '@turf/boolean-contains';
@@ -24,14 +25,12 @@ import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
 import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
-import  {MergeTilesTasker}  from '../../merge/mergeTilesTasker';
+import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
-import { piscina } from '../../utils/piscina/piscina';
-import Piscina from "piscina";
 
 @injectable()
 export class LayersManager {
@@ -50,16 +49,16 @@ export class LayersManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(SERVICES.PISCINA) private readonly piscina: Piscina,
     private readonly zoomLevelCalculator: ZoomLevelCalculator,
-    private readonly db: JobManagerWrapper,
+    private readonly jobManager: JobManagerWrapper,
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
     private readonly ingestionValidator: IngestionValidator,
     private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
-    @inject('PISCINA') private readonly piscina: Piscina,
-    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry,
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
@@ -86,9 +85,6 @@ export class LayersManager {
 
   @withSpanAsyncV4
   public async createLayer(data: IngestionParams, overseerUrl: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    // const result = await piscina.run({string: "ASDF"});
-    // console.log("result",result);  // Prints 10
     const convertedData: LayerMetadata = data.metadata;
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
@@ -127,9 +123,8 @@ export class LayersManager {
 
     this.validateCorrectProductVersion(data);
 
-    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
-      data.metadata.productId as string
-    } productType: ${productType}`;
+    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${data.metadata.productId as string
+      } productType: ${productType}`;
     this.logger.info({
       jobType: jobType,
       taskType: taskType,
@@ -164,11 +159,12 @@ export class LayersManager {
         const layerRelativePath = `${id}/${displayPath}`;
 
         if (taskType === TaskAction.MERGE_TILES) {
+          const tracer = this.tracer;
           const grids = this.grids;
-
           // const piscina = container.resolve<Piscina>('PISCINA');
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           jobId = await this.piscina.run({
+            tracer,
             data,
             layerRelativePath,
             taskType,
@@ -177,7 +173,7 @@ export class LayersManager {
             extent,
             managerCallbackUrl: overseerUrl,
             isNew: true
-        });
+          }, { name: 'mergeTiles' });
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
@@ -431,7 +427,7 @@ export class LayersManager {
       shouldReturnTasks: false,
     };
     const ingestionJobTypes = this.config.get<string[]>('forbiddenTypesForParallelIngesion');
-    const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
+    const jobs = await this.jobManager.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
       if ((job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) && ingestionJobTypes.includes(job.type)) {
         const message = `Layer id: ${productId} product type: ${productType}, conflicting job ${job.type} is already running for that layer`;
@@ -519,7 +515,7 @@ export class LayersManager {
           internalId: id,
           shouldReturnTasks: false,
         };
-        jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
+        jobs = await this.jobManager.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
       } while (isExists && jobs.length > 0);
 
       const displayPath = uuidv4();
