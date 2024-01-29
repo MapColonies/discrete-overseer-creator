@@ -24,7 +24,7 @@ export interface IMergeTilesTaskParams {
     cleanupData?: ICleanupData;
 }
 
-const mergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> => {
+const createMergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> => {
     const logger = jsLogger({ enabled: true });
     const jobManager = new JobManagerWrapper(config, logger, params.tracer);
     const mergeTilesTasker = new MergeTilesTasker(config, logger, params.tracer, jobManager);
@@ -40,5 +40,5 @@ const mergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> =
     );
     return jobId
 }
-mergeTilesTasks.mergeTiles = mergeTilesTasks;
-module.exports = mergeTilesTasks;
+createMergeTilesTasks.mergeTiles = createMergeTilesTasks;
+module.exports = createMergeTilesTasks;

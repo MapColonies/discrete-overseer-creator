@@ -259,7 +259,7 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
-    it.only('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
+    it('should return 200 status code for sending request transparency opaque with jpeg output format', async function () {
       getJobsMock.mockResolvedValue([]);
       const transparencyOpaqueMetadata = { ...validTestData.metadata, transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: transparencyOpaqueMetadata };
@@ -275,7 +275,7 @@ describe('layers', function () {
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       expect(runMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: {
+          data: expect.objectContaining({
             metadata: {
               ...validTestData.metadata,
               transparency: Transparency.OPAQUE,
@@ -289,16 +289,16 @@ describe('layers', function () {
             },
             fileNames: validTestData.fileNames,
             originDirectory: validTestData.originDirectory,
-          },
+          }),
           layerRelativePath: expect.anything(),
-          taskType: 'Ingestion_New',
-          jobType: 'tilesMerging',
+          jobType: 'Ingestion_New',
+          taskType: 'tilesMerging',
           grids: expect.anything(),
           extent: expect.anything(),
-          managerCallbackUrl: undefined,
-          isNew: expect.anything(),
+          managerCallbackUrl: expect.anything(),
+          isNew: true,
           tracer: expect.anything()
-        }));
+        }), expect.objectContaining({ name: "mergeTiles" }));
       //expect(createTasksMock).toHaveBeenCalledTimes(3); - isnt called at all- now it is merge not split
       expect(response.status).toBe(httpStatusCodes.OK);
     });
@@ -317,8 +317,8 @@ describe('layers', function () {
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      expect(createLayerJobMock).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(runMock).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
           metadata: {
             ...validTestData.metadata,
             productVersion: `${productVersionMetadata.productVersion}.0`,
@@ -334,13 +334,15 @@ describe('layers', function () {
           fileNames: validTestData.fileNames,
           originDirectory: validTestData.originDirectory,
         }),
-        expect.anything(),
-        'Ingestion_New',
-        'tilesMerging',
-        expect.anything(),
-        expect.anything(),
-        undefined
-      );
+        layerRelativePath: expect.anything(),
+        jobType: 'Ingestion_New',
+        taskType: 'tilesMerging',
+        grids: expect.anything(),
+        extent: expect.anything(),
+        managerCallbackUrl: expect.anything(),
+        isNew: true,
+        tracer: expect.anything()
+      }), expect.objectContaining({ name: "mergeTiles" }));
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
@@ -469,12 +471,13 @@ describe('layers', function () {
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      expect(createLayerJobMock).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(runMock).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
           metadata: {
             ...validTestData.metadata,
             tileOutputFormat: TileOutputFormat.PNG,
             productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
+
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
@@ -485,13 +488,15 @@ describe('layers', function () {
           fileNames: validTestData.fileNames,
           originDirectory: validTestData.originDirectory,
         }),
-        expect.anything(),
-        'Ingestion_New',
-        'tilesMerging',
-        expect.anything(),
-        expect.anything(),
-        undefined
-      );
+        layerRelativePath: expect.anything(),
+        jobType: 'Ingestion_New',
+        taskType: 'tilesMerging',
+        grids: expect.anything(),
+        extent: expect.anything(),
+        managerCallbackUrl: expect.anything(),
+        isNew: true,
+        tracer: expect.anything()
+      }), expect.objectContaining({ name: "mergeTiles" }));
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
     });
 
@@ -513,27 +518,30 @@ describe('layers', function () {
       expect(runMock).toHaveBeenCalledTimes(1);
 
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      expect(createLayerJobMock).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(runMock).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
           metadata: {
             ...validTestData.metadata,
             transparency: Transparency.OPAQUE,
             tileOutputFormat: TileOutputFormat.JPEG,
+
             id: expect.anything(),
             displayPath: expect.anything(),
             layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
-          },
+          }
         }),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        undefined
-      );
+        layerRelativePath: expect.anything(),
+        jobType: 'Ingestion_New',
+        taskType: 'tilesMerging',
+        grids: expect.anything(),
+        extent: expect.anything(),
+        managerCallbackUrl: expect.anything(),
+        isNew: true,
+        tracer: expect.anything()
+      }), expect.objectContaining({ name: "mergeTiles" }));
     });
 
     it('should return 200 status code for sending request transparency transparent with png output format', async function () {
@@ -554,8 +562,8 @@ describe('layers', function () {
       expect(catalogExistsMock).toHaveBeenCalledTimes(1);
       expect(runMock).toHaveBeenCalledTimes(1);
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      expect(createLayerJobMock).toHaveBeenCalledWith(
-        expect.objectContaining({
+      expect(runMock).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
           metadata: {
             ...validTestData.metadata,
             transparency: Transparency.TRANSPARENT,
@@ -568,13 +576,15 @@ describe('layers', function () {
             creationDate: expect.anything(),
           },
         }),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        undefined
-      );
+        layerRelativePath: expect.anything(),
+        taskType: 'tilesMerging',
+        jobType: 'Ingestion_New',
+        grids: expect.anything(),
+        extent: expect.anything(),
+        managerCallbackUrl: expect.anything(),
+        isNew: true,
+        tracer: expect.anything()
+      }), expect.objectContaining({ name: "mergeTiles" }));
     });
 
     it('should return 200 status code for indexed gpkg', async function () {
