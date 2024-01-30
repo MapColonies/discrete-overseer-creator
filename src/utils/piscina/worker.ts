@@ -1,18 +1,16 @@
-
 import 'reflect-metadata';
 import config from "config";
 import jsLogger from '@map-colonies/js-logger';
 import { BBox } from "@turf/turf";
-import { Tracer } from "@opentelemetry/api";
+import { trace } from "@opentelemetry/api";
 import { IngestionParams } from "@map-colonies/mc-model-types";
 import { MergeTilesTasker } from "../../merge/mergeTilesTasker";
 import { JobManagerWrapper } from "../../serviceClients/JobManagerWrapper";
 import { ICleanupData } from "../../common/interfaces";
 import { Grid } from "../../layers/interfaces";
-
+import { SERVICE_NAME } from '../../common/constants';
 // eslint-disable-next-line import/exports-last
 export interface IMergeTilesTaskParams {
-    tracer: Tracer;
     data: IngestionParams;
     layerRelativePath: string;
     taskType: string;
@@ -26,8 +24,9 @@ export interface IMergeTilesTaskParams {
 
 const createMergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> => {
     const logger = jsLogger({ enabled: true });
-    const jobManager = new JobManagerWrapper(config, logger, params.tracer);
-    const mergeTilesTasker = new MergeTilesTasker(config, logger, params.tracer, jobManager);
+    const tracer = trace.getTracer(SERVICE_NAME);
+    const jobManager = new JobManagerWrapper(config, logger, tracer);
+    const mergeTilesTasker = new MergeTilesTasker(config, logger, tracer, jobManager);
     const jobId = await mergeTilesTasker.createMergeTilesTasks(
         params.data,
         params.layerRelativePath,

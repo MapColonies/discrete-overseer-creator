@@ -73,6 +73,7 @@
     "handlebars": "^4.7.7",
     "http-status-codes": "^2.2.0",
     "lodash": "^4.17.21",
+    "nock": "^13.5.1",
     "piscina": "^4.3.0",
     "reflect-metadata": "^0.1.13",
     "tsyringe": "^4.8.0",

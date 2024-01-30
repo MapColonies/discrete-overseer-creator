@@ -164,7 +164,6 @@ export class LayersManager {
           // const piscina = container.resolve<Piscina>('PISCINA');
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           jobId = await this.piscina.run({
-            tracer,
             data,
             layerRelativePath,
             taskType,
@@ -173,7 +172,7 @@ export class LayersManager {
             extent,
             managerCallbackUrl: overseerUrl,
             isNew: true
-          }, { name: 'mergeTiles' });
+          }, {name: 'mergeTiles'});
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);

@@ -1,4 +1,5 @@
 import { trace } from '@opentelemetry/api';
+import Piscina from 'piscina';
 import jsLogger from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
 import { Registry } from 'prom-client';
@@ -21,6 +22,7 @@ import { metadataMergerMock } from '../mocks/metadataMerger';
 import { piscinaMock } from '../mocks/piscina/piscinaMock';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
+  const piscina = new Piscina({ filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js', maxThreads: 1 })
   initConfig();
   return [
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },

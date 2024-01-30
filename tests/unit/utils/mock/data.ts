@@ -1,14 +1,31 @@
-export const validPolygon = {
-    type: 'Polygon',
-    coordinates: [
+import { LayerMetadata, ProductType, RecordType, Transparency } from "@map-colonies/mc-model-types";
+
+const validPolygon = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [34.91692694458297, 33.952927285465876],
+      [34.90156677832806, 32.42331628696577],
+      [36.23406120090846, 32.410349688281244],
+      [36.237901242471565, 33.96885230417779],
+      [34.91692694458297, 33.952927285465876],
+    ],
+  ],
+};
+
+const invalidPolygon = {
+  type: 'Polygon',
+  coordinates: [
+    [
       [
-        [34.91692694458297, 33.952927285465876],
-        [34.90156677832806, 32.42331628696577],
-        [36.23406120090846, 32.410349688281244],
-        [36.237901242471565, 33.96885230417779],
-        [34.91692694458297, 33.952927285465876],
+        [100, 0],
+        [101, 0],
+        [101, 1],
+        [100, 1],
+        [100, 0],
       ],
     ],
+  ],
 };
 
 export const validTestImageMetadata = {

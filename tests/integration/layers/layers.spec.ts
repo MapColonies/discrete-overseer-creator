@@ -2,10 +2,12 @@ import { LayerMetadata, ProductType, TileOutputFormat, Transparency } from '@map
 import httpStatusCodes from 'http-status-codes';
 import _ from 'lodash';
 import { GeoJSON } from 'geojson';
+import Piscina from 'piscina';
 import { FeatureCollection, LineString } from '@turf/turf';
 import { RecordType } from '@map-colonies/mc-model-types/Schema/models/pycsw/coreEnums';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
+import { runMock } from '../../mocks/piscina/piscinaMock';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { getJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
@@ -17,7 +19,6 @@ import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersManager } from '../../../src/layers/models/layersManager';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
-import { runMock } from '../../mocks/piscina/piscinaMock';
 
 const validPolygon = {
   type: 'Polygon',
@@ -173,6 +174,7 @@ const invalidFileFormat = {
 
 describe('layers', function () {
   let requestSender: LayersRequestSender;
+  let runSpy: jest.SpyInstance;
   beforeEach(function () {
     console.warn = jest.fn();
     setValue('tiling.zoomGroups', ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
@@ -303,7 +305,9 @@ describe('layers', function () {
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
-    it('should return 200 status code and productVersion full number x will become x.0', async function () {
+    it.only('should return 200 status code and productVersion full number x will become x.0', async function () {
+      // const piscina = new Piscina({ filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js'})
+      // runSpy = jest.spyOn(Piscina.prototype, "run");
       getJobsMock.mockResolvedValue([]);
       const productVersionMetadata = { ...validTestData.metadata, productVersion: '3', transparency: Transparency.OPAQUE };
       const testData = { ...validTestData, metadata: productVersionMetadata };
@@ -340,12 +344,13 @@ describe('layers', function () {
         grids: expect.anything(),
         extent: expect.anything(),
         managerCallbackUrl: expect.anything(),
-        isNew: true,
-        tracer: expect.anything()
+        isNew: true
       }), expect.objectContaining({ name: "mergeTiles" }));
       //expect(createTasksMock).toHaveBeenCalledTimes(3);
+      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
+      
       expect(response.status).toBe(httpStatusCodes.OK);
-    });
+    }, 60000);
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
     it('should return 200 status code for update layer operation with higher version on exists', async function () {

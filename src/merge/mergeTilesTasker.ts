@@ -69,6 +69,7 @@ export class MergeTilesTasker {
         footprint: footprint,
       };
     });
+
     const maxZoom = degreesPerPixelToZoomLevel(data.metadata.maxResolutionDeg as number);
     const params: IMergeParameters = {
       layers: layers,
