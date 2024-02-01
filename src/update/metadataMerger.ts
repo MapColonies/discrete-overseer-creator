@@ -13,12 +13,16 @@ export class MetadataMerger {
     const newMetadata: LayerMetadata = {
       ...oldMetadata,
       productVersion: updateMetadata.productVersion,
-      sourceDateStart:
-        (oldMetadata.sourceDateStart as Date) <= (updateMetadata.sourceDateStart as Date)
-          ? oldMetadata.sourceDateStart
-          : updateMetadata.sourceDateStart,
-      sourceDateEnd:
-        (oldMetadata.sourceDateEnd as Date) >= (updateMetadata.sourceDateEnd as Date) ? oldMetadata.sourceDateEnd : updateMetadata.sourceDateEnd,
+      sourceDateStart: isSwap
+        ? updateMetadata.sourceDateStart
+        : (oldMetadata.sourceDateStart as Date) <= (updateMetadata.sourceDateStart as Date)
+        ? oldMetadata.sourceDateStart
+        : updateMetadata.sourceDateStart,
+      sourceDateEnd: isSwap
+        ? updateMetadata.sourceDateEnd
+        : (oldMetadata.sourceDateEnd as Date) >= (updateMetadata.sourceDateEnd as Date)
+        ? oldMetadata.sourceDateEnd
+        : updateMetadata.sourceDateEnd,
       ingestionDate: getUTCDate(),
       description: isSwap ? updateMetadata.description : (oldMetadata.description as string) + '\n' + (updateMetadata.description as string),
       minHorizontalAccuracyCE90: isSwap
