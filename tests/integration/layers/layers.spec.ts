@@ -12,7 +12,7 @@ import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { getJobsMock, createLayerJobMock, createTasksMock } from '../../mocks/clients/jobManagerClient';
 import { mapExistsMock } from '../../mocks/clients/mapPublisherClient';
 import { catalogExistsMock, getHighestLayerVersionMock, findRecordMock } from '../../mocks/clients/catalogClient';
-import { setValue, clear as clearConfig, configMock } from '../../mocks/config';
+import { setValue, clear as clearConfig } from '../../mocks/config';
 import { Grid } from '../../../src/layers/interfaces';
 import { SQLiteClient } from '../../../src/serviceClients/sqliteClient';
 import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
@@ -174,7 +174,6 @@ const invalidFileFormat = {
 
 describe('layers', function () {
   let requestSender: LayersRequestSender;
-  let runSpy: jest.SpyInstance;
   beforeEach(function () {
     console.warn = jest.fn();
     setValue('tiling.zoomGroups', ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);

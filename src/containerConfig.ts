@@ -24,7 +24,8 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
   const piscina = new Piscina({
-    filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js'
+    filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js',
+    maxThreads: 1
   });
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);

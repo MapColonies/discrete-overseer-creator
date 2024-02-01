@@ -42,6 +42,7 @@ export class LayersManager {
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
   private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
+  private readonly bc: BroadcastChannel;
 
   private grids: Grid[] = [];
 
@@ -64,6 +65,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.bc = new BroadcastChannel('broadcast_channel');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -157,22 +159,22 @@ export class LayersManager {
         this.setDefaultValues(data);
 
         const layerRelativePath = `${id}/${displayPath}`;
-
         if (taskType === TaskAction.MERGE_TILES) {
-          const tracer = this.tracer;
-          const grids = this.grids;
-          // const piscina = container.resolve<Piscina>('PISCINA');
+          console.log("BC OUTSIDE", this.bc)
+          this.bc.onmessage = (message) => {
+            console.log(message.data)
+          }
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           jobId = await this.piscina.run({
             data,
             layerRelativePath,
             taskType,
             jobType,
-            grids,
+            grids: this.grids,
             extent,
             managerCallbackUrl: overseerUrl,
-            isNew: true
-          }, {name: 'mergeTiles'});
+            isNew: true,
+          }, { name: 'mergeTiles' });
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);

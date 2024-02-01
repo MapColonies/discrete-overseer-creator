@@ -6,21 +6,25 @@ import { IMergeTilesTaskParams } from '../../../src/utils/piscina/worker';
 import { JobAction, TaskAction } from '../../../src/common/enums';
 import { Grid } from '../../../src/layers/interfaces';
 import { validTestData } from '../../unit/utils/mock/data';
-import { configMock, init as initMockConfig } from '../../mocks/config';
+import { configMock, init as initMockConfig, clear as clearConfig } from '../../mocks/config';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
-import { createLayerJobMock } from '../../mocks/clients/jobManagerClient';
+import { getContainerConfig, resetContainer } from '../testContainerConfig';
+import { getApp } from '../../../src/app';
+import { LayersRequestSender } from '../layers/helpers/requestSender';
 
 
-const createLayerJobStub = jest.fn();
-// jest.mock('../../../../src/serviceClients/JobManagerWrapper', () => {
-//     createLayerJob: jest.fn().mockImplementation(() => undefined)
-// });
+jest.mock('../../../src/serviceClients/JobManagerWrapper.ts');
 describe('createMergeTilesTasks', () => {
-
     beforeEach(function () {
+        const app = getApp({
+            override: [...getContainerConfig()],
+            useChild: false,
+        });
         initMockConfig();
     });
     afterEach(function () {
+        clearConfig();
+        resetContainer();
         jest.resetAllMocks();
         nock.cleanAll();
     })
@@ -29,6 +33,7 @@ describe('createMergeTilesTasks', () => {
     describe('runMergeTiles', () => {
         it('run merge tiles', async () => {
             //expect.assertions(3)
+            const createLaterJobStub = jest.spyOn(JobManagerWrapper.prototype, 'createLayerJob');
             const createMergeTilesTasksStub = jest.spyOn(MergeTilesTasker.prototype, 'createMergeTilesTasks')
             const jobManagerUrl = configMock.get<string>('jobManagerURL');
             console.log("job", jobManagerUrl)
@@ -48,8 +53,7 @@ describe('createMergeTilesTasks', () => {
             const action = piscina.run(params);
             await expect(action).resolves.not.toThrow();
             await expect(action).resolves.toHaveLastReturnedWith('sdaffs')
-
-
+            expect(createLaterJobStub).toHaveBeenCalledTimes(1);
         }, 60000);
     });
 });

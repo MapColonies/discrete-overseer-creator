@@ -9,6 +9,7 @@ import { JobManagerWrapper } from "../../serviceClients/JobManagerWrapper";
 import { ICleanupData } from "../../common/interfaces";
 import { Grid } from "../../layers/interfaces";
 import { SERVICE_NAME } from '../../common/constants';
+
 // eslint-disable-next-line import/exports-last
 export interface IMergeTilesTaskParams {
     data: IngestionParams;
@@ -25,6 +26,7 @@ export interface IMergeTilesTaskParams {
 const createMergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<string> => {
     const logger = jsLogger({ enabled: true });
     const tracer = trace.getTracer(SERVICE_NAME);
+
     const jobManager = new JobManagerWrapper(config, logger, tracer);
     const mergeTilesTasker = new MergeTilesTasker(config, logger, tracer, jobManager);
     const jobId = await mergeTilesTasker.createMergeTilesTasks(
@@ -35,7 +37,8 @@ const createMergeTilesTasks = async (params: IMergeTilesTaskParams): Promise<str
         params.grids,
         params.extent,
         params.managerCallbackUrl,
-        true
+        true,
+        undefined,
     );
     return jobId
 }

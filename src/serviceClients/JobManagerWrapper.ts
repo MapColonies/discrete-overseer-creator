@@ -11,6 +11,16 @@ import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
 import { ICompletedJobs } from '../jobs/interfaces';
 
+export interface CreateLayerJobParams {
+  data: IngestionParams,
+  layerRelativePath: string,
+  jobType: string,
+  taskType: string,
+  taskParams?: (ITaskParameters | IMergeTaskParams)[],
+  managerCallbackUrl?: string,
+  cleanupData?: ICleanupData
+}
+
 @injectable()
 export class JobManagerWrapper extends JobManagerClient {
   private readonly jobDomain: string;
@@ -88,16 +98,16 @@ export class JobManagerWrapper extends JobManagerClient {
     await this.updateJob(jobId, updateJobBody);
   }
 
+
   @withSpanAsyncV4
-  public async createLayerJob(
-    data: IngestionParams,
-    layerRelativePath: string,
-    jobType: string,
-    taskType: string,
-    taskParams?: (ITaskParameters | IMergeTaskParams)[],
-    managerCallbackUrl?: string,
-    cleanupData?: ICleanupData
-  ): Promise<string> {
+  public async createLayerJob(params: CreateLayerJobParams): Promise<string> {
+    const data = params.data;
+    const jobType = params.jobType;
+    const taskType = params.taskType;
+    const layerRelativePath = params.layerRelativePath;
+    const managerCallbackUrl = params.managerCallbackUrl;
+    const cleanupData = params.cleanupData;
+    const taskParams = params.taskParams;
     const resourceId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
     const createLayerTasksUrl = `/jobs`;
