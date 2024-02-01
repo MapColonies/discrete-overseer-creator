@@ -1,4 +1,6 @@
+import "reflect-metadata";
 import { join } from 'path';
+import { promises as fs } from 'fs'
 import { degreesPerPixelToZoomLevel, Footprint, multiIntersect, subGroupsGen, tileBatchGenerator, TileRanger } from '@map-colonies/mc-utils';
 import { IngestionParams, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { difference, union, Feature, Polygon, BBox } from '@turf/turf';
@@ -11,9 +13,10 @@ import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { SERVICES } from '../common/constants';
 import { ICleanupData, IConfig, ILayerMergeData, IMergeOverlaps, IMergeParameters, IMergeSources, IMergeTaskParams } from '../common/interfaces';
 import { Grid } from '../layers/interfaces';
-import { JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
+import { CreateLayerJobParams, JobManagerWrapper } from '../serviceClients/JobManagerWrapper';
 
 @injectable()
+// eslint-disable-next-line import/exports-last
 export class MergeTilesTasker {
   private readonly tileRanger: TileRanger;
   private readonly batchSize: number;
@@ -54,9 +57,11 @@ export class MergeTilesTasker {
     extent: BBox,
     managerCallbackUrl: string,
     isNew?: boolean,
-    cleanupData?: ICleanupData
+    cleanupData?: ICleanupData,
+    bc?: BroadcastChannel,
   ): Promise<string> {
     const layers = data.fileNames.map<ILayerMergeData>((fileName) => {
+      console.log("####", fileName)
       const fileRelativePath = join(data.originDirectory, fileName);
       const footprint = data.metadata.footprint;
       return {
@@ -65,6 +70,7 @@ export class MergeTilesTasker {
         footprint: footprint,
       };
     });
+
     const maxZoom = degreesPerPixelToZoomLevel(data.metadata.maxResolutionDeg as number);
     const params: IMergeParameters = {
       layers: layers,
@@ -94,15 +100,19 @@ export class MergeTilesTasker {
           configurationBatchSize: this.mergeTaskBatchSize,
         });
         if (jobId === undefined) {
-          jobId = await this.jobManagerClient.createLayerJob(
+          const params: CreateLayerJobParams = {
             data,
             layerRelativePath,
             jobType,
             taskType,
-            mergeTaskBatch,
+            taskParams: mergeTaskBatch,
             managerCallbackUrl,
             cleanupData
-          );
+          }
+          const bci = new BroadcastChannel('broadcast_channel');
+          console.log("BC INSIDE:", bci)
+          bci.postMessage(params);
+          jobId = await this.jobManagerClient.createLayerJob(params);
         } else {
           try {
             await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
@@ -114,20 +124,24 @@ export class MergeTilesTasker {
         mergeTaskBatch = [];
       }
     }
+    
     if (mergeTaskBatch.length !== 0) {
+      console.log("ALSOO HEREE")
       if (jobId === undefined) {
-        jobId = await this.jobManagerClient.createLayerJob(
+        const params: CreateLayerJobParams = {
           data,
           layerRelativePath,
           jobType,
           taskType,
-          mergeTaskBatch,
+          taskParams: mergeTaskBatch,
           managerCallbackUrl,
           cleanupData
-        );
+        }
+        jobId = await this.jobManagerClient.createLayerJob(params);
       } else {
         // eslint-disable-next-line no-useless-catch
         try {
+          console.log("HERE #2")
           await this.jobManagerClient.createTasks(jobId, mergeTaskBatch, taskType);
 
           if (fetchTimerTaskBatchFill) {

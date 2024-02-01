@@ -11,5 +11,6 @@ export const SERVICES: Record<string, symbol> = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
+  PISCINA: Symbol('Piscina'),
 };
 /* eslint-enable @typescript-eslint/naming-convention */

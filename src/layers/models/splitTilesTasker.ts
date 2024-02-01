@@ -11,7 +11,7 @@ import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { ITaskParameters } from '../interfaces';
 import { ITaskZoomRange } from '../../jobs/interfaces';
-import { JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
+import { CreateLayerJobParams, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 
 @injectable()
 export class SplitTilesTasker {
@@ -71,7 +71,14 @@ export class SplitTilesTasker {
         });
 
         if (jobId === undefined) {
-          jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, taskBatch);
+          const params: CreateLayerJobParams = {
+            data,
+            layerRelativePath,
+            jobType,
+            taskType,
+            taskParams: taskBatch
+          }
+          jobId = await this.jobManagerClient.createLayerJob(params);
         } else {
           // eslint-disable-next-line no-useless-catch
           try {
@@ -87,7 +94,14 @@ export class SplitTilesTasker {
     }
     if (taskBatch.length !== 0) {
       if (jobId === undefined) {
-        jobId = await this.jobManagerClient.createLayerJob(data, layerRelativePath, jobType, taskType, taskBatch);
+        const params: CreateLayerJobParams = {
+          data,
+          layerRelativePath,
+          jobType,
+          taskType,
+          taskParams: taskBatch
+        }
+        jobId = await this.jobManagerClient.createLayerJob(params);
       } else {
         // eslint-disable-next-line no-useless-catch
         try {

@@ -4,6 +4,7 @@ import { trace } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { instanceCachingFactory } from 'tsyringe';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
+import Piscina from 'piscina';
 import client from 'prom-client';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { tracing } from './common/tracing';
@@ -22,12 +23,16 @@ export const registerExternalValues = (options?: RegisterOptions): DependencyCon
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
-
+  const piscina = new Piscina({
+    filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js',
+    maxThreads: 1
+  });
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
 
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: config } },
+    { token: SERVICES.PISCINA, provider: { useValue: piscina } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },

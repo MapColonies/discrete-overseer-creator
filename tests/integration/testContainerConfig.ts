@@ -1,4 +1,5 @@
 import { trace } from '@opentelemetry/api';
+import Piscina from 'piscina';
 import jsLogger from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
 import { Registry } from 'prom-client';
@@ -18,13 +19,16 @@ import { GdalUtilities } from '../../src/utils/GDAL/gdalUtilities';
 import { gdalUtilitiesMock } from '../mocks/gdalUtilitiesMock';
 import { MetadataMerger } from '../../src/update/metadataMerger';
 import { metadataMergerMock } from '../mocks/metadataMerger';
+import { piscinaMock } from '../mocks/piscina/piscinaMock';
 
 function getContainerConfig(): InjectionObject<unknown>[] {
+  const piscina = new Piscina({ filename: '/media/shlomiko/data/repositories/ingestion-repos/discrete-overseer-creator/dist/utils/piscina/worker.js', maxThreads: 1 })
   initConfig();
   return [
     { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
     { token: SERVICES.CONFIG, provider: { useValue: configMock } },
     { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
+    { token: SERVICES.PISCINA, provider: { useValue: piscinaMock } },
     { token: LAYERS_ROUTER_SYMBOL, provider: { useFactory: layersRouterFactory } },
     { token: JOBS_ROUTER_SYMBOL, provider: { useFactory: jobsRouterFactory } },
     { token: TOC_ROUTER_SYMBOL, provider: { useFactory: tocRouterFactory } },

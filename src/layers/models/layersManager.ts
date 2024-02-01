@@ -1,4 +1,6 @@
+import "reflect-metadata";
 import { join } from 'node:path';
+import Piscina from "piscina";
 import { Logger } from '@map-colonies/js-logger';
 import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,6 +42,7 @@ export class LayersManager {
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
   private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
+  private readonly bc: BroadcastChannel;
 
   private grids: Grid[] = [];
 
@@ -47,21 +50,22 @@ export class LayersManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.TRACER) public readonly tracer: Tracer,
+    @inject(SERVICES.PISCINA) private readonly piscina: Piscina,
     private readonly zoomLevelCalculator: ZoomLevelCalculator,
-    private readonly db: JobManagerWrapper,
+    private readonly jobManager: JobManagerWrapper,
     private readonly catalog: CatalogClient,
     private readonly mapPublisher: MapPublisherClient,
     private readonly ingestionValidator: IngestionValidator,
     private readonly gdalUtilities: GdalUtilities,
     private readonly splitTilesTasker: SplitTilesTasker,
     private readonly mergeTilesTasker: MergeTilesTasker,
-
-    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry,
   ) {
     this.sourceMount = this.config.get<string>('layerSourceDir');
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.bc = new BroadcastChannel('broadcast_channel');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -121,9 +125,8 @@ export class LayersManager {
 
     this.validateCorrectProductVersion(data);
 
-    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
-      data.metadata.productId as string
-    } productType: ${productType}`;
+    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${data.metadata.productId as string
+      } productType: ${productType}`;
     this.logger.info({
       jobType: jobType,
       taskType: taskType,
@@ -156,18 +159,22 @@ export class LayersManager {
         this.setDefaultValues(data);
 
         const layerRelativePath = `${id}/${displayPath}`;
-
         if (taskType === TaskAction.MERGE_TILES) {
-          jobId = await this.mergeTilesTasker.createMergeTilesTasks(
+          console.log("BC OUTSIDE", this.bc)
+          this.bc.onmessage = (message) => {
+            console.log(message.data)
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          jobId = await this.piscina.run({
             data,
             layerRelativePath,
             taskType,
             jobType,
-            this.grids,
+            grids: this.grids,
             extent,
-            overseerUrl,
-            true
-          );
+            managerCallbackUrl: overseerUrl,
+            isNew: true,
+          }, { name: 'mergeTiles' });
         } else {
           const layerZoomRanges = this.zoomLevelCalculator.createLayerZoomRanges(data.metadata.maxResolutionDeg as number);
           jobId = await this.splitTilesTasker.createSplitTilesTasks(data, layerRelativePath, layerZoomRanges, jobType, taskType);
@@ -421,7 +428,7 @@ export class LayersManager {
       shouldReturnTasks: false,
     };
     const ingestionJobTypes = this.config.get<string[]>('forbiddenTypesForParallelIngesion');
-    const jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
+    const jobs = await this.jobManager.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
     jobs.forEach((job) => {
       if ((job.status == OperationStatus.IN_PROGRESS || job.status == OperationStatus.PENDING) && ingestionJobTypes.includes(job.type)) {
         const message = `Layer id: ${productId} product type: ${productType}, conflicting job ${job.type} is already running for that layer`;
@@ -509,7 +516,7 @@ export class LayersManager {
           internalId: id,
           shouldReturnTasks: false,
         };
-        jobs = await this.db.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
+        jobs = await this.jobManager.getJobs<Record<string, unknown>, ITaskParameters | IMergeTaskParams>(findJobParameters);
       } while (isExists && jobs.length > 0);
 
       const displayPath = uuidv4();
@@ -537,11 +544,11 @@ export class LayersManager {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
-            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
-              infoData.pixelSize
-            } from GeoPackage.`;
-          }
+          // if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
+          //   message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
+          //     infoData.pixelSize
+          //   } from GeoPackage.`;
+          // }
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
               const polygon = { type: 'Polygon', coordinates: coords };

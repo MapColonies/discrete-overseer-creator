@@ -24,6 +24,7 @@ import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
 import { Grid } from '../../../../src/layers/interfaces';
 import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilitiesMock';
 import { tracerMock } from '../../../mocks/tracer';
+import { piscinaMock, runMock } from '../../../mocks/piscina/piscinaMock';
 
 let layersManager: LayersManager;
 
@@ -82,6 +83,7 @@ describe('LayersManager', () => {
       configMock,
       jsLogger({ enabled: false }),
       tracerMock,
+      piscinaMock,
       zoomLevelCalculator,
       jobManagerClientMock,
       catalogClientMock,
@@ -252,23 +254,29 @@ describe('LayersManager', () => {
       expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
       expect(getJobsMock).toHaveBeenCalledTimes(2);
       expect(validateGpkgFilesMock).toHaveBeenCalledTimes(1);
-      expect(createMergeTilesTasksMock).toHaveBeenCalledTimes(1);
+      expect(runMock).toHaveBeenCalledTimes(1);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const piscinaTaskName = runMock.mock.calls[0][1].name;
+      expect(piscinaTaskName).toBe('mergeTiles');
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-      const mockId = createMergeTilesTasksMock.mock.calls[0][0].metadata.id;
+      const mockId = runMock.mock.calls[0][0].data.metadata.id;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-      const mockDisplayPath = createMergeTilesTasksMock.mock.calls[0][0].metadata.displayPath;
+      const mockDisplayPath = runMock.mock.calls[0][0].data.metadata.displayPath;
       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      const relativePath = `${mockId}/${mockDisplayPath}`;
-      expect(createMergeTilesTasksMock).toHaveBeenCalledWith(
-        testData,
-        relativePath,
-        TaskAction.MERGE_TILES,
-        JobAction.NEW,
-        [Grid.TWO_ON_ONE],
-        [34.90156677832806, 32.410349688281244, 36.237901242471565, 33.96885230417779],
+      const layerRelativePath = `${mockId}/${mockDisplayPath}`;
+      const params = {
+        data: testData,
+        layerRelativePath,
+        taskType: TaskAction.MERGE_TILES,
+        jobType: JobAction.NEW,
+        grids: [Grid.TWO_ON_ONE],
+        extent: [34.90156677832806, 32.410349688281244, 36.237901242471565, 33.96885230417779],
         managerCallbackUrl,
-        true
-      );
+        isNew: true,
+        tracer: tracerMock,
+      }
+      expect(runMock).toHaveBeenCalledWith(params,{name: "mergeTiles"});
     });
 
     /* this test is not relevant currently, since we are passing "isNew" parameter from configuration */
