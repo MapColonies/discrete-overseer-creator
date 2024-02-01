@@ -101,7 +101,7 @@ describe('MetadataMerger', () => {
     maxResolutionDeg: 0.0072,
     sensors: ['RGB', 'VIS'],
     sourceDateEnd: new Date(2, 1, 1),
-    sourceDateStart: new Date(2, 1, 1),
+    sourceDateStart: new Date(1, 1, 1),
     srsId: 'EPSG:4326',
     srsName: 'wgs84',
     type: RecordType.RECORD_RASTER,
