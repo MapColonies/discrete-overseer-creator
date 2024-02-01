@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.4.6](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.5...v4.4.6) (2024-02-01)
+
+
+### Bug Fixes
+
+* update metadata on swap cases (MAPCO-3909) ([#44](https://github.com/MapColonies/discrete-overseer-creator/issues/44)) ([0d4b187](https://github.com/MapColonies/discrete-overseer-creator/commit/0d4b1875bd94dcdd79cc21b36e343a6618161145))
+
 ### [4.4.5](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.4...v4.4.5) (2024-01-21)
 
 ### [4.4.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.3...v4.4.4) (2024-01-18)
