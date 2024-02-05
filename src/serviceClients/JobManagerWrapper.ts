@@ -22,7 +22,6 @@ export class JobManagerWrapper extends JobManagerClient {
   ) {
     super(
       logger,
-      '',
       config.get<string>('jobManagerURL'),
       config.get<IHttpRetryConfig>('httpRetry'),
       'jobManagerClient',
