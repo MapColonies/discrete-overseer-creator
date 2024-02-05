@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.5.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.6...v4.5.0) (2024-02-05)
+
+
+### Features
+
+* upgrade mc-utils version to fix the liveness bug ([#45](https://github.com/MapColonies/discrete-overseer-creator/issues/45)) ([32b7848](https://github.com/MapColonies/discrete-overseer-creator/commit/32b7848bf95ca3dbc08d74ff5eefc7db7e6febe2))
+
 ### [4.4.6](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.5...v4.4.6) (2024-02-01)
 
 
