@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.5.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.0...v4.5.1) (2024-02-06)
+
+
+### Bug Fixes
+
+* merge operator values ([#46](https://github.com/MapColonies/discrete-overseer-creator/issues/46)) ([ffffb3d](https://github.com/MapColonies/discrete-overseer-creator/commit/ffffb3dd2eaae99e3d7cb86b92173eeb834e5226))
+
 ## [4.5.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.4.6...v4.5.0) (2024-02-05)
 
 
