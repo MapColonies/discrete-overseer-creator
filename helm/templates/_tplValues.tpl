@@ -54,7 +54,7 @@ Custom definitions
 {{- end -}}
 
 {{- define "common.serviceUrls.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.serviceUrls .Values.serviceUrls ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.serviceUrls .Values.global.serviceUrls ) "context" . ) }}
 {{- end -}}
 
 {{- define "common.jobManagement.merged" -}}
