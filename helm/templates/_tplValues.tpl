@@ -46,11 +46,11 @@ Custom definitions
 */}}
 
 {{- define "common.storage.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.storage .Values.storage ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.storage .Values.global.storage ) "context" . ) }}
 {{- end -}}
 
 {{- define "common.fs.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.storage.fs .Values.storage.fs ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.storage.fs .Values.global.storage.fs ) "context" . ) }}
 {{- end -}}
 
 {{- define "common.serviceUrls.merged" -}}
@@ -58,9 +58,9 @@ Custom definitions
 {{- end -}}
 
 {{- define "common.jobManagement.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.jobManagement .Values.jobManagement ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.jobManagement .Values.global.jobManagement ) "context" . ) }}
 {{- end -}}
 
 {{- define "common.ingestion.merged" -}}
-{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.global.ingestion .Values.ingestion ) "context" . ) }}
+{{- include "common.tplvalues.merge" ( dict "values" ( list .Values.ingestion .Values.global.ingestion ) "context" . ) }}
 {{- end -}}
