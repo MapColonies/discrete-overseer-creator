@@ -33,6 +33,7 @@ export class JobsManager {
   private readonly ingestionUpdateJobType: string;
   private readonly ingestionSwapUpdateJobType: string;
   private readonly ingestionTaskType: IngestionTaskTypes;
+  private readonly redisEnabled : boolean;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -52,6 +53,7 @@ export class JobsManager {
     this.ingestionUpdateJobType = config.get<string>('ingestionUpdateJobType');
     this.ingestionSwapUpdateJobType = config.get<string>('ingestionSwapUpdateJobType');
     this.ingestionTaskType = config.get<IngestionTaskTypes>('ingestionTaskType');
+    this.redisEnabled = config.get<boolean>('redis.enabled');
     this.cacheType = this.getCacheType(mapServerCacheType);
   }
 
@@ -130,7 +132,7 @@ export class JobsManager {
       await this.abortJobWithStatusFailed(job.id, `Failed to generate tiles`);
       job.status = OperationStatus.FAILED;
     } else if (job.isSuccessful) {
-      const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
+      const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType, this.redisEnabled);
 
       this.logger.debug({
         productId: job.metadata.productId,
@@ -228,6 +230,7 @@ export class JobsManager {
         tilesPath: relativePath,
         cacheType: this.cacheType,
         format: metadata.tileOutputFormat as TileOutputFormat,
+        isRedis : this.redisEnabled
       };
       if (isLayerUpdate) {
         await this.mapPublisher.updateLayer(publishReq); // update existing mapproxy layer

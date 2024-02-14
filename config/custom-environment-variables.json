@@ -148,5 +148,11 @@
   "forbiddenTypesForParallelIngesion": {
     "__name": "FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"
+  },
+  "redis": {
+    "enabled": {
+      "__name": "REDIS_ENABLED",
+      "__format": "boolean"
+    }
   }
 }

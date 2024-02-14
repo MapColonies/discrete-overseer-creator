@@ -6,6 +6,7 @@ export interface IPublishMapLayerRequest {
   tilesPath: string;
   cacheType: PublishedMapLayerCacheType;
   format: TileOutputFormat;
+  isRedis: boolean
 }
 
 export enum PublishedMapLayerCacheType {

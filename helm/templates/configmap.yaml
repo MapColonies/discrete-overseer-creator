@@ -51,6 +51,9 @@ data:
   PIXEL_SIZE_RANGE_MAX: {{ .Values.env.validationValuesByInfo.pixelSizeRange.max | quote}}
   TILE_SIZE: {{ .Values.env.validationValuesByInfo.tileSize | quote}}
   FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
+  {{ if .Values.global.redis.enabled }}
+  REDIS_ENABLED: {{ quote .Values.global.redis.enabled }}
+  {{ end }}
   {{ if .Values.env.tracing.enabled }}
   TELEMETRY_TRACING_ENABLED: 'true'
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
