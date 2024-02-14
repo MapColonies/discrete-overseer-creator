@@ -1,11 +1,10 @@
 import { singleton } from 'tsyringe';
 import { GeoJSON } from 'geojson';
-import { Feature, FeatureCollection, union, difference, MultiPolygon, featureCollection, Polygon } from '@turf/turf';
+import { union } from '@turf/turf';
 import { LayerMetadata } from '@map-colonies/mc-model-types';
 import { Footprint } from '@map-colonies/mc-utils';
 import { getUTCDate } from '@map-colonies/mc-utils';
 import { createBBoxString } from '../utils/bbox';
-import { layerMetadataToPolygonParts } from '../common/utils/polygonPartsBuilder';
 
 @singleton()
 export class MetadataMerger {
@@ -28,9 +27,6 @@ export class MetadataMerger {
       minHorizontalAccuracyCE90: isSwap
         ? updateMetadata.minHorizontalAccuracyCE90 ?? 0
         : Math.max(oldMetadata.minHorizontalAccuracyCE90 ?? 0, updateMetadata.minHorizontalAccuracyCE90 ?? 0),
-      layerPolygonParts: isSwap
-        ? layerMetadataToPolygonParts(updateMetadata)
-        : this.mergeLayerPolygonParts(updateMetadata, oldMetadata.layerPolygonParts),
       footprint: isSwap
         ? (updateMetadata.footprint as Footprint)
         : (union(oldMetadata.footprint as Footprint, updateMetadata.footprint as Footprint)?.geometry as GeoJSON),
@@ -46,7 +42,7 @@ export class MetadataMerger {
       classification: isSwap ? updateMetadata.classification : this.mergeClassification(oldMetadata.classification, updateMetadata.classification),
     };
     newMetadata.productBoundingBox = createBBoxString(newMetadata.footprint as Footprint);
-    newMetadata.sensors = this.polygonPartsToSensors(newMetadata.layerPolygonParts as FeatureCollection);
+    newMetadata.sensors = updateMetadata.sensors;
     return newMetadata;
   }
 
@@ -61,57 +57,6 @@ export class MetadataMerger {
       }
     });
     return Array.from(merged);
-  }
-
-  private mergeLayerPolygonParts(updateMetadata: LayerMetadata, oldPolygonParts?: GeoJSON): GeoJSON | undefined {
-    // handle one polygon part undefined state
-    let updatePolygonParts = updateMetadata.layerPolygonParts;
-    if (!oldPolygonParts) {
-      return updatePolygonParts;
-    } else if (!updateMetadata.layerPolygonParts) {
-      updatePolygonParts = layerMetadataToPolygonParts(updateMetadata);
-    }
-    // handle polygon parts merging
-    const updateFootprint = updateMetadata.footprint as Footprint;
-    const oldFeatures = (oldPolygonParts as FeatureCollection<Polygon | MultiPolygon>).features;
-    const updateFeatures = (updatePolygonParts as FeatureCollection<Polygon | MultiPolygon>).features;
-    const newFeatures: Feature<Polygon | MultiPolygon>[] = [];
-    // old features handling
-    // for each old feature
-    oldFeatures.forEach((feature: Feature<Polygon | MultiPolygon>) => {
-      // clone old feature
-      let updatedFeature: Feature<Polygon | MultiPolygon> | null = { ...feature };
-      // remove new footprint from cloned old feature
-      updatedFeature = difference(updatedFeature, updateFootprint);
-      // if there is a leftover
-      if (updatedFeature !== null) {
-        // push leftover feature into new features collection
-        // TODO: difference returnes multipolygon feature - Needs to be changed to Polygon!!!
-        newFeatures.push(updatedFeature);
-      }
-    });
-    // push new features into new features collection
-    updateFeatures.forEach((feature: Feature<Polygon | MultiPolygon>) => {
-      newFeatures.push(feature);
-    });
-    return featureCollection(newFeatures);
-  }
-
-  private polygonPartsToSensors(layerPolygonParts?: FeatureCollection): string[] {
-    if (!layerPolygonParts) {
-      return [];
-    }
-    const sensors = new Set<string>();
-    layerPolygonParts.features.forEach((feature) => {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const partSensors = (feature.properties as { SensorType: string }).SensorType.split(',');
-      partSensors.forEach((sensor) => {
-        if (!sensors.has(sensor)) {
-          sensors.add(sensor);
-        }
-      });
-    });
-    return Array.from(sensors);
   }
 
   private mergeClassification(oldClassification?: string, newClassification?: string): string {

@@ -2,7 +2,7 @@ import { LayerMetadata, ProductType, TileOutputFormat, Transparency } from '@map
 import httpStatusCodes from 'http-status-codes';
 import _ from 'lodash';
 import { GeoJSON } from 'geojson';
-import { FeatureCollection, LineString } from '@turf/turf';
+import { LineString } from '@turf/turf';
 import { RecordType } from '@map-colonies/mc-model-types/Schema/models/pycsw/coreEnums';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
@@ -30,20 +30,7 @@ const validPolygon = {
     ],
   ],
 };
-const validMultiPolygon = {
-  type: 'MultiPolygon',
-  coordinates: [
-    [
-      [
-        [34.91692694458297, 33.952927285465876],
-        [34.90156677832806, 32.42331628696577],
-        [36.23406120090846, 32.410349688281244],
-        [36.237901242471565, 33.96885230417779],
-        [34.91692694458297, 33.952927285465876],
-      ],
-    ],
-  ],
-};
+
 const invalidPolygon = {
   type: 'Polygon',
   coordinates: [
@@ -109,47 +96,7 @@ const invalidTestData = {
   metadata: invalidTestImageMetadata,
   originDirectory: '/here',
 };
-const validLayerPolygonParts: FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {
-        /* eslint-disable @typescript-eslint/naming-convention */
-        Dsc: 'a',
-        Rms: null,
-        Ep90: null,
-        Scale: null,
-        Cities: null,
-        Source: `testid-testversion`,
-        Countries: '',
-        Resolution: 0.072,
-        SensorType: 'a,b',
-        SourceName: 'test',
-        /* eslint-enable @typescript-eslint/naming-convention */
-      },
-      geometry: validPolygon,
-    },
-    {
-      type: 'Feature',
-      properties: {
-        /* eslint-disable @typescript-eslint/naming-convention */
-        Dsc: 'b',
-        Rms: null,
-        Ep90: null,
-        Scale: null,
-        Cities: null,
-        Source: `testid-testversion`,
-        Countries: '',
-        Resolution: 0.072,
-        SensorType: 'a,b',
-        SourceName: 'test',
-        /* eslint-enable @typescript-eslint/naming-convention */
-      },
-      geometry: validMultiPolygon,
-    },
-  ],
-};
+
 const validLine: LineString = {
   type: 'LineString',
   coordinates: [
@@ -281,7 +228,6 @@ describe('layers', function () {
             tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
@@ -323,7 +269,6 @@ describe('layers', function () {
             tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
@@ -432,24 +377,6 @@ describe('layers', function () {
       expect(findRecordMock).toHaveBeenCalledTimes(1);
     });
 
-    it('should return 200 status code with valid layer polygon parts', async function () {
-      getJobsMock.mockResolvedValue([]);
-      const testData = _.cloneDeep(validTestData);
-      testData.metadata.layerPolygonParts = validLayerPolygonParts as GeoJSON;
-      testData.metadata.footprint = validMultiPolygon as GeoJSON;
-
-      const response = await requestSender.createLayer(testData);
-
-      expect(response).toSatisfyApiSpec();
-      expect(response.status).toBe(httpStatusCodes.OK);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
-      expect(getJobsMock).toHaveBeenCalledTimes(2);
-      expect(mapExistsMock).toHaveBeenCalledTimes(1);
-      expect(catalogExistsMock).toHaveBeenCalledTimes(1);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(1);
-      //expect(createTasksMock).toHaveBeenCalledTimes(3);
-    });
-
     it('should return 200 status code for sending request with extra metadata fields', async function () {
       getJobsMock.mockResolvedValue([]);
       let extraFieldTestMetaData = { ...validTestData.metadata } as Record<string, unknown>;
@@ -474,7 +401,6 @@ describe('layers', function () {
             productBoundingBox: '34.90156677832806,32.410349688281244,36.237901242471565,33.96885230417779',
             id: expect.anything(),
             displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
@@ -518,7 +444,6 @@ describe('layers', function () {
             tileOutputFormat: TileOutputFormat.JPEG,
             id: expect.anything(),
             displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
@@ -559,7 +484,6 @@ describe('layers', function () {
             tileOutputFormat: TileOutputFormat.PNG,
             id: expect.anything(),
             displayPath: expect.anything(),
-            layerPolygonParts: expect.anything(),
             sourceDateEnd: expect.anything(),
             sourceDateStart: expect.anything(),
             creationDate: expect.anything(),
@@ -745,60 +669,6 @@ describe('layers', function () {
     it('should return 400 status code for invalid footprint multiPolygon', async function () {
       const testData = _.cloneDeep(validTestData);
       testData.metadata.footprint = invalidMultiPolygon as GeoJSON;
-
-      const response = await requestSender.createLayer(testData);
-
-      expect(response).toSatisfyApiSpec();
-      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
-      expect(getJobsMock).toHaveBeenCalledTimes(0);
-      expect(mapExistsMock).toHaveBeenCalledTimes(0);
-      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(0);
-      expect(createTasksMock).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return 400 status code for invalid layerPolygonParts multiPolygon', async function () {
-      const testData = _.cloneDeep(validTestData);
-      testData.metadata.layerPolygonParts = _.cloneDeep(validLayerPolygonParts) as GeoJSON;
-      const polygonParts = testData.metadata.layerPolygonParts as FeatureCollection;
-      polygonParts.features[1].geometry = invalidMultiPolygon;
-
-      const response = await requestSender.createLayer(testData);
-
-      expect(response).toSatisfyApiSpec();
-      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
-      expect(getJobsMock).toHaveBeenCalledTimes(0);
-      expect(mapExistsMock).toHaveBeenCalledTimes(0);
-      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(0);
-      expect(createTasksMock).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return 400 status code for invalid layerPolygonParts polygon', async function () {
-      const testData = _.cloneDeep(validTestData);
-      testData.metadata.layerPolygonParts = _.cloneDeep(validLayerPolygonParts) as GeoJSON;
-      const polygonParts = testData.metadata.layerPolygonParts as FeatureCollection;
-      polygonParts.features[1].geometry = invalidPolygon;
-
-      const response = await requestSender.createLayer(testData);
-
-      expect(response).toSatisfyApiSpec();
-      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
-      expect(getJobsMock).toHaveBeenCalledTimes(0);
-      expect(mapExistsMock).toHaveBeenCalledTimes(0);
-      expect(catalogExistsMock).toHaveBeenCalledTimes(0);
-      expect(createLayerJobMock).toHaveBeenCalledTimes(0);
-      expect(createTasksMock).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return 400 status code for invalid layerPolygonParts geometry type', async function () {
-      const testData = _.cloneDeep(validTestData);
-      testData.metadata.layerPolygonParts = _.cloneDeep(validLayerPolygonParts) as GeoJSON;
-      const polygonParts = testData.metadata.layerPolygonParts as FeatureCollection;
-      polygonParts.features[1].geometry = validLine;
 
       const response = await requestSender.createLayer(testData);
 

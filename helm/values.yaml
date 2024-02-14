@@ -128,7 +128,6 @@ env:
   displayNameDir: "\\layerSources"
   validFileExtensions: 
   - 'gpkg'
-  mapServerPublicDNS: 'http://mapproxy-server-public-dns'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
   useNewTargetFlagInUpdateTasks: true

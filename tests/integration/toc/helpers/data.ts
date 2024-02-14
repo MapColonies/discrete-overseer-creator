@@ -38,7 +38,6 @@ export const validTestImageMetadata: IFindResponseRecord = {
     creationDate: new Date('11/16/2017'),
     sourceDateEnd: new Date('11/16/2017'),
     sourceDateStart: new Date('11/16/2017'),
-    layerPolygonParts: undefined,
     region: ['testRegion1', 'testRegion2'],
     includedInBests: undefined,
     maxResolutionMeter: 0.2,

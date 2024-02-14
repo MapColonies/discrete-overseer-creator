@@ -8,32 +8,6 @@ describe('MetadataMerger', () => {
 
   const baseFootprint = bboxPolygon([0, 0, 5, 5]);
   delete baseFootprint.bbox;
-  const basePolygonParts = featureCollection([
-    bboxPolygon([0, 0, 4, 5], {
-      properties: {
-        test: '1',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'RGB',
-      },
-    }),
-    bboxPolygon([4, 0, 5, 4], {
-      properties: {
-        test: '2',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'Pan_Sharpen',
-      },
-    }),
-    bboxPolygon([4, 4, 5, 5], {
-      properties: {
-        test: '3',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'excluded',
-      },
-    }),
-  ]);
-  basePolygonParts.features.forEach((feat) => {
-    delete feat.bbox;
-  });
   const baseRawProductData = featureCollection([bboxPolygon([0, 0, 5, 5])]);
   const baseMetadata = {
     minHorizontalAccuracyCE90: 5,
@@ -43,7 +17,6 @@ describe('MetadataMerger', () => {
     footprint: baseFootprint,
     includedInBests: [],
     ingestionDate: new Date(2022, 1, 1),
-    layerPolygonParts: basePolygonParts,
     maxResolutionMeter: 777,
     producerName: 'tester',
     productBoundingBox: '0,0,5,5',
@@ -87,7 +60,6 @@ describe('MetadataMerger', () => {
     description: 'test',
     footprint: updateFootprint,
     includedInBests: [],
-    layerPolygonParts: updatePolygonParts,
     maxResolutionMeter: 500,
     producerName: 'tester',
     productBoundingBox: '4,4,7,7',
@@ -99,7 +71,7 @@ describe('MetadataMerger', () => {
     rawProductData: updateRawProductData,
     region: ['r1', 'r4'],
     maxResolutionDeg: 0.0072,
-    sensors: ['RGB', 'VIS'],
+    sensors: ['RGB', 'Pan_Sharpen', 'VIS'],
     sourceDateEnd: new Date(1, 1, 6),
     sourceDateStart: new Date(1, 1, 4),
     srsId: 'EPSG:4326',
@@ -123,71 +95,7 @@ describe('MetadataMerger', () => {
     ],
   ]);
   delete expectedFootprint.bbox;
-  const expectedPolygonParts = featureCollection([
-    bboxPolygon([0, 0, 4, 5], {
-      properties: {
-        test: '1',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'RGB',
-      }, // eslint-disable-next-line @typescript-eslint/naming-convention
-    }),
-    bboxPolygon([4, 0, 5, 3], {
-      properties: {
-        test: '2',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'Pan_Sharpen',
-      },
-    }),
-    bboxPolygon([4, 4, 7, 7], {
-      properties: {
-        test: '4',
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        SensorType: 'VIS',
-      },
-    }),
-  ]);
 
-  expectedPolygonParts.features.forEach((feat) => {
-    delete feat.bbox;
-  });
-
-  const expectedSwapPolygonParts = {
-    bbox: [4, 3, 7, 7],
-    type: 'FeatureCollection',
-    features: [
-      {
-        type: 'Feature',
-        geometry: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [4, 3],
-                [7, 3],
-                [7, 7],
-                [4, 7],
-                [4, 3],
-              ],
-            ],
-          },
-        },
-        properties: {
-          Dsc: 'test',
-          Rms: null,
-          Ep90: 3,
-          Scale: null,
-          Cities: null,
-          Source: 'testId-2.0',
-          Countries: 'r1,r4',
-          Resolution: '0.0072',
-          SensorType: 'RGB,VIS',
-          SourceName: 'test',
-        },
-      },
-    ],
-  };
   const expectedMetadata = {
     minHorizontalAccuracyCE90: 5,
     classification: '4',
@@ -195,7 +103,6 @@ describe('MetadataMerger', () => {
     description: 'test\ntest',
     footprint: expectedFootprint.geometry,
     includedInBests: [],
-    layerPolygonParts: expectedPolygonParts,
     maxResolutionMeter: 500,
     producerName: 'tester',
     productBoundingBox: '0,0,7,7',
@@ -224,7 +131,6 @@ describe('MetadataMerger', () => {
     description: 'test',
     footprint: updateFootprint,
     includedInBests: [],
-    layerPolygonParts: expectedSwapPolygonParts,
     maxResolutionMeter: 500,
     producerName: 'tester',
     productBoundingBox: '4,3,7,7',
@@ -236,7 +142,7 @@ describe('MetadataMerger', () => {
     rawProductData: undefined,
     region: ['r1', 'r4'],
     maxResolutionDeg: 0.0072,
-    sensors: ['RGB', 'VIS'],
+    sensors: ['RGB', 'Pan_Sharpen', 'VIS'],
     sourceDateEnd: new Date(1, 1, 6),
     sourceDateStart: new Date(1, 1, 4),
     srsId: 'EPSG:4326',

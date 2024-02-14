@@ -4,7 +4,7 @@ import isValidGeoJson from '@turf/boolean-valid';
 import { v4 as uuidv4 } from 'uuid';
 import { GeoJSON } from 'geojson';
 import client from 'prom-client';
-import { FeatureCollection, Geometry, geojsonType, bbox } from '@turf/turf';
+import { Geometry, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
@@ -17,7 +17,6 @@ import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds, ISupportedIngestionSwapTypes } from '../../common/interfaces';
 import { JobAction, TaskAction } from '../../common/enums';
-import { layerMetadataToPolygonParts } from '../../common/utils/polygonPartsBuilder';
 import { createBBoxString } from '../../utils/bbox';
 import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
 import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
@@ -471,26 +470,6 @@ export class LayersManager {
       });
       throw new BadRequestError(message);
     }
-
-    if (metadata.layerPolygonParts != undefined) {
-      const featureCollection = metadata.layerPolygonParts as FeatureCollection;
-      try {
-        geojsonType(featureCollection, 'FeatureCollection', 'validateGeoJsons');
-      } catch {
-        throw new BadRequestError(`received invalid layerPolygonParts, layerPolygonParts must be feature collection`);
-      }
-      featureCollection.features.forEach((feature) => {
-        if (
-          (feature.geometry.type !== 'Polygon' && feature.geometry.type !== 'MultiPolygon') ||
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          feature.geometry.coordinates === undefined ||
-          !this.validateGeometry(footprint) ||
-          !isValidGeoJson(feature)
-        ) {
-          throw new BadRequestError(`received invalid footprint for layerPolygonParts feature, it must be valid Polygon or MultiPolygon`);
-        }
-      });
-    }
   }
 
   @withSpanAsyncV4
@@ -614,8 +593,5 @@ export class LayersManager {
     data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;
     data.metadata.srsName = data.metadata.srsName === undefined ? 'WGS84GEO' : data.metadata.srsName;
     data.metadata.productBoundingBox = createBBoxString(data.metadata.footprint as GeoJSON);
-    if (!data.metadata.layerPolygonParts) {
-      data.metadata.layerPolygonParts = layerMetadataToPolygonParts(data.metadata);
-    }
   }
 }
