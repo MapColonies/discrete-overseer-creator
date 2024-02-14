@@ -593,5 +593,6 @@ export class LayersManager {
     data.metadata.srsId = data.metadata.srsId === undefined ? '4326' : data.metadata.srsId;
     data.metadata.srsName = data.metadata.srsName === undefined ? 'WGS84GEO' : data.metadata.srsName;
     data.metadata.productBoundingBox = createBBoxString(data.metadata.footprint as GeoJSON);
+    data.metadata.layerPolygonParts = undefined;
   }
 }

@@ -15,13 +15,13 @@ export class MetadataMerger {
       sourceDateStart: isSwap
         ? updateMetadata.sourceDateStart
         : (oldMetadata.sourceDateStart as Date) <= (updateMetadata.sourceDateStart as Date)
-          ? oldMetadata.sourceDateStart
-          : updateMetadata.sourceDateStart,
+        ? oldMetadata.sourceDateStart
+        : updateMetadata.sourceDateStart,
       sourceDateEnd: isSwap
         ? updateMetadata.sourceDateEnd
         : (oldMetadata.sourceDateEnd as Date) >= (updateMetadata.sourceDateEnd as Date)
-          ? oldMetadata.sourceDateEnd
-          : updateMetadata.sourceDateEnd,
+        ? oldMetadata.sourceDateEnd
+        : updateMetadata.sourceDateEnd,
       ingestionDate: getUTCDate(),
       description: isSwap ? updateMetadata.description : (oldMetadata.description as string) + '\n' + (updateMetadata.description as string),
       minHorizontalAccuracyCE90: isSwap
@@ -40,7 +40,7 @@ export class MetadataMerger {
         : Math.min(oldMetadata.maxResolutionMeter as number, updateMetadata.maxResolutionMeter as number),
       displayPath: isSwap ? updateMetadata.displayPath : oldMetadata.displayPath,
       classification: isSwap ? updateMetadata.classification : this.mergeClassification(oldMetadata.classification, updateMetadata.classification),
-      sensors: isSwap ? updateMetadata.sensors : this.mergeUniqueArrays(oldMetadata.sensors, updateMetadata.sensors)
+      sensors: isSwap ? updateMetadata.sensors : this.mergeUniqueArrays(oldMetadata.sensors, updateMetadata.sensors),
     };
     newMetadata.productBoundingBox = createBBoxString(newMetadata.footprint as Footprint);
     return newMetadata;
