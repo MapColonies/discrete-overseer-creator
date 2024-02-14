@@ -60,7 +60,6 @@ const testImageMetadata = {
   srsId: '4326',
   srsName: 'WGS84GEO',
   type: RecordType.RECORD_RASTER,
-  layerPolygonParts: undefined,
   includedInBests: undefined,
   maxResolutionMeter: 0.2,
   productBoundingBox: undefined,
