@@ -40,9 +40,9 @@ export class MetadataMerger {
         : Math.min(oldMetadata.maxResolutionMeter as number, updateMetadata.maxResolutionMeter as number),
       displayPath: isSwap ? updateMetadata.displayPath : oldMetadata.displayPath,
       classification: isSwap ? updateMetadata.classification : this.mergeClassification(oldMetadata.classification, updateMetadata.classification),
+      sensors: isSwap ? updateMetadata.sensors : this.mergeUniqueArrays(oldMetadata.sensors, updateMetadata.sensors)
     };
     newMetadata.productBoundingBox = createBBoxString(newMetadata.footprint as Footprint);
-    newMetadata.sensors = isSwap ? updateMetadata.sensors : this.mergeUniqueArrays(oldMetadata.sensors, updateMetadata.sensors)
     return newMetadata;
   }
 
