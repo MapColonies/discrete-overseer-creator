@@ -247,7 +247,7 @@ components:
       value:
         metadata:
           type: RECORD_RASTER
-          classification: 3
+          classification: '3'
           productId: string
           productName: string
           productVersion: '47.1'
