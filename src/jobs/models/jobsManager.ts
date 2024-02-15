@@ -330,7 +330,7 @@ export class JobsManager {
   }
 
   private async publishCompletedUpdateRecord(job: ICompletedJobs, task: TaskResponse, data: LayerMetadata, isSwap = false): Promise<void> {
-    const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
+    const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType, this.redisEnabled);
     this.logger.debug({
       productId: job.metadata.productId,
       productType: job.metadata.productType,

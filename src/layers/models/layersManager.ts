@@ -36,6 +36,7 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
+  private readonly redisEnabled: boolean;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -62,6 +63,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.redisEnabled = config.get<boolean>('redis.enabled');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -121,9 +123,8 @@ export class LayersManager {
 
     this.validateCorrectProductVersion(data);
 
-    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
-      data.metadata.productId as string
-    } productType: ${productType}`;
+    const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${data.metadata.productId as string
+      } productType: ${productType}`;
     this.logger.info({
       jobType: jobType,
       taskType: taskType,
@@ -407,7 +408,7 @@ export class LayersManager {
 
   @withSpanAsyncV4
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
-    const layerName = getMapServingLayerName(productId, productType);
+    const layerName = getMapServingLayerName(productId, productType, this.redisEnabled);
     const existsInMapServer = await this.mapPublisher.exists(layerName);
     return existsInMapServer;
   }
@@ -538,9 +539,8 @@ export class LayersManager {
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
           if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
-            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
-              infoData.pixelSize
-            } from GeoPackage.`;
+            message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${infoData.pixelSize
+              } from GeoPackage.`;
           }
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
