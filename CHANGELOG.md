@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.5.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.1...v4.5.2) (2024-02-18)
+
+
+### Bug Fixes
+
+* changed container name to chart name instead of release name ([#49](https://github.com/MapColonies/discrete-overseer-creator/issues/49)) ([be0f3ea](https://github.com/MapColonies/discrete-overseer-creator/commit/be0f3ea9ad9c6c587e23125527667c72f8513c88))
+* changed swagger classification type to string ([#48](https://github.com/MapColonies/discrete-overseer-creator/issues/48)) ([3cd1f07](https://github.com/MapColonies/discrete-overseer-creator/commit/3cd1f07edfa9ed78a0327c3a62d49b8d128aa6f5))
+
 ### [4.5.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.0...v4.5.1) (2024-02-06)
 
 
