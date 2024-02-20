@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.6.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.2...v4.6.0) (2024-02-20)
+
+
+### Features
+
+* adding tileMimeType support field (MAPCO-3257)  ([#51](https://github.com/MapColonies/discrete-overseer-creator/issues/51)) ([467a0a3](https://github.com/MapColonies/discrete-overseer-creator/commit/467a0a3b04a608e9870a6c203433e5caed2ce7a1))
+
 ### [4.5.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.1...v4.5.2) (2024-02-18)
 
 
