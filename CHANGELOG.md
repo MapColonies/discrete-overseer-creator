@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.6.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.0...v4.6.1) (2024-02-20)
+
+
+### Bug Fixes
+
+* support helm registry auto pushing ([#52](https://github.com/MapColonies/discrete-overseer-creator/issues/52)) ([f3e65c9](https://github.com/MapColonies/discrete-overseer-creator/commit/f3e65c9ef328d80adfe33250252575b0e8536cb2))
+
 ## [4.6.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.5.2...v4.6.0) (2024-02-20)
 
 
