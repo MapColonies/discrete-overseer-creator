@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [18.x]
+        node: [18.x,20.x]
 
     steps:
       - name: Check out Git repository

@@ -6,6 +6,7 @@ import { GeoJSON } from 'geojson';
 import client from 'prom-client';
 import { Geometry, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { TilesMimeFormat, lookup as mimeLookup } from '@map-colonies/types';
 import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
@@ -152,6 +153,7 @@ export class LayersManager {
         }
 
         data.metadata.tileOutputFormat = this.getTileOutputFormat(taskType, transparency);
+        data.metadata.tileMimeFormat = mimeLookup(data.metadata.tileOutputFormat) as TilesMimeFormat;
         this.setDefaultValues(data);
 
         const layerRelativePath = `${id}/${displayPath}`;
@@ -203,6 +205,7 @@ export class LayersManager {
         }
         data.metadata.transparency = record?.metadata.transparency;
         data.metadata.tileOutputFormat = record?.metadata.tileOutputFormat;
+        data.metadata.tileMimeFormat = record?.metadata.tileMimeFormat;
         let cleanupData = undefined;
         let displayPath = '';
         if (jobType === JobAction.SWAP_UPDATE) {
@@ -234,9 +237,11 @@ export class LayersManager {
           cleanupData
         );
 
-        const message = `Update job - Transparency and TileOutputFormat will be override from catalog:
+        const message = `Update job - Transparency, TileOutputFormat and TilesMimeFormat will be override from catalog:
     Transparency => from ${data.metadata.transparency as Transparency} to ${record?.metadata.transparency as Transparency},
+    TilesMimeFormat => from ${data.metadata.tileMimeFormat as TilesMimeFormat} to ${record?.metadata.tileMimeFormat as TilesMimeFormat}
     TileOutputFormat => from ${data.metadata.tileOutputFormat as TileOutputFormat} to ${record?.metadata.tileOutputFormat as TileOutputFormat}`;
+
         this.logger.warn({
           jobId: jobId,
           productId: productId,
