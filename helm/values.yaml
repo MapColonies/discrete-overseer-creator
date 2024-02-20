@@ -39,6 +39,8 @@ global:
     secretName: ''
     path: '/usr/local/share/ca-certificates'
     key: 'ca.crt'
+  ingress:
+    domain: 'apps.aroapp.io'
 
 serviceUrls:
   syncManager: ""
