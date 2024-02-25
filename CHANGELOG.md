@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.6.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.2...v4.6.3) (2024-02-25)
+
+
+### Bug Fixes
+
+* add tracinng params to configmap ([#54](https://github.com/MapColonies/discrete-overseer-creator/issues/54)) ([5fa8593](https://github.com/MapColonies/discrete-overseer-creator/commit/5fa8593630164ea99151d7d586cd3a2c1f69eab1))
+
 ### [4.6.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.1...v4.6.2) (2024-02-20)
 
 ### [4.6.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.0...v4.6.1) (2024-02-20)
