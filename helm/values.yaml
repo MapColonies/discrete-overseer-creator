@@ -159,7 +159,7 @@ env:
     prometheus:
       scrape: true
       port: 8080
-    enabled: true
+    enabled: false
     url: http://localhost:55681/v1/metrics
     buckets:
     - 0.005

@@ -101,18 +101,40 @@ Returns the cloud provider image pull secret name from global if exists or from 
 {{- end -}}
 
 {{/*
-Returns the tracing url from global if exists or from the chart's values
+Returns if tracing is enabled from global if exists or from the chart's values
 */}}
-{{- define "discrete-overseer-creator.tracingUrl" -}}
-{{- if .Values.global.tracing.url }}
-    {{- .Values.global.tracing.url -}}
-{{- else if .Values.cloudProvider -}}
-    {{- .Values.env.tracing.url -}}
+{{- define "discrete-overseer-creator.tracingEnabled" -}}
+{{- if .Values.global.tracing.enabled }}
+    {{- .Values.global.tracing.enabled -}}
+{{- else -}}
+    {{- .Values.env.tracing.enabled -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Returns the tracing url from global if exists or from the chart's values
+*/}}
+{{- define "discrete-overseer-creator.tracingUrl" -}}
+{{- if .Values.global.tracing.url }}
+    {{- .Values.global.tracing.url -}}
+{{- else -}}
+    {{- .Values.env.tracing.url -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns if metrics is enabled from global if exists or from the chart's values
+*/}}
+{{- define "discrete-overseer-creator.metricsEnabled" -}}
+{{- if .Values.global.metrics.enabled }}
+    {{- .Values.global.metrics.enabled -}}
+{{- else -}}
+    {{- .Values.env.metrics.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the metrics url from global if exists or from the chart's values
 */}}
 {{- define "discrete-overseer-creator.metricsUrl" -}}
 {{- if .Values.global.metrics.url }}
@@ -121,3 +143,16 @@ Returns the tracing url from global if exists or from the chart's values
     {{- .Values.env.metrics.url -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Returns the metrics buckets from global if exists or from the chart's values
+*/}}
+{{- define "discrete-overseer-creator.metricsBuckets" -}}
+{{- if .Values.global.metrics.buckets }}
+    {{- .Values.global.metrics.buckets -}}
+{{- else -}}
+    {{- .Values.env.metrics.buckets -}}
+{{- end -}}
+{{- end -}}
+
+
