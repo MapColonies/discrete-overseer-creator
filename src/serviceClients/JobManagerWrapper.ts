@@ -6,7 +6,7 @@ import { NotFoundError } from '@map-colonies/error-types';
 import { IHttpRetryConfig } from '@map-colonies/mc-utils';
 import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { ICleanupData, IConfig, IMergeTaskParams } from '../common/interfaces';
+import { ICleanupData, IConfig, IMergeTaskParams, ISeedTaskParams } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
 import { ITaskParameters } from '../layers/interfaces';
 import { ICompletedJobs } from '../jobs/interfaces';
@@ -134,8 +134,35 @@ export class JobManagerWrapper extends JobManagerClient {
     });
     await this.post(createTasksUrl, req);
   }
+
+  public async createSeedJobTask(ingestionJob: ICompletedJobs, jobType: string, taskType: string, taskParams?: ISeedTaskParams[]): Promise<string> {
+    const resourceId = ingestionJob.metadata.productId as string;
+    const version = ingestionJob.metadata.productVersion as string;
+    const createLayerTasksUrl = `/jobs`;
+    const createJobRequest: CreateSeedJobBody = {
+      resourceId: resourceId,
+      internalId: ingestionJob.internalId,
+      version: version,
+      type: jobType,
+      parameters: {},
+      status: OperationStatus.IN_PROGRESS,
+      producerName: ingestionJob.metadata.producerName,
+      productName: ingestionJob.metadata.productName,
+      productType: ingestionJob.metadata.productType,
+      domain: this.jobDomain,
+      tasks: taskParams?.map((params) => {
+        return {
+          type: taskType,
+          parameters: params,
+        };
+      }),
+    };
+    const res = await this.post<ICreateJobResponse>(createLayerTasksUrl, createJobRequest);
+    return res.id;
+  }
 }
 
 export type JobResponse = IJobResponse<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;
 export type TaskResponse = ITaskResponse<ITaskParameters>;
 export type CreateJobBody = ICreateJobBody<Record<string, unknown>, ITaskParameters | IMergeTaskParams>;
+export type CreateSeedJobBody = ICreateJobBody<Record<string, unknown>, ISeedTaskParams>;

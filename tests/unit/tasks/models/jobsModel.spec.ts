@@ -1,15 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import jsLogger from '@map-colonies/js-logger';
 import { ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { JobsManager } from '../../../../src/jobs/models/jobsManager';
-import { jobManagerClientMock, getJobByIdMock, getTaskByIdMock, abortJobMock, updateJobByIdMock } from '../../../mocks/clients/jobManagerClient';
-import { mapPublisherClientMock, publishLayerMock, updateLayerMock } from '../../../mocks/clients/mapPublisherClient';
+import {
+  jobManagerClientMock,
+  getJobByIdMock,
+  getTaskByIdMock,
+  abortJobMock,
+  updateJobByIdMock,
+  createSeedJobTaskMock,
+} from '../../../mocks/clients/jobManagerClient';
+import { getCacheByNameTypeMock, mapPublisherClientMock, publishLayerMock, updateLayerMock } from '../../../mocks/clients/mapPublisherClient';
 import {
   catalogClientMock,
   findRecordMock,
   publishToCatalogMock,
   updateMock,
   getHighestLayerVersionMock,
+  findRecordByIdMock,
 } from '../../../mocks/clients/catalogClient';
 import { syncClientMock, triggerSyncMock } from '../../../mocks/clients/syncClient';
 import { configMock, init as initMockConfig, setValue } from '../../../mocks/config';
@@ -18,6 +27,7 @@ import { OperationTypeEnum } from '../../../../src/serviceClients/syncClient';
 import { mergeMock, metadataMergerMock } from '../../../mocks/metadataMerger';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../../../src/layers/interfaces';
 import { tracerMock } from '../../../mocks/tracer';
+import { staticIngestionNewMetadata, staticIngestionUpdateMetadata } from '../../../mocks/data/mockMetadata';
 
 let jobsManager: JobsManager;
 
@@ -186,10 +196,11 @@ describe('JobsManager', () => {
       setValue('ingestionUpdateJobType', ingestionUpdateJobType);
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
 
-      const rasterMapTestData = { ...testMetadata };
+      const rasterMapTestData = { ...staticIngestionUpdateMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
+      const generateSeedJobSpy = jest.spyOn(JobsManager.prototype as any, 'generateSeedJob');
       mergeMock.mockReturnValue(rasterMapTestData);
-      getJobByIdMock.mockReturnValue({
+      const runningJob = {
         id: jobId,
         isCompleted: true,
         isSuccessful: true,
@@ -199,7 +210,9 @@ describe('JobsManager', () => {
         type: ingestionUpdateJobType,
         successTasksCount: 3,
         status: OperationStatus.IN_PROGRESS,
-      });
+      };
+
+      getJobByIdMock.mockReturnValue(runningJob);
 
       getTaskByIdMock.mockReturnValue({
         id: taskId,
@@ -208,14 +221,17 @@ describe('JobsManager', () => {
         status: OperationStatus.COMPLETED,
       });
 
+      createSeedJobTaskMock.mockResolvedValue(undefined);
+
       const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
-      findRecordMock.mockResolvedValue({
+      const originalRecord = {
         id: catalogRecordId,
-        metadata: {},
-      });
+        metadata: staticIngestionNewMetadata,
+        links: [{ name: 'test-layer' }],
+      };
 
-      getHighestLayerVersionMock.mockResolvedValue(['1.0']);
-
+      findRecordByIdMock.mockResolvedValue(originalRecord);
+      getCacheByNameTypeMock.mockResolvedValue({cacheName: 'test-redis'})
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
@@ -223,8 +239,10 @@ describe('JobsManager', () => {
       expect(mergeMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), false);
       expect(updateMock).toHaveBeenCalledTimes(1);
       expect(updateLayerMock).toHaveBeenCalledTimes(0);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
-      expect(findRecordMock).toHaveBeenCalledTimes(1);
+      expect(findRecordByIdMock).toHaveBeenCalledTimes(1);
+      expect(createSeedJobTaskMock).toHaveBeenCalledTimes(1);
+      expect(generateSeedJobSpy).toHaveBeenCalledTimes(1);
+      expect(generateSeedJobSpy).toHaveBeenCalledWith(runningJob, rasterMapTestData, originalRecord, originalRecord.links[0].name, false);
     });
 
     it('should complete job once all tasks are successful for update-swap-merge job-task', async function () {
@@ -233,14 +251,23 @@ describe('JobsManager', () => {
 
       const rasterMapTestData = { ...testMetadata };
       rasterMapTestData.productType = ProductType.RASTER_MAP;
-      mergeMock.mockReturnValue(rasterMapTestData);
+
+      const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
+      const originalRecord = {
+        id: catalogRecordId,
+        metadata: staticIngestionNewMetadata,
+        links: [{ name: 'test-layer' }],
+      };
+      publishToCatalogMock.mockResolvedValue(catalogRecordId);
+      mergeMock.mockReturnValue(originalRecord);
+      getCacheByNameTypeMock.mockResolvedValue({cacheName: 'test-redis'})
       getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,
         isSuccessful: true,
         percentage: 90,
         relativePath: `test/${ProductType.RASTER_MAP}`,
-        metadata: rasterMapTestData,
+        metadata: { ...staticIngestionNewMetadata, id: catalogRecordId },
         type: ingestionSwapUpdateJobType,
         successTasksCount: 3,
         status: OperationStatus.IN_PROGRESS,
@@ -253,13 +280,8 @@ describe('JobsManager', () => {
         status: OperationStatus.COMPLETED,
       });
 
-      const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
-      findRecordMock.mockResolvedValue({
-        id: catalogRecordId,
-        metadata: {},
-      });
-
-      getHighestLayerVersionMock.mockResolvedValue(['1.0']);
+      findRecordByIdMock.mockResolvedValue(originalRecord);
+      createSeedJobTaskMock.mockResolvedValue(undefined);
 
       await jobsManager.completeJob(jobId, taskId);
 
@@ -268,8 +290,8 @@ describe('JobsManager', () => {
       expect(mergeMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), true);
       expect(updateMock).toHaveBeenCalledTimes(1);
       expect(updateLayerMock).toHaveBeenCalledTimes(1);
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
-      expect(findRecordMock).toHaveBeenCalledTimes(1);
+      expect(findRecordByIdMock).toHaveBeenCalledTimes(1);
+      expect(createSeedJobTaskMock).toHaveBeenCalledTimes(1);
     });
 
     it('should update job status to "Failed" if task status is "Failed"', async function () {

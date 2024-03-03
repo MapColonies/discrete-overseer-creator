@@ -39,6 +39,8 @@ data:
   INGESTION_UPDATE_JOB_TYPE: {{ $jobManagement.ingestion.update.jobType | quote }}
   INGESTION_MERGE_TASK_TYPE: {{ $jobManagement.ingestion.update.mergeTilesTaskType | quote }}
   INGESTION_SWAP_UPDATE_JOB_TYPE: {{ $jobManagement.ingestion.updateSwap.jobType | quote }}
+  SEED_JOB_TYPE: {{ $jobManagement.seed.jobType | quote }}
+  SEED_TASK_TYPE: {{ $jobManagement.seed.taskType | quote }}
   SUPPORTED_iNGESTION_SWAP_TYPES: {{ $jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}
   BBOX_SIZE_TILES: {{ .Values.env.bboxSizeTiles | quote }}
   MERGE_BATCH_SIZE: {{ .Values.env.mergeBatchSize | quote }}
@@ -59,5 +61,6 @@ data:
   {{ if .Values.env.metrics.enabled }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
+  MAPPROXY_CACHE_GRIDS: {{ .Values.env.mapproxyCache.grids | quote }}
   {{ end }}
 {{- end }}

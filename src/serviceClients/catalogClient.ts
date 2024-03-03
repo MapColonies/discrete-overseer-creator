@@ -50,6 +50,23 @@ export class CatalogClient extends HttpClient {
   }
 
   @withSpanAsyncV4
+  public async findRecordById(identifier: string): Promise<IFindResponseRecord | undefined> {
+    const req = {
+      id: identifier,
+    };
+
+    // Get product information
+    const res = await this.post<FindRecordResponse>('/records/find', req);
+    // Check if product exists with given version
+    if (res.length == 0) {
+      return undefined;
+    }
+
+    // Return metadata
+    return res[0];
+  }
+
+  @withSpanAsyncV4
   public async exists(productId: string, productVersion?: string, productType?: string): Promise<boolean> {
     const req = {
       metadata: {

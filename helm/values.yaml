@@ -63,6 +63,10 @@ jobManagement:
       supportedIngestionSwapTypes: 
       - productType: ""
         productSubType: ""
+  seed: 
+    jobType: ""
+    taskType: ""
+    
 storage:
   tilesStorageProvider: ""
   fs:
@@ -152,6 +156,8 @@ env:
   linksTemplate:
     mountPath: /usr/app/config
     fileName: linkTemplates.template
+  mapproxyCache:
+    grids: WorldCRS84
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace

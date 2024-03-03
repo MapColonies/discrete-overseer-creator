@@ -19,3 +19,15 @@ export enum SourceType {
   FS = 'FS',
   GPKG = 'GPKG',
 }
+
+// todo - mutual enums with cache-seeder repo - should consider one source
+export enum SeedMode {
+  SEED = 'seed',
+  CLEAN = 'clean',
+}
+
+export enum CacheType {
+  S3 = 's3',
+  REDIS = 'redis',
+  GPKG = 'geopackage',
+}

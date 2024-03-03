@@ -59,6 +59,14 @@
     "tileMergeTask": "tilesMerging",
     "tileSplitTask": "tilesSplitting"
   },
+  "seedJobType": "TilesSeeding",
+  "seedTaskType": "TilesSeeding",
+
+  "mapproxy": {
+    "cache": {
+      "grids": "WorldCRS84"
+    }
+  },
   "ingestionMergeTiles": {
     "mergeBatchSize": 10000,
     "tasksBatchSize": 5,

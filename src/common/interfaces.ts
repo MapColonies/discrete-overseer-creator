@@ -3,6 +3,7 @@ import { ITileRange } from '@map-colonies/mc-utils';
 import { GeoJSON } from 'geojson';
 import { BBox } from '@turf/helpers';
 import { Grid, IBBox } from '../layers/interfaces';
+import { CacheType, SeedMode } from './enums';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -74,4 +75,23 @@ export interface ISupportedIngestionSwapTypes {
 export interface ICleanupData {
   previousRelativePath: string;
   previousProductVersion: string;
+}
+
+// todo - should consider refactor it to mutual type packages
+export interface ISeed {
+  mode: SeedMode;
+  grid: string;
+  fromZoomLevel: number;
+  toZoomLevel: number;
+  geometry: GeoJSON;
+  skipUncached: boolean;
+  layerId: string; // cache name as configured in mapproxy
+  refreshBefore: string;
+}
+
+export interface ISeedTaskParams {
+  seedTasks: ISeed[];
+  catalogId: string;
+  spanId: string;
+  cacheType: CacheType;
 }

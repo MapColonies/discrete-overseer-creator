@@ -3,12 +3,14 @@ import { BadRequestError, InternalServerError } from '@map-colonies/error-types'
 import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { Tracer } from '@opentelemetry/api';
-import { IRasterCatalogUpsertRequestBody, LayerMetadata, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { IRasterCatalogUpsertRequestBody, LayerMetadata, Link, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
+import { Footprint, degreesPerPixelToZoomLevel, getUTCDate } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
+import { intersect } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
-import { MapServerCacheType } from '../../common/enums';
-import { IConfig } from '../../common/interfaces';
+import { CacheType, MapServerCacheType, SeedMode } from '../../common/enums';
+import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams } from '../../common/interfaces';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../layers/interfaces';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { JobManagerWrapper, TaskResponse } from '../../serviceClients/JobManagerWrapper';
@@ -33,6 +35,9 @@ export class JobsManager {
   private readonly ingestionUpdateJobType: string;
   private readonly ingestionSwapUpdateJobType: string;
   private readonly ingestionTaskType: IngestionTaskTypes;
+  private readonly seedJobType: string;
+  private readonly seedTaskType: string;
+  private readonly mapproxyCacheGrid: string;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -52,7 +57,10 @@ export class JobsManager {
     this.ingestionUpdateJobType = config.get<string>('ingestionUpdateJobType');
     this.ingestionSwapUpdateJobType = config.get<string>('ingestionSwapUpdateJobType');
     this.ingestionTaskType = config.get<IngestionTaskTypes>('ingestionTaskType');
+    this.seedJobType = config.get<string>('seedJobType');
+    this.seedTaskType = config.get<string>('seedTaskType');
     this.cacheType = this.getCacheType(mapServerCacheType);
+    this.mapproxyCacheGrid = config.get<string>('mapproxy.cache.grids');
   }
 
   @withSpanAsyncV4
@@ -72,6 +80,7 @@ export class JobsManager {
       });
 
       const isSwap = job.type === this.ingestionSwapUpdateJobType; // validate if it is update with swap
+
       await this.handleUpdateIngestion(job, task, isSwap);
     } else if (
       (task.type === this.ingestionTaskType.tileMergeTask || task.type === this.ingestionTaskType.tileSplitTask) &&
@@ -111,7 +120,25 @@ export class JobsManager {
         msg: `job & task completed - executing data merge from job metadata to record`,
       });
 
-      const mergedData = await this.mergeUpdatedRecord(job, task, isSwap);
+      this.logger.debug({
+        jobId: job.id,
+        taskId: task.id,
+        productId: job.metadata.productId,
+        productType: job.metadata.productType,
+        productVersion: job.metadata.productVersion,
+        msg: `Getting catalog record for layerId ${job.internalId}`,
+      });
+
+      const previousLayerData = await this.catalogClient.findRecordById(job.internalId);
+      if (previousLayerData === undefined) {
+        const errMsg = `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
+          job.metadata.productType as string
+        }, version: ${job.metadata.productVersion as string} to merge data into`;
+        this.logger.error(errMsg, job.id);
+        throw new InternalServerError(errMsg);
+      }
+      const mergedData = this.mergeUpdatedRecord(job, task, previousLayerData, isSwap);
+
       this.logger.debug({
         jobId: job.id,
         taskId: task.id,
@@ -120,7 +147,10 @@ export class JobsManager {
         msg: `Updating catalog record ${mergedData.id as string} with merged metadata`,
       });
 
-      await this.publishCompletedUpdateRecord(job, task, mergedData, isSwap);
+      const layerName = this.getMapLayerName(previousLayerData);
+      await this.publishCompletedUpdateRecord(layerName, job, task, mergedData, isSwap);
+
+      await this.generateSeedJob(job, mergedData, previousLayerData, layerName, isSwap);
     }
   }
 
@@ -281,38 +311,7 @@ export class JobsManager {
     await this.jobManager.updateJobById(jobId, OperationStatus.FAILED, undefined, reason);
   }
 
-  private async mergeUpdatedRecord(job: ICompletedJobs, task: TaskResponse, isSwap = false): Promise<LayerMetadata> {
-    const highestVersion = await this.catalogClient.getHighestLayerVersion(job.metadata.productId as string, job.metadata.productType as string);
-    if (highestVersion === undefined) {
-      throw new InternalServerError(
-        `Could not find highestVersion for: productId ${job.metadata.productId as string}, productType: ${job.metadata.productType as string}`
-      );
-    }
-    const highestVersionToString = Number.isInteger(highestVersion) ? highestVersion.toFixed(1) : String(highestVersion);
-
-    this.logger.debug({
-      jobId: job.id,
-      taskId: task.id,
-      productId: job.metadata.productId,
-      productType: job.metadata.productType,
-      highestVersion: highestVersionToString,
-      msg: `Getting catalog record with version: ${highestVersionToString}, productId ${job.metadata.productId as string}, productType: ${
-        job.metadata.productType as string
-      }`,
-    });
-    const catalogRecord = await this.catalogClient.findRecord(
-      job.metadata.productId as string,
-      highestVersionToString,
-      job.metadata.productType as string
-    );
-
-    if (catalogRecord === undefined) {
-      throw new InternalServerError(
-        `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
-          job.metadata.productType as string
-        }, version: ${highestVersionToString} to merge data into`
-      );
-    }
+  private mergeUpdatedRecord(job: ICompletedJobs, task: TaskResponse, catalogRecord: IFindResponseRecord, isSwap = false): LayerMetadata {
     this.logger.debug({
       jobId: job.id,
       taskId: task.id,
@@ -326,8 +325,13 @@ export class JobsManager {
     return mergedData;
   }
 
-  private async publishCompletedUpdateRecord(job: ICompletedJobs, task: TaskResponse, data: LayerMetadata, isSwap = false): Promise<void> {
-    const layerName = getMapServingLayerName(job.metadata.productId as string, job.metadata.productType as ProductType);
+  private async publishCompletedUpdateRecord(
+    layerName: string,
+    job: ICompletedJobs,
+    task: TaskResponse,
+    data: LayerMetadata,
+    isSwap = false
+  ): Promise<void> {
     this.logger.debug({
       productId: job.metadata.productId,
       productType: job.metadata.productType,
@@ -349,8 +353,71 @@ export class JobsManager {
       taskId: task.id,
       msg: message,
     });
+
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     await this.jobManager.updateJobById(job.id, OperationStatus.COMPLETED, 100, undefined, job.metadata.id);
     job.status = OperationStatus.COMPLETED;
+  }
+
+  private async generateSeedJob(
+    job: ICompletedJobs,
+    data: LayerMetadata,
+    previousLayerMetadata: IFindResponseRecord,
+    layerName: string,
+    isSwap = false
+  ): Promise<void> {
+    const cacheName = await this.mapPublisher.getCacheByNameType({layerName, cacheType: PublishedMapLayerCacheType.REDIS})
+    if (cacheName === undefined){// layer not include redis cache
+      return;
+    }
+    const seedMode = isSwap ? SeedMode.CLEAN : SeedMode.SEED; // clean for swapped and seeding for regular update
+    const previousGeometry = previousLayerMetadata.metadata.footprint as Footprint;
+    const updatedGeometry = job.metadata.footprint as Footprint;
+    const intersectedGeometry = intersect(previousGeometry, updatedGeometry);
+    const geometry = isSwap ? (previousLayerMetadata.metadata.footprint as Footprint) : intersectedGeometry;
+    
+    if (geometry === null) {
+      // if null, no areas to seed or clean
+      return;
+    }
+    this.logger.info({
+      productId: job.metadata.productId,
+      productType: job.metadata.productType,
+      version: job.metadata.productVersion,
+      layerId: layerName,
+      jobId: job.id,
+      msg: `Generating cache-seeder job-task to refresh cache for layer name: "${layerName}"`,
+    });
+    const maxResolutionDeg = isSwap ? previousLayerMetadata.metadata.maxResolutionDeg : data.maxResolutionDeg;
+    const toZoomLevel = degreesPerPixelToZoomLevel(maxResolutionDeg as number);
+    const refreshBefore = getUTCDate().toISOString().replace(/\..+/, '');
+
+
+    const seedOption: ISeed = {
+      mode: seedMode,
+      grid: this.mapproxyCacheGrid,
+      fromZoomLevel: 0,
+      toZoomLevel,
+      geometry: geometry,
+      skipUncached: false,
+      layerId: cacheName,
+      refreshBefore,
+    };
+
+    const taskParams: ISeedTaskParams = {
+      seedTasks: [seedOption],
+      catalogId: data.id as string,
+      spanId: 'TBD',
+      cacheType: CacheType.REDIS,
+    };
+
+    const jobId = await this.jobManager.createSeedJobTask(job, this.seedJobType, this.seedTaskType, [taskParams]);
+    this.logger.info({ msg: `Generated new seed job of type ${seedMode}`, seedJobId: jobId, jobId: job.id });
+  }
+
+  private getMapLayerName(catalogRecords: IFindResponseRecord): string {
+    const links = catalogRecords.links as Link[]; // extract links from record
+    const layerName = links[0].name as string; // get the layer name
+    return layerName;
   }
 }
