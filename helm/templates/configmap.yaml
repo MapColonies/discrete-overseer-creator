@@ -1,6 +1,9 @@
 {{- $chartName := include "discrete-overseer-creator.name" . -}}
 {{- $tracingUrl := include "discrete-overseer-creator.tracingUrl" . -}}
 {{- $metricsUrl := include "discrete-overseer-creator.metricsUrl" . -}}
+{{- $tracingEnabled := include "discrete-overseer-creator.tracingEnabled" . -}}
+{{- $metricsEnabled := include "discrete-overseer-creator.metricsEnabled" . -}}
+{{- $metricsBuckets := include "discrete-overseer-creator.metricsBuckets" . -}}
 {{- $configmapName := include "configmap.fullname" . }}
 {{- $serviceUrls := (include "common.serviceUrls.merged" .) | fromYaml }}
 {{- $jobManagement := (include "common.jobManagement.merged" .) | fromYaml }}
@@ -53,14 +56,14 @@ data:
   PIXEL_SIZE_RANGE_MAX: {{ .Values.env.validationValuesByInfo.pixelSizeRange.max | quote}}
   TILE_SIZE: {{ .Values.env.validationValuesByInfo.tileSize | quote}}
   FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
-  {{ if .Values.env.tracing.enabled }}
-  TELEMETRY_TRACING_ENABLED: 'true'
+  TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled | quote }}
+  {{ if $tracingEnabled }}
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
   {{ end }}
-  TELEMETRY_METRICS_ENABLED: {{ .Values.env.metrics.enabled | quote }}
-  {{ if .Values.env.metrics.enabled }}
+  TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled | quote }}
+  {{ if $metricsEnabled }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
-  TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
+  TELEMETRY_METRICS_BUCKETS: {{ $metricsBuckets | toJson | quote }}
   MAPPROXY_CACHE_GRIDS: {{ .Values.env.mapproxyCache.grids | quote }}
   {{ end }}
 {{- end }}
