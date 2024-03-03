@@ -231,7 +231,7 @@ describe('JobsManager', () => {
       };
 
       findRecordByIdMock.mockResolvedValue(originalRecord);
-      getCacheByNameTypeMock.mockResolvedValue({cacheName: 'test-redis'})
+      getCacheByNameTypeMock.mockResolvedValue({ cacheName: 'test-redis' });
       await jobsManager.completeJob(jobId, taskId);
 
       expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
@@ -260,7 +260,7 @@ describe('JobsManager', () => {
       };
       publishToCatalogMock.mockResolvedValue(catalogRecordId);
       mergeMock.mockReturnValue(originalRecord);
-      getCacheByNameTypeMock.mockResolvedValue({cacheName: 'test-redis'})
+      getCacheByNameTypeMock.mockResolvedValue({ cacheName: 'test-redis' });
       getJobByIdMock.mockReturnValue({
         id: jobId,
         isCompleted: true,

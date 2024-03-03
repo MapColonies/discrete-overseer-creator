@@ -366,8 +366,10 @@ export class JobsManager {
     layerName: string,
     isSwap = false
   ): Promise<void> {
-    const cacheName = await this.mapPublisher.getCacheByNameType({layerName, cacheType: PublishedMapLayerCacheType.REDIS})
-    if (cacheName === undefined){// layer not include redis cache
+    const cacheName = await this.mapPublisher.getCacheByNameType({ layerName, cacheType: PublishedMapLayerCacheType.REDIS });
+    if (cacheName === undefined) {
+      // layer not include redis cache
+      this.logger.warn({ msg: `skip generating seed job-task, no cache redis exists on mapproxy.yaml`, layerName });
       return;
     }
     const seedMode = isSwap ? SeedMode.CLEAN : SeedMode.SEED; // clean for swapped and seeding for regular update
@@ -375,9 +377,10 @@ export class JobsManager {
     const updatedGeometry = job.metadata.footprint as Footprint;
     const intersectedGeometry = intersect(previousGeometry, updatedGeometry);
     const geometry = isSwap ? (previousLayerMetadata.metadata.footprint as Footprint) : intersectedGeometry;
-    
+
     if (geometry === null) {
       // if null, no areas to seed or clean
+      this.logger.warn({ msg: `skip generating seed job-task, no geometry relevant for cache seeding`, layerName, cacheName });
       return;
     }
     this.logger.info({
@@ -391,7 +394,6 @@ export class JobsManager {
     const maxResolutionDeg = isSwap ? previousLayerMetadata.metadata.maxResolutionDeg : data.maxResolutionDeg;
     const toZoomLevel = degreesPerPixelToZoomLevel(maxResolutionDeg as number);
     const refreshBefore = getUTCDate().toISOString().replace(/\..+/, '');
-
 
     const seedOption: ISeed = {
       mode: seedMode,

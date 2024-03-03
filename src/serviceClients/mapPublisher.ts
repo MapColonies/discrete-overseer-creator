@@ -6,7 +6,7 @@ import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { IConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
-import { IGetCacheRequest, IGetCacheResponse, IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../layers/interfaces';
+import { IGetCacheRequest, IGetCacheResponse, IPublishMapLayerRequest } from '../layers/interfaces';
 
 @injectable()
 export class MapPublisherClient extends HttpClient {

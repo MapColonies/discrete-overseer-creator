@@ -102,7 +102,7 @@ describe('jobs', function () {
         status: OperationStatus.COMPLETED,
       };
       getJobByIdMock.mockReturnValue(testJob);
-      getCacheByNameTypeMock.mockResolvedValue({cacheName: 'test-redis'})
+      getCacheByNameTypeMock.mockResolvedValue({ cacheName: 'test-redis' });
       getTaskByIdMock.mockReturnValue(testTask);
 
       const response = await requestSender.completeJob(jobId, taskId);
