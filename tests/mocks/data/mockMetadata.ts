@@ -1,7 +1,49 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
+import { Footprint } from '@map-colonies/mc-utils';
+import { intersect } from '@turf/turf';
+
+const worldGeometry: Footprint = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [-180, -90],
+      [-180, 90],
+      [180, 90],
+      [180, -90],
+      [-180, -90],
+    ],
+  ],
+};
+
+const europeGeometry: Footprint = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [26.229837467420225, 51.912834376940765],
+      [22.5313965395448, 51.912834376940765],
+      [22.5313965395448, 49.43454673640505],
+      [26.229837467420225, 49.43454673640505],
+      [26.229837467420225, 51.912834376940765],
+    ],
+  ],
+};
+
+const africaGeometry: Footprint = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [21.787623449394744, 14.246536728675196],
+      [15.485078710132626, 14.246536728675196],
+      [15.485078710132626, 8.2708698625367],
+      [21.787623449394744, 8.2708698625367],
+      [21.787623449394744, 14.246536728675196],
+    ],
+  ],
+};
 
 const staticIngestionNewMetadata = {
+  id: 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23',
   productId: 'test',
   productVersion: '1.0',
   productName: 'test name',
@@ -11,18 +53,7 @@ const staticIngestionNewMetadata = {
   rms: 0.5,
   scale: 3,
   sensors: ['OTHER', 'Test'],
-  footprint: {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [-180, -90],
-        [-180, 90],
-        [180, 90],
-        [180, -90],
-        [-180, -90],
-      ],
-    ],
-  },
+  footprint: worldGeometry,
   classification: '',
   creationDate: new Date('02/01/2020'),
   producerName: 'testProducer',
@@ -80,4 +111,9 @@ const staticIngestionUpdateMetadata = {
   rawProductData: undefined,
 } as unknown as LayerMetadata;
 
-export { staticIngestionNewMetadata, staticIngestionUpdateMetadata };
+const intersectedGeometryNewUpdate = intersect(
+  staticIngestionUpdateMetadata.footprint as Footprint,
+  staticIngestionNewMetadata.footprint as Footprint
+)?.geometry as Footprint;
+
+export { staticIngestionNewMetadata, staticIngestionUpdateMetadata, intersectedGeometryNewUpdate, worldGeometry, europeGeometry, africaGeometry };

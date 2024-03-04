@@ -319,7 +319,6 @@ export class JobsManager {
       jobMetadata: inspect(job.metadata),
       msg: `Merging catalog record ${catalogRecord.metadata.id as string} with new metadata`,
     });
-
     const mergedData = this.metadataMerger.merge(catalogRecord.metadata, job.metadata, isSwap);
 
     return mergedData;
@@ -375,14 +374,14 @@ export class JobsManager {
     const seedMode = isSwap ? SeedMode.CLEAN : SeedMode.SEED; // clean for swapped and seeding for regular update
     const previousGeometry = previousLayerMetadata.metadata.footprint as Footprint;
     const updatedGeometry = job.metadata.footprint as Footprint;
-    const intersectedGeometry = intersect(previousGeometry, updatedGeometry);
-    const geometry = isSwap ? (previousLayerMetadata.metadata.footprint as Footprint) : intersectedGeometry;
+    const geometry = isSwap ? (previousLayerMetadata.metadata.footprint as Footprint) : intersect(previousGeometry, updatedGeometry)?.geometry;
 
-    if (geometry === null) {
+    if (geometry === undefined) {
       // if null, no areas to seed or clean
       this.logger.warn({ msg: `skip generating seed job-task, no geometry relevant for cache seeding`, layerName, cacheName });
       return;
     }
+
     this.logger.info({
       productId: job.metadata.productId,
       productType: job.metadata.productType,
@@ -398,7 +397,7 @@ export class JobsManager {
     const seedOption: ISeed = {
       mode: seedMode,
       grid: this.mapproxyCacheGrid,
-      fromZoomLevel: 0,
+      fromZoomLevel: 0, // by design will alway seed\clean from zoom 0
       toZoomLevel,
       geometry: geometry,
       skipUncached: false,
