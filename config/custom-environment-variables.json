@@ -94,10 +94,12 @@
   "ingestionNewJobType": "INGESTION_NEW_JOB_TYPE",
   "ingestionUpdateJobType": "INGESTION_UPDATE_JOB_TYPE",
   "ingestionSwapUpdateJobType": "INGESTION_SWAP_UPDATE_JOB_TYPE",
-  "seedJobType": "SEED_JOB_TYPE",
-  "seedTaskType": "SEED_TASK_TYPE",
+  "seed": {
+    "seedJobType": "SEED_JOB_TYPE",
+    "seedTaskType": "SEED_TASK_TYPE"
+  },
   "supportedIngestionSwapTypes": {
-    "__name": "SUPPORTED_iNGESTION_SWAP_TYPES",
+    "__name": "SUPPORTED_INGESTION_SWAP_TYPES",
     "__format": "json"
   },
   "ingestionTaskType": {

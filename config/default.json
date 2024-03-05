@@ -12,7 +12,23 @@
     },
     "metrics": {
       "enabled": true,
-      "buckets": [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 15, 50, 250, 500]
+      "buckets": [
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1,
+        2.5,
+        5,
+        10,
+        15,
+        50,
+        250,
+        500
+      ]
     }
   },
   "server": {
@@ -34,14 +50,41 @@
   "layerSourceDir": "/layerSources",
   "mapServerCacheType": "FS",
   "displayNameDir": "\\layerSources",
-  "validFileExtensions": ["gpkg"],
+  "validFileExtensions": [
+    "gpkg"
+  ],
   "jobManagerURL": "http://localhost:8088",
   "syncServiceURL": "http://localhost:8082",
   "mapPublishingServiceURL": "http://localhost:8083",
   "publicMapServerURL": "http://localhost:8084",
   "catalogPublishingServiceURL": "http://localhost:8085",
   "tiling": {
-    "zoomGroups": ["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23"]
+    "zoomGroups": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23"
+    ]
   },
   "httpRetry": {
     "attempts": 5,
@@ -54,14 +97,20 @@
   "ingestionNewJobType": "Ingestion_New",
   "ingestionUpdateJobType": "Ingestion_Update",
   "ingestionSwapUpdateJobType": "Ingestion_Swap_Update",
-  "supportedIngestionSwapTypes": [{"productType": "RasterVectorBest", "productSubType": "testProductSubType"}],
+  "supportedIngestionSwapTypes": [
+    {
+      "productType": "RasterVectorBest",
+      "productSubType": "testProductSubType"
+    }
+  ],
   "ingestionTaskType": {
     "tileMergeTask": "tilesMerging",
     "tileSplitTask": "tilesSplitting"
   },
-  "seedJobType": "TilesSeeding",
-  "seedTaskType": "TilesSeeding",
-
+  "seed": {
+    "seedJobType": "TilesSeeding",
+    "seedTaskType": "TilesSeeding"
+  },
   "mapproxy": {
     "cache": {
       "grids": "WorldCRS84"
@@ -77,10 +126,20 @@
     "tasksBatchSize": 5
   },
   "validationValuesByInfo": {
-    "crs":[4326],
-    "fileFormat":["GPKG"],
-    "pixelSizeRange" : { "min": 0.000000335276,"max": 0.703125 },
-    "tileSize" : 256
+    "crs": [
+      4326
+    ],
+    "fileFormat": [
+      "GPKG"
+    ],
+    "pixelSizeRange": {
+      "min": 0.000000335276,
+      "max": 0.703125
+    },
+    "tileSize": 256
   },
-  "forbiddenTypesForParallelIngesion": ["Ingestion_New", "Ingestion_Update"]
+  "forbiddenTypesForParallelIngesion": [
+    "Ingestion_New",
+    "Ingestion_Update"
+  ]
 }

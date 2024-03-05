@@ -37,7 +37,7 @@ import {
   europeGeometry,
 } from '../../../mocks/data/mockMetadata';
 import { ISeed, ISeedTaskParams } from '../../../../src/common/interfaces';
-import { CacheType, SeedMode } from '../../../../src/common/enums';
+import { MapServerCacheType, MapServerSeedMode } from '../../../../src/common/enums';
 
 let jobsManager: JobsManager;
 
@@ -428,8 +428,8 @@ describe('JobsManager', () => {
 
     it('Create success seed task - on update (regular)', async () => {
       const grid = configMock.get<string>('mapproxy.cache.grids');
-      const seedJobType = configMock.get<string>('seedJobType');
-      const seedTaskType = configMock.get<string>('seedTaskType');
+      const seedJobType = configMock.get<string>('seed.seedJobType');
+      const seedTaskType = configMock.get<string>('seed.seedTaskType');
       const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
       const originalRecord = {
         id: catalogRecordId,
@@ -465,7 +465,7 @@ describe('JobsManager', () => {
       const generateSeedJobSpy = jest.spyOn(JobsManager.prototype as any, 'generateSeedJob');
 
       const expectedSeedOption: ISeed = {
-        mode: SeedMode.SEED,
+        mode: MapServerSeedMode.SEED,
         grid,
         fromZoomLevel: 0,
         toZoomLevel: 9,
@@ -479,7 +479,7 @@ describe('JobsManager', () => {
         seedTasks: [expectedSeedOption],
         catalogId: catalogRecordId,
         spanId: 'TBD',
-        cacheType: CacheType.REDIS,
+        cacheType: MapServerCacheType.REDIS,
       };
 
       getCacheByNameTypeMock.mockResolvedValue('test-redis');
@@ -501,8 +501,8 @@ describe('JobsManager', () => {
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
 
       const grid = configMock.get<string>('mapproxy.cache.grids');
-      const seedJobType = configMock.get<string>('seedJobType');
-      const seedTaskType = configMock.get<string>('seedTaskType');
+      const seedJobType = configMock.get<string>('seed.seedJobType');
+      const seedTaskType = configMock.get<string>('seed.seedTaskType');
 
       const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
       const originalRecord = {
@@ -538,7 +538,7 @@ describe('JobsManager', () => {
       const generateSeedJobSpy = jest.spyOn(JobsManager.prototype as any, 'generateSeedJob');
 
       const expectedSeedOption: ISeed = {
-        mode: SeedMode.CLEAN,
+        mode: MapServerSeedMode.CLEAN,
         grid,
         fromZoomLevel: 0,
         toZoomLevel: 9,
@@ -552,7 +552,7 @@ describe('JobsManager', () => {
         seedTasks: [expectedSeedOption],
         catalogId: catalogRecordId,
         spanId: 'TBD',
-        cacheType: CacheType.REDIS,
+        cacheType: MapServerCacheType.REDIS,
       };
 
       getCacheByNameTypeMock.mockResolvedValue('test-redis');
@@ -646,6 +646,49 @@ describe('JobsManager', () => {
       await jobsManager.completeJob(jobId, taskId);
 
       expect(findRecordByIdMock).toHaveBeenCalledTimes(1);
+      expect(generateSeedJobSpy).toHaveBeenCalledTimes(1);
+      expect(createSeedJobTaskMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('Fail on generating seed job on mapproxy-api calling - not throw exception to main method', async () => {
+      const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
+      const originalRecord = {
+        id: catalogRecordId,
+        metadata: staticIngestionNewMetadata,
+        links: [{ name: 'test-layer' }],
+      };
+
+      const runningJob = {
+        id: jobId,
+        isCompleted: true,
+        isSuccessful: true,
+        percentage: 90,
+        relativePath: `test/${ProductType.ORTHOPHOTO_HISTORY}`,
+        metadata: { ...staticIngestionUpdateMetadata },
+        type: ingestionUpdateJobType,
+        successTasksCount: 3,
+        status: OperationStatus.IN_PROGRESS,
+      };
+
+      const runningTask = {
+        id: taskId,
+        jobId: jobId,
+        type: tileMergeTask,
+        status: OperationStatus.COMPLETED,
+      };
+
+      getJobByIdMock.mockReturnValue(runningJob);
+      getTaskByIdMock.mockReturnValue(runningTask);
+      findRecordByIdMock.mockResolvedValue(originalRecord);
+      mergeMock.mockReturnValue(staticIngestionUpdateMetadata);
+      getCacheByNameTypeMock.mockRejectedValue(`InternalError`);
+      const generateSeedJobSpy = jest.spyOn(JobsManager.prototype as any, 'generateSeedJob');
+
+      const action = async () => jobsManager.completeJob(jobId, taskId);
+
+      await expect(action()).resolves.not.toThrow();
+      expect(updateJobByIdMock).toHaveBeenCalledWith(jobId, OperationStatus.COMPLETED, 100, undefined, catalogRecordId);
+      expect(mergeMock).toHaveBeenCalledTimes(1);
       expect(generateSeedJobSpy).toHaveBeenCalledTimes(1);
       expect(createSeedJobTaskMock).toHaveBeenCalledTimes(0);
     });

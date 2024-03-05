@@ -119,6 +119,10 @@ const registerDefaultConfig = (): void => {
       tileMergeTask: 'tilesMerging',
       tileSplitTask: 'tilesSplitting',
     },
+    seed: {
+      seedJobType: 'TilesSeeding',
+      seedTaskType: 'TilesSeeding',
+    },
     ingestionMergeTiles: {
       mergeBatchSize: 10000,
       tasksBatchSize: 10000,

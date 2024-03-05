@@ -41,8 +41,10 @@ export class MapPublisherClient extends HttpClient {
     const getCacheUrl = `/layer/${getCacheReq.layerName}/${getCacheReq.cacheType}`;
     try {
       const res: IGetCacheResponse = await this.get(getCacheUrl);
+      this.logger.debug({ msg: `received cache from mapproxy`, res });
       return res.cacheName;
     } catch (err) {
+      this.logger.error({ msg: `Failed on getting cache from mapproxy`, getCacheReq, err });
       if (err instanceof NotFoundError) {
         return undefined;
       } else {

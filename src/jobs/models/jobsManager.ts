@@ -9,7 +9,7 @@ import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { intersect } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
-import { CacheType, MapServerCacheType, SeedMode } from '../../common/enums';
+import { MapServerCacheType, MapServerCacheSource, MapServerSeedMode } from '../../common/enums';
 import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams } from '../../common/interfaces';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../layers/interfaces';
 import { CatalogClient } from '../../serviceClients/catalogClient';
@@ -57,8 +57,8 @@ export class JobsManager {
     this.ingestionUpdateJobType = config.get<string>('ingestionUpdateJobType');
     this.ingestionSwapUpdateJobType = config.get<string>('ingestionSwapUpdateJobType');
     this.ingestionTaskType = config.get<IngestionTaskTypes>('ingestionTaskType');
-    this.seedJobType = config.get<string>('seedJobType');
-    this.seedTaskType = config.get<string>('seedTaskType');
+    this.seedJobType = config.get<string>('seed.seedJobType');
+    this.seedTaskType = config.get<string>('seed.seedTaskType');
     this.cacheType = this.getCacheType(mapServerCacheType);
     this.mapproxyCacheGrid = config.get<string>('mapproxy.cache.grids');
   }
@@ -120,15 +120,6 @@ export class JobsManager {
         msg: `job & task completed - executing data merge from job metadata to record`,
       });
 
-      this.logger.debug({
-        jobId: job.id,
-        taskId: task.id,
-        productId: job.metadata.productId,
-        productType: job.metadata.productType,
-        productVersion: job.metadata.productVersion,
-        msg: `Getting catalog record for layerId ${job.internalId}`,
-      });
-
       const previousLayerData = await this.catalogClient.findRecordById(job.internalId);
       if (previousLayerData === undefined) {
         const errMsg = `Could not find record catalog for: productId: ${job.metadata.productId as string}, productType: ${
@@ -150,7 +141,11 @@ export class JobsManager {
       const layerName = this.getMapLayerName(previousLayerData);
       await this.publishCompletedUpdateRecord(layerName, job, task, mergedData, isSwap);
 
-      await this.generateSeedJob(job, mergedData, previousLayerData, layerName, isSwap);
+      try {
+        await this.generateSeedJob(job, mergedData, previousLayerData, layerName, isSwap);
+      } catch (err) {
+        this.logger.warn({ msg: `Failed generate seed job`, err, jobId: job.id, layerName, catalogId: mergedData.id });
+      }
     }
   }
 
@@ -281,11 +276,11 @@ export class JobsManager {
   private getCacheType(mapServerCacheType: string): PublishedMapLayerCacheType {
     let cacheType: PublishedMapLayerCacheType;
     switch (mapServerCacheType.toLowerCase()) {
-      case MapServerCacheType.S3.toLowerCase(): {
+      case MapServerCacheSource.S3.toLowerCase(): {
         cacheType = PublishedMapLayerCacheType.S3;
         break;
       }
-      case MapServerCacheType.FS.toLowerCase(): {
+      case MapServerCacheSource.FS.toLowerCase(): {
         cacheType = PublishedMapLayerCacheType.FS;
         break;
       }
@@ -371,7 +366,7 @@ export class JobsManager {
       this.logger.warn({ msg: `skip generating seed job-task, no cache redis exists on mapproxy.yaml`, layerName });
       return;
     }
-    const seedMode = isSwap ? SeedMode.CLEAN : SeedMode.SEED; // clean for swapped and seeding for regular update
+    const seedMode = isSwap ? MapServerSeedMode.CLEAN : MapServerSeedMode.SEED; // clean for swapped and seeding for regular update
     const previousGeometry = previousLayerMetadata.metadata.footprint as Footprint;
     const updatedGeometry = job.metadata.footprint as Footprint;
     const geometry = isSwap ? (previousLayerMetadata.metadata.footprint as Footprint) : intersect(previousGeometry, updatedGeometry)?.geometry;
@@ -409,7 +404,7 @@ export class JobsManager {
       seedTasks: [seedOption],
       catalogId: data.id as string,
       spanId: 'TBD',
-      cacheType: CacheType.REDIS,
+      cacheType: MapServerCacheType.REDIS,
     };
 
     const jobId = await this.jobManager.createSeedJobTask(job, this.seedJobType, this.seedTaskType, [taskParams]);

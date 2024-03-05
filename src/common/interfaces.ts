@@ -3,7 +3,7 @@ import { ITileRange } from '@map-colonies/mc-utils';
 import { GeoJSON } from 'geojson';
 import { BBox } from '@turf/helpers';
 import { Grid, IBBox } from '../layers/interfaces';
-import { CacheType, SeedMode } from './enums';
+import { MapServerCacheType, MapServerSeedMode } from './enums';
 
 export interface IConfig {
   get: <T>(setting: string) => T;
@@ -79,7 +79,7 @@ export interface ICleanupData {
 
 // todo - should consider refactor it to mutual type packages
 export interface ISeed {
-  mode: SeedMode;
+  mode: MapServerSeedMode;
   grid: string;
   fromZoomLevel: number;
   toZoomLevel: number;
@@ -93,5 +93,5 @@ export interface ISeedTaskParams {
   seedTasks: ISeed[];
   catalogId: string;
   spanId: string;
-  cacheType: CacheType;
+  cacheType: MapServerCacheType;
 }
