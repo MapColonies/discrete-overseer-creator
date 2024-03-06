@@ -385,7 +385,7 @@ export class JobsManager {
       jobId: job.id,
       msg: `Generating cache-seeder job-task to refresh cache for layer name: "${layerName}"`,
     });
-    const maxResolutionDeg = isSwap ? previousLayerMetadata.metadata.maxResolutionDeg : data.maxResolutionDeg;
+    const maxResolutionDeg = previousLayerMetadata.metadata.maxResolutionDeg; // seed\clean depends on the previous resolution (max zoom to seed)
     const toZoomLevel = degreesPerPixelToZoomLevel(maxResolutionDeg as number);
     const refreshBefore = getUTCDate().toISOString().replace(/\..+/, '');
 
