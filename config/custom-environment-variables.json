@@ -84,13 +84,22 @@
     "__name": "SHOULD_SYNC",
     "__format": "boolean"
   },
+  "mapproxy": {
+    "cache": {
+      "grids": "MAPPROXY_CACHE_GRIDS"
+    }
+  },
   "linkTemplatesPath": "LINKS_TEMPLATE_PATH",
   "jobDomain": "JOB_DOMAIN",
   "ingestionNewJobType": "INGESTION_NEW_JOB_TYPE",
   "ingestionUpdateJobType": "INGESTION_UPDATE_JOB_TYPE",
   "ingestionSwapUpdateJobType": "INGESTION_SWAP_UPDATE_JOB_TYPE",
+  "seed": {
+    "seedJobType": "SEED_JOB_TYPE",
+    "seedTaskType": "SEED_TASK_TYPE"
+  },
   "supportedIngestionSwapTypes": {
-    "__name": "SUPPORTED_iNGESTION_SWAP_TYPES",
+    "__name": "SUPPORTED_INGESTION_SWAP_TYPES",
     "__format": "json"
   },
   "ingestionTaskType": {
@@ -122,29 +131,29 @@
     }
   },
   "validationValuesByInfo": {
-    "crs":{
-      "__name":"CRS",
-      "__format":"json"
+    "crs": {
+      "__name": "CRS",
+      "__format": "json"
     },
-    "fileFormat":{
-      "__name":"FILE_FORMAT",
-      "__format":"json"
+    "fileFormat": {
+      "__name": "FILE_FORMAT",
+      "__format": "json"
     },
-    "pixelSizeRange" : 
-      { 
-      "min":{
-        "__name":"PIXEL_SIZE_RANGE_MIN",
-        "__format":"number"
+    "pixelSizeRange": {
+      "min": {
+        "__name": "PIXEL_SIZE_RANGE_MIN",
+        "__format": "number"
       },
-      "max":{
-        "__name":"PIXEL_SIZE_RANGE_MAX",
-        "__format":"number"
+      "max": {
+        "__name": "PIXEL_SIZE_RANGE_MAX",
+        "__format": "number"
       }
     },
-    "tileSize" : {
-      "__name": "TILE_SIZE", 
-      "__format":"number"} 
-    },
+    "tileSize": {
+      "__name": "TILE_SIZE",
+      "__format": "number"
+    }
+  },
   "forbiddenTypesForParallelIngesion": {
     "__name": "FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"

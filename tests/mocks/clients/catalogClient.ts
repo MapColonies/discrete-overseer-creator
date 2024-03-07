@@ -4,6 +4,7 @@ const catalogExistsMock = jest.fn();
 const existsByRecordIdMock = jest.fn();
 const publishToCatalogMock = jest.fn();
 const findRecordMock = jest.fn();
+const findRecordByIdMock = jest.fn();
 const updateMock = jest.fn();
 const getHighestLayerVersionMock = jest.fn();
 
@@ -12,8 +13,18 @@ const catalogClientMock = {
   existsByRecordId: existsByRecordIdMock,
   publish: publishToCatalogMock,
   findRecord: findRecordMock,
+  findRecordById: findRecordByIdMock,
   update: updateMock,
   getHighestLayerVersion: getHighestLayerVersionMock,
 } as unknown as CatalogClient;
 
-export { catalogExistsMock, publishToCatalogMock, findRecordMock, updateMock, getHighestLayerVersionMock, existsByRecordIdMock, catalogClientMock };
+export {
+  catalogExistsMock,
+  publishToCatalogMock,
+  findRecordMock,
+  findRecordByIdMock,
+  updateMock,
+  getHighestLayerVersionMock,
+  existsByRecordIdMock,
+  catalogClientMock,
+};

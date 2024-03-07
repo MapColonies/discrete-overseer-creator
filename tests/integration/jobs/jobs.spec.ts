@@ -1,13 +1,14 @@
 import httpStatusCodes from 'http-status-codes';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getApp } from '../../../src/app';
-import { getJobByIdMock, getTaskByIdMock } from '../../mocks/clients/jobManagerClient';
+import { createSeedJobTaskMock, getJobByIdMock, getTaskByIdMock } from '../../mocks/clients/jobManagerClient';
 import { mergeMock } from '../../mocks/metadataMerger';
-import { publishLayerMock, updateLayerMock } from '../../mocks/clients/mapPublisherClient';
-import { publishToCatalogMock, getHighestLayerVersionMock, findRecordMock } from '../../mocks/clients/catalogClient';
+import { getCacheByNameTypeMock, publishLayerMock, updateLayerMock } from '../../mocks/clients/mapPublisherClient';
+import { publishToCatalogMock, findRecordByIdMock } from '../../mocks/clients/catalogClient';
 import { getContainerConfig, resetContainer } from '../testContainerConfig';
 import { setValue, init as initMockConfig, clear as clearConfig } from '../../mocks/config';
 import { JobsManager } from '../../../src/jobs/models/jobsManager';
+import { staticIngestionNewMetadata } from '../../mocks/data/mockMetadata';
 import { JobsRequestSender } from './helpers/requestSender';
 
 const jobId = 'c3e8d0c6-6663-49e5-9257-323674161725';
@@ -76,46 +77,40 @@ describe('jobs', function () {
     it('should return 200 status code on update swap job', async function () {
       const handleUpdateIngestionSpy = jest.spyOn(JobsManager.prototype as any, 'handleUpdateIngestion');
       const handleNewIngestionSpy = jest.spyOn(JobsManager.prototype as any, 'handleNewIngestion');
-      getHighestLayerVersionMock.mockResolvedValue(1);
-      mergeMock.mockReturnValue({ metadata: { id: 'test' } });
+
+      const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
+      const originalRecord = {
+        id: catalogRecordId,
+        metadata: staticIngestionNewMetadata,
+        links: [{ name: 'test-layer' }],
+      };
+
+      findRecordByIdMock.mockResolvedValue(originalRecord);
+      mergeMock.mockReturnValue({ metadata: staticIngestionNewMetadata });
       updateLayerMock.mockResolvedValue({});
-      findRecordMock.mockReturnValue({ metadata: { id: 'test' } });
-      getJobByIdMock.mockReturnValue({
-        metadata: {
-          productId: 'test',
-          productType: 'avirutTest',
-        },
+      createSeedJobTaskMock.mockResolvedValue(undefined);
+      const testJob = {
+        metadata: staticIngestionNewMetadata,
         isCompleted: true,
         isSuccessful: true,
         type: ingestionSwapUpdateJobType,
         relativePath: 'test',
-      });
+      };
 
-      getTaskByIdMock.mockReturnValue({
+      const testTask = {
         type: tileMergeTask,
         status: OperationStatus.COMPLETED,
-      });
+      };
+      getJobByIdMock.mockReturnValue(testJob);
+      getCacheByNameTypeMock.mockResolvedValue({ cacheName: 'test-redis' });
+      getTaskByIdMock.mockReturnValue(testTask);
 
       const response = await requestSender.completeJob(jobId, taskId);
       expect(response).toSatisfyApiSpec();
       expect(handleNewIngestionSpy).toHaveBeenCalledTimes(0);
       expect(handleUpdateIngestionSpy).toHaveBeenCalledTimes(1);
-      expect(handleUpdateIngestionSpy).toHaveBeenCalledWith(
-        {
-          isCompleted: true,
-          type: ingestionSwapUpdateJobType,
-          metadata: {
-            productId: 'test',
-            productType: 'avirutTest',
-          },
-          status: OperationStatus.COMPLETED,
-          isSuccessful: true,
-          relativePath: 'test',
-        },
-        { type: tileMergeTask, status: OperationStatus.COMPLETED },
-        true
-      );
-      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(handleUpdateIngestionSpy).toHaveBeenCalledWith(testJob, { type: tileMergeTask, status: OperationStatus.COMPLETED }, true);
+      expect(createSeedJobTaskMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.OK);
     });
 
