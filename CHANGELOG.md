@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.7.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.3...v4.7.0) (2024-03-07)
+
+
+### Features
+
+* adding seed job-task generation after update - first pr - logic (MAPCO-3941) ([#55](https://github.com/MapColonies/discrete-overseer-creator/issues/55)) ([690acb6](https://github.com/MapColonies/discrete-overseer-creator/commit/690acb6790545cf6e649f8839dc0659595d61339))
+
 ### [4.6.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.2...v4.6.3) (2024-02-25)
 
 
