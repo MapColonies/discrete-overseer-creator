@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.7.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.0...v4.7.1) (2024-03-10)
+
+
+### Bug Fixes
+
+* helm adaption ([#56](https://github.com/MapColonies/discrete-overseer-creator/issues/56)) ([80c9447](https://github.com/MapColonies/discrete-overseer-creator/commit/80c94476bbd7eaef90a18dc4437b11ed5ce1bf1d))
+
 ## [4.7.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.6.3...v4.7.0) (2024-03-07)
 
 
