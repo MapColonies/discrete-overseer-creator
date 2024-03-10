@@ -25,9 +25,14 @@ global:
         mergeTilesTaskType: ""
       updateSwap:
         jobType: ""
-        supportedIngestionSwapTypes: 
-        - productType: ""
-          productSubType: ""
+        supportedIngestionSwapTypes: {}
+        # - productType: ""
+        #   productSubType: ""
+    seed: 
+      jobType: ""
+      taskType: ""
+    
+      
   storage:
     tilesStorageProvider: ""
     fs:
@@ -60,9 +65,9 @@ jobManagement:
       mergeTilesTaskType: ""
     updateSwap:
       jobType: ""
-      supportedIngestionSwapTypes: 
-      - productType: ""
-        productSubType: ""
+      supportedIngestionSwapTypes: {}
+      # - productType: ""
+      #   productSubType: ""
   seed: 
     jobType: ""
     taskType: ""
