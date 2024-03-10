@@ -58,7 +58,7 @@ export interface SourcesInfoRequest {
 }
 
 interface SourcesInfoResponse {
-  fileName: String;
+  fileName: string;
   info: InfoData;
 }
 
