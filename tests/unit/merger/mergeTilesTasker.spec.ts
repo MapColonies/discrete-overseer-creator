@@ -1,3 +1,5 @@
+/* eslint-disable jest/no-commented-out-tests */
+
 import jsLogger from '@map-colonies/js-logger';
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
 import { bboxPolygon, polygon } from '@turf/turf';

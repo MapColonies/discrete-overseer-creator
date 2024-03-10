@@ -6,7 +6,7 @@ import { Tracer } from '@opentelemetry/api';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
 import { IConfig } from '../common/interfaces';
 import { SERVICES } from '../common/constants';
-import { IPublishMapLayerRequest } from '../layers/interfaces';
+import { IGetCacheRequest, IGetCacheResponse, IPublishMapLayerRequest } from '../layers/interfaces';
 
 @injectable()
 export class MapPublisherClient extends HttpClient {
@@ -34,6 +34,23 @@ export class MapPublisherClient extends HttpClient {
   public async updateLayer(updateReq: IPublishMapLayerRequest): Promise<IPublishMapLayerRequest> {
     const saveMetadataUrl = `/layer/${updateReq.name}`;
     return this.put(saveMetadataUrl, updateReq);
+  }
+
+  @withSpanAsyncV4
+  public async getCacheByNameType(getCacheReq: IGetCacheRequest): Promise<string | undefined> {
+    const getCacheUrl = `/layer/${getCacheReq.layerName}/${getCacheReq.cacheType}`;
+    try {
+      const res: IGetCacheResponse = await this.get(getCacheUrl);
+      this.logger.debug({ msg: `received cache from mapproxy`, res });
+      return res.cacheName;
+    } catch (err) {
+      this.logger.error({ msg: `Failed on getting cache from mapproxy`, getCacheReq, err });
+      if (err instanceof NotFoundError) {
+        return undefined;
+      } else {
+        throw err;
+      }
+    }
   }
 
   @withSpanAsyncV4

@@ -9,10 +9,21 @@ export interface IPublishMapLayerRequest {
   format: TileOutputFormat;
 }
 
+export interface IGetCacheRequest {
+  layerName: string;
+  cacheType: PublishedMapLayerCacheType;
+}
+
+export interface IGetCacheResponse {
+  cacheName: string;
+  cache: { type: PublishedMapLayerCacheType };
+}
+
 export enum PublishedMapLayerCacheType {
   FS = 'file',
   S3 = 's3',
   GPKG = 'geopackage',
+  REDIS = 'redis',
 }
 
 export interface ITaskParameters {
