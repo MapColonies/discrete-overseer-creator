@@ -1,5 +1,5 @@
 import { IngestionParams, LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
-import { BadRequestError, ConflictError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError, NotFoundError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
@@ -21,9 +21,10 @@ import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
 import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaskerMock } from '../../../mocks/splitTilesTasker';
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
-import { Grid } from '../../../../src/layers/interfaces';
+import { Grid, SourcesInfoRequest } from '../../../../src/layers/interfaces';
 import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilitiesMock';
 import { tracerMock } from '../../../mocks/tracer';
+import { InfoData } from '../../../../src/utils/interfaces';
 
 let layersManager: LayersManager;
 
@@ -630,6 +631,112 @@ describe('LayersManager', () => {
       expect(createSplitTilesTasksMock.mock.calls[0][0].metadata).toHaveProperty('id');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(createSplitTilesTasksMock.mock.calls[0][0].metadata).toHaveProperty('displayPath');
+    });
+  });
+
+  describe('getFilesInfo', () => {
+    it('getFilesInfo should return the correct gdal info data in the same order as input for multiple files', async function () {
+      const testData: SourcesInfoRequest = {
+        fileNames: ['test1.gpkg', 'test2.gpkg'],
+        originDirectory: '/here',
+      };
+
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      getInfoDataMock.mockResolvedValueOnce({
+        crs: 1,
+        fileFormat: 'GPKG',
+        pixelSize: 0.001373291015625,
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.61517, 34.10156],
+              [34.61517, 32.242124],
+              [36.4361539, 32.242124],
+              [36.4361539, 34.10156],
+              [34.61517, 34.10156],
+            ],
+          ],
+        },
+      });
+
+      const gdalInfo: InfoData[] = await layersManager.getFilesInfo(testData);
+
+      expect(getInfoDataMock).toHaveBeenCalledTimes(2);
+      expect(gdalInfo).toHaveLength(2);
+      expect(gdalInfo[0].crs).toBe(1);
+
+      getInfoDataMock.mockResolvedValueOnce({
+        crs: 4326,
+        fileFormat: 'GPKG',
+        pixelSize: 0.001373291015625,
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.61517, 34.10156],
+              [34.61517, 32.242124],
+              [36.4361539, 32.242124],
+              [36.4361539, 34.10156],
+              [34.61517, 34.10156],
+            ],
+          ],
+        },
+      });
+
+      getInfoDataMock.mockResolvedValueOnce({
+        crs: 1,
+        fileFormat: 'GPKG',
+        pixelSize: 0.001373291015625,
+        footprint: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [34.61517, 34.10156],
+              [34.61517, 32.242124],
+              [36.4361539, 32.242124],
+              [36.4361539, 34.10156],
+              [34.61517, 34.10156],
+            ],
+          ],
+        },
+      });
+
+      const testDataReversed: SourcesInfoRequest = {
+        fileNames: ['test2.gpkg', 'test1.gpkg'],
+        originDirectory: '/here',
+      };
+      const gdalInfoReversed: InfoData[] = await layersManager.getFilesInfo(testDataReversed);
+      expect(gdalInfoReversed[0].crs).toBe(4326);
+    });
+
+    it('when files does not exist getFilesInfo should return 404', async () => {
+      const testData: SourcesInfoRequest = {
+        fileNames: ['test1.gpkg', 'test2.gpkg'],
+        originDirectory: '/here',
+      };
+
+      fileValidatorValidateExistsMock.mockResolvedValueOnce(false);
+
+      const action = async () => {
+        await layersManager.getFilesInfo(testData);
+      };
+      expect(action).rejects.toThrow('Invalid files list, some files are missing');
+    });
+
+    it('when getInfoData fails, getFilesInfo should return bad request error', async () => {
+      const testData: SourcesInfoRequest = {
+        fileNames: ['test1.gpkg', 'test2.gpkg'],
+        originDirectory: '/here',
+      };
+
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      getInfoDataMock.mockRejectedValue(new BadRequestError('failed to get gdal info on some of the files'));
+
+      const action = async () => {
+        await layersManager.getFilesInfo(testData);
+      };
+      expect(action).rejects.toThrow(BadRequestError);
     });
   });
 });

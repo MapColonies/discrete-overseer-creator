@@ -1,5 +1,6 @@
 import { TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BBox } from '@turf/helpers';
+import { InfoData } from '../utils/interfaces';
 
 export interface IPublishMapLayerRequest {
   name: string;
@@ -50,3 +51,15 @@ export interface SourcesValidationResponse {
   isValid: boolean;
   reason?: string;
 }
+
+export interface SourcesInfoRequest {
+  fileNames: string[];
+  originDirectory: string;
+}
+
+interface SourcesInfoResponse {
+  fileName: String;
+  info: InfoData;
+}
+
+export interface SourcesInfoResponses extends Array<SourcesInfoResponse> {}
