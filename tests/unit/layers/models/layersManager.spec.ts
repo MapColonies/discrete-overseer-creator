@@ -1,5 +1,5 @@
 import { IngestionParams, LayerMetadata, ProductType, RecordType } from '@map-colonies/mc-model-types';
-import { BadRequestError, ConflictError, NotFoundError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError } from '@map-colonies/error-types';
 import jsLogger from '@map-colonies/js-logger';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { LayersManager } from '../../../../src/layers/models/layersManager';
@@ -707,7 +707,7 @@ describe('LayersManager', () => {
         originDirectory: '/here',
       };
       const gdalInfoReversed: InfoData[] = await layersManager.getFilesInfo(testDataReversed);
-      expect(gdalInfoReversed[0].crs).toBe(4326);
+      await expect(gdalInfoReversed[0].crs).toBe(4326);
     });
 
     it('when files does not exist getFilesInfo should return 404', async () => {
@@ -721,7 +721,7 @@ describe('LayersManager', () => {
       const action = async () => {
         await layersManager.getFilesInfo(testData);
       };
-      expect(action).rejects.toThrow('Invalid files list, some files are missing');
+      await expect(action).rejects.toThrow('Invalid files list, some files are missing');
     });
 
     it('when getInfoData fails, getFilesInfo should return bad request error', async () => {
@@ -736,7 +736,7 @@ describe('LayersManager', () => {
       const action = async () => {
         await layersManager.getFilesInfo(testData);
       };
-      expect(action).rejects.toThrow(BadRequestError);
+      await expect(action).rejects.toThrow(BadRequestError);
     });
   });
 });
