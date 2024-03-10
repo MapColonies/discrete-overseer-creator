@@ -430,7 +430,7 @@ export class LayersManager {
           return infoData;
         })
       );
-      return info;
+      return await info;
     } catch (err) {
       const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on some of the files';
       throw new Error(message);
