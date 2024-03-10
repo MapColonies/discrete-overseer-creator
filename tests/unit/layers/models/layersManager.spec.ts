@@ -707,7 +707,7 @@ describe('LayersManager', () => {
         originDirectory: '/here',
       };
       const gdalInfoReversed: InfoData[] = await layersManager.getFilesInfo(testDataReversed);
-      await expect(gdalInfoReversed[0].crs).toBe(4326);
+      expect(gdalInfoReversed[0].crs).toBe(4326);
     });
 
     it('when files does not exist getFilesInfo should return 404', async () => {
