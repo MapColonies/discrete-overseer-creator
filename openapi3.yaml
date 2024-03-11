@@ -274,21 +274,23 @@ components:
       required:
         - isValid
     filesInfoResponse:
-      type: object
-      properties:
-        crs:
-          type: number
-        fileFormat:
-          type: string
-        pixelSize:
-          type: number
-        footprint:
-          type: object
-      required:
-        - crs
-        - fileFormat
-        - pixelSize
-        - footprint
+      type: array
+      items:
+        type: object
+        properties:
+          crs:
+            type: number
+          fileFormat:
+            type: string
+          pixelSize:
+            type: number
+          footprint:
+            type: object
+        required:
+          - crs
+          - fileFormat
+          - pixelSize
+          - footprint
     tocResponse:
       type: object
       properties:

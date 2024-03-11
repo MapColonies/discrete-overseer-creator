@@ -17,6 +17,7 @@ import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersManager } from '../../../src/layers/models/layersManager';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
+import { InfoData } from '../../../src/utils/interfaces';
 
 const validPolygon = {
   type: 'Polygon',
@@ -115,6 +116,48 @@ const invalidFiles = {
 const invalidFileFormat = {
   fileNames: ['test.ecw'],
   originDirectory: '/files',
+};
+const validFilesForInfo = {
+  fileNames: ['blueMarble.gpkg', 'indexed.gpkg'],
+  originDirectory: '/files',
+};
+const ReversedValidFilesForInfo = {
+  fileNames: ['indexed.gpkg', 'blueMarble.gpkg'],
+  originDirectory: '/files',
+};
+const blueMarbleGdalInfo: InfoData = {
+  crs: 4326,
+  fileFormat: 'GPKG',
+  pixelSize: 0.0439453125,
+  footprint: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [-180, 90],
+        [-180, -90],
+        [180, -90],
+        [180, 90],
+        [-180, 90],
+      ],
+    ],
+  },
+};
+const indexedGdalInfo: InfoData = {
+  crs: 4326,
+  fileFormat: 'GPKG',
+  pixelSize: 0.001373291015625,
+  footprint: {
+    type: 'Polygon',
+    coordinates: [
+      [
+        [34.61517, 34.10156],
+        [34.61517, 32.242124],
+        [36.4361539, 32.242124],
+        [36.4361539, 34.10156],
+        [34.61517, 34.10156],
+      ],
+    ],
+  },
 };
 
 describe('layers', function () {
@@ -829,6 +872,56 @@ describe('layers', function () {
     it('should return 400 status code with invalid file format', async function () {
       const response = await requestSender.checkFiles(invalidFileFormat);
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+    });
+  });
+
+  // describe('Happy path on /layers/sourcesInfo', function () {
+  //   it('should return 200 status code with info in correct order', async function () {
+  //     const response = await requestSender.getInfo(validFilesForInfo);
+  //     expect(response).toSatisfyApiSpec();
+  //     expect(response.status).toBe(httpStatusCodes.OK);
+  //     expect(getInfoDataMock).toHaveBeenCalledTimes(2);
+  //     expect(response.body).toHaveLength(2);
+  //     console.log(response.body, 2630);
+  //     expect(response.body[0]).toEqual(blueMarbleGdalInfo);
+  //     expect(response.body[1]).toEqual(indexedGdalInfo);
+  //   });
+  // });
+});
+
+describe('/layers/sourcesInfo', function () {
+  let requestSender: LayersRequestSender;
+  beforeEach(function () {
+    console.warn = jest.fn();
+    setValue('tiling.zoomGroups', ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
+    setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+    setValue('ingestionMergeTiles.tasksBatchSize', 10000);
+    setValue('layerSourceDir', 'tests/mocks');
+    setValue('watchDirectory', 'watch');
+
+    const app = getApp({
+      override: [...getContainerConfig()],
+      useChild: false,
+    });
+    requestSender = new LayersRequestSender(app);
+    //getProjectionMock.mockResolvedValue('4326');
+    // createLayerJobMock.mockResolvedValue('jobId');
+  });
+  afterEach(function () {
+    clearConfig();
+    resetContainer();
+    jest.resetAllMocks();
+  });
+  describe('Happy path on /layers/sourcesInfo', function () {
+    it('should return 200 status code with info in correct order', async function () {
+      const response = await requestSender.getInfo(validFilesForInfo);
+      console.log(response.body, 2630);
+      expect(response).toSatisfyApiSpec();
+      expect(response.status).toBe(httpStatusCodes.OK);
+      expect(getInfoDataMock).toHaveBeenCalledTimes(2);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0]).toEqual(blueMarbleGdalInfo);
+      expect(response.body[1]).toEqual(indexedGdalInfo);
     });
   });
 });

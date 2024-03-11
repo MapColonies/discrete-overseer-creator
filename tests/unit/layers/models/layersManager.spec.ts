@@ -696,7 +696,7 @@ describe('LayersManager', () => {
       expect(gdalInfoReversed[0]).toBe(mockFileInfoValues2);
     });
 
-    it('when files does not exist getFilesInfo should return 404', async () => {
+    it('when files does not exist getFilesInfo should return not found', async () => {
       const testData: SourcesInfoRequest = {
         fileNames: ['test1.gpkg', 'test2.gpkg'],
         originDirectory: '/here',

@@ -31,7 +31,7 @@
   },
   "disableHttpClientLogs": false,
   "watchDirectory": "watch",
-  "layerSourceDir": "/layerSources",
+  "layerSourceDir": "/home/nitzanm5/Documents/discrete-overseer-creator/tests/mocks/",
   "mapServerCacheType": "FS",
   "displayNameDir": "\\layerSources",
   "validFileExtensions": [
