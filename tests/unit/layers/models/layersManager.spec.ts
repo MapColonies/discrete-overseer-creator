@@ -640,9 +640,7 @@ describe('LayersManager', () => {
         fileNames: ['test1.gpkg', 'test2.gpkg'],
         originDirectory: '/here',
       };
-
-      fileValidatorValidateExistsMock.mockResolvedValue(true);
-      getInfoDataMock.mockResolvedValueOnce({
+      const mockFileInfoValues1: InfoData = {
         crs: 1,
         fileFormat: 'GPKG',
         pixelSize: 0.001373291015625,
@@ -658,15 +656,8 @@ describe('LayersManager', () => {
             ],
           ],
         },
-      });
-
-      const gdalInfo: InfoData[] = await layersManager.getFilesInfo(testData);
-
-      expect(getInfoDataMock).toHaveBeenCalledTimes(2);
-      expect(gdalInfo).toHaveLength(2);
-      expect(gdalInfo[0].crs).toBe(1);
-
-      getInfoDataMock.mockResolvedValueOnce({
+      };
+      const mockFileInfoValues2: InfoData = {
         crs: 4326,
         fileFormat: 'GPKG',
         pixelSize: 0.001373291015625,
@@ -682,32 +673,27 @@ describe('LayersManager', () => {
             ],
           ],
         },
-      });
+      };
 
-      getInfoDataMock.mockResolvedValueOnce({
-        crs: 1,
-        fileFormat: 'GPKG',
-        pixelSize: 0.001373291015625,
-        footprint: {
-          type: 'Polygon',
-          coordinates: [
-            [
-              [34.61517, 34.10156],
-              [34.61517, 32.242124],
-              [36.4361539, 32.242124],
-              [36.4361539, 34.10156],
-              [34.61517, 34.10156],
-            ],
-          ],
-        },
-      });
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      getInfoDataMock.mockResolvedValueOnce(mockFileInfoValues1);
+      getInfoDataMock.mockResolvedValueOnce(mockFileInfoValues2);
+
+      const gdalInfo: InfoData[] = await layersManager.getFilesInfo(testData);
+
+      expect(getInfoDataMock).toHaveBeenCalledTimes(2);
+      expect(gdalInfo).toHaveLength(2);
+      expect(gdalInfo[0]).toEqual(mockFileInfoValues1);
+
+      getInfoDataMock.mockResolvedValueOnce(mockFileInfoValues2);
+      getInfoDataMock.mockResolvedValueOnce(mockFileInfoValues1);
 
       const testDataReversed: SourcesInfoRequest = {
         fileNames: ['test2.gpkg', 'test1.gpkg'],
         originDirectory: '/here',
       };
       const gdalInfoReversed: InfoData[] = await layersManager.getFilesInfo(testDataReversed);
-      expect(gdalInfoReversed[0].crs).toBe(4326);
+      expect(gdalInfoReversed[0]).toBe(mockFileInfoValues2);
     });
 
     it('when files does not exist getFilesInfo should return 404', async () => {
