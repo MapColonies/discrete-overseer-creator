@@ -430,6 +430,13 @@ describe('JobsManager', () => {
       const grid = configMock.get<string>('mapproxy.cache.grids');
       const seedJobType = configMock.get<string>('seed.seedJobType');
       const seedTaskType = configMock.get<string>('seed.seedTaskType');
+      setValue('mapproxy', {
+        cache: {
+          grids: 'WorldCRS84',
+          maxZoom: 20,
+        },
+      });
+      const maxZoomToSeed = configMock.get<number>('mapproxy.cache.maxZoom');
       const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
       const originalRecord = {
         id: catalogRecordId,
@@ -463,12 +470,11 @@ describe('JobsManager', () => {
       createSeedJobTaskMock.mockResolvedValue(undefined);
       getCacheByNameTypeMock.mockResolvedValue(`${originalRecord.links[0].name}-redis`);
       const generateSeedJobSpy = jest.spyOn(JobsManager.prototype as any, 'generateSeedJob');
-
       const expectedSeedOption: ISeed = {
         mode: MapServerSeedMode.SEED,
         grid,
         fromZoomLevel: 0,
-        toZoomLevel: 21,
+        toZoomLevel: maxZoomToSeed,
         geometry: intersectedGeometryNewUpdate,
         skipUncached: false,
         layerId: 'test-redis',
@@ -499,11 +505,16 @@ describe('JobsManager', () => {
       setValue('ingestionUpdateJobType', ingestionUpdateJobType);
       setValue('ingestionSwapUpdateJobType', ingestionSwapUpdateJobType);
       setValue('ingestionTaskType', { tileMergeTask, tileSplitTask });
-
+      setValue('mapproxy', {
+        cache: {
+          grids: 'WorldCRS84',
+          maxZoom: 20,
+        },
+      });
+      const maxZoomToSeed = configMock.get<number>('mapproxy.cache.maxZoom');
       const grid = configMock.get<string>('mapproxy.cache.grids');
       const seedJobType = configMock.get<string>('seed.seedJobType');
       const seedTaskType = configMock.get<string>('seed.seedTaskType');
-
       const catalogRecordId = 'a6fbf0dc-d82c-4c8d-ad28-b8f56c685a23';
       const originalRecord = {
         id: catalogRecordId,
@@ -541,7 +552,7 @@ describe('JobsManager', () => {
         mode: MapServerSeedMode.CLEAN,
         grid,
         fromZoomLevel: 0,
-        toZoomLevel: 21,
+        toZoomLevel: maxZoomToSeed,
         geometry: worldGeometry,
         skipUncached: false,
         layerId: 'test-redis',
