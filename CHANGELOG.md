@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.7.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.1...v4.7.2) (2024-03-12)
+
+
+### Bug Fixes
+
+* footprint validation fix (MAPCO-4097) ([#58](https://github.com/MapColonies/discrete-overseer-creator/issues/58)) ([4f40168](https://github.com/MapColonies/discrete-overseer-creator/commit/4f4016833b4c75cef099ca5f7741be846de56baf))
+
 ### [4.7.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.0...v4.7.1) (2024-03-10)
 
 

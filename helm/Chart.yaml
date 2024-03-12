@@ -2,5 +2,5 @@ apiVersion: v2
 name: discrete-overseer-creator
 description: A Helm chart for discrete-overseer-creator service
 type: application
-version: 4.7.1
-appVersion: 4.7.1
+version: 4.7.2
+appVersion: 4.7.2
