@@ -18,7 +18,7 @@ import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds, ISupportedIngestionSwapTypes } from '../../common/interfaces';
 import { JobAction, TaskAction } from '../../common/enums';
-import { createBBoxString } from '../../utils/bbox';
+import { createBBoxString, extentBuffer } from '../../utils/bbox';
 import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
 import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 import { CatalogClient } from '../../serviceClients/catalogClient';
@@ -36,6 +36,7 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
+  private readonly extentBufferInMeters: number;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -62,6 +63,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.extentBufferInMeters = this.config.get<number>('validationValuesByInfo.extentBufferInMeters');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -520,6 +522,7 @@ export class LayersManager {
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
+          const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.footprint);
           let message = '';
           if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
             message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
@@ -529,11 +532,11 @@ export class LayersManager {
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
               const polygon = { type: 'Polygon', coordinates: coords };
-              if (!booleanContains(infoData.footprint as Geometry, polygon as Geometry)) {
+              if (!booleanContains(bufferedExtent as Geometry, polygon as Geometry)) {
                 message += `Provided footprint isn't contained in the extent from GeoPackage.`;
               }
             });
-          } else if (!booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)) {
+          } else if (!booleanContains(bufferedExtent as Geometry, data.metadata.footprint as Geometry)) {
             message += `Provided footprint isn't contained in the extent from GeoPackage.`;
           }
           if (message !== '') {
