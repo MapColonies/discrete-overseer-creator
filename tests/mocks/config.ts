@@ -133,7 +133,7 @@ const registerDefaultConfig = (): void => {
       tasksBatchSize: 5,
     },
     validationValuesByInfo: {
-      extentBuffer: 10,
+      extentBufferInMeters: 10,
     },
   };
   setConfigValues(config);

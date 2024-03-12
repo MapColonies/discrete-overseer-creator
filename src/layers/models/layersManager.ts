@@ -36,7 +36,7 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
-  private readonly extentBuffer: number;
+  private readonly extentBufferInMeters: number;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -63,7 +63,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
-    this.extentBuffer = this.config.get<number>('validationValuesByInfo.extentBuffer');
+    this.extentBufferInMeters = this.config.get<number>('validationValuesByInfo.extentBufferInMeters');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -522,7 +522,7 @@ export class LayersManager {
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
-          const bufferedExtent = extentBuffer(this.extentBuffer, infoData.footprint);
+          const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.footprint);
           let message = '';
           if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
             message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${

@@ -95,7 +95,8 @@
       "min": 0.000000335276,
       "max": 0.703125
     },
-    "tileSize": 256
+    "tileSize": 256,
+    "extentBufferInMeters": 50
   },
   "forbiddenTypesForParallelIngesion": [
     "Ingestion_New",

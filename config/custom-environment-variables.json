@@ -153,8 +153,8 @@
       "__name": "TILE_SIZE",
       "__format": "number"
     },
-    "extentBuffer": {
-      "__name": "EXTENT_BUFFER",
+    "extentBufferInMeters": {
+      "__name": "EXTENT_BUFFER_IN_METERS",
       "__format": "number"
     }
   },
