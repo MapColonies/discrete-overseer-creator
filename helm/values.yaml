@@ -121,6 +121,7 @@ env:
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
+  resolutionTolerance: 12
   tilingZoomGroups:
   - '0-12'
   - '13'

@@ -157,5 +157,9 @@
   "forbiddenTypesForParallelIngesion": {
     "__name": "FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"
+  },
+  "resolutionTolerance": {
+    "__name": "RESOLUION_TOLERANCE",
+    "__format": "number"
   }
 }

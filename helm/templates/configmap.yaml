@@ -66,4 +66,5 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ $metricsBuckets | toJson | quote }}
   {{ end }}
+  RESOLUTION_TOLERANCE: {{ .Values.env.resolutionTolerance | quote }}
 {{- end }}

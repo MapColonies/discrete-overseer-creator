@@ -100,5 +100,6 @@
   "forbiddenTypesForParallelIngesion": [
     "Ingestion_New",
     "Ingestion_Update"
-  ]
+  ],
+  "resolutionTolerance": 12
 }
