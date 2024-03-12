@@ -72,7 +72,8 @@
   },
   "mapproxy": {
     "cache": {
-      "grids": "WorldCRS84"
+      "grids": "WorldCRS84",
+      "maxZoom": 21
     }
   },
   "ingestionMergeTiles": {
