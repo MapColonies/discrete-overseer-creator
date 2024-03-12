@@ -427,6 +427,9 @@ export class LayersManager {
         fileNames.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
+          if (!infoData) {
+            throw new BadRequestError('Invalid files');
+          }
           return infoData;
         })
       );
