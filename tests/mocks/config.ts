@@ -132,6 +132,9 @@ const registerDefaultConfig = (): void => {
       bboxSizeTiles: 10000,
       tasksBatchSize: 5,
     },
+    validationValuesByInfo: {
+      extentBuffer: 10,
+    },
   };
   setConfigValues(config);
 };

@@ -56,6 +56,7 @@ data:
   PIXEL_SIZE_RANGE_MIN: {{ .Values.env.validationValuesByInfo.pixelSizeRange.min | quote}}
   PIXEL_SIZE_RANGE_MAX: {{ .Values.env.validationValuesByInfo.pixelSizeRange.max | quote}}
   TILE_SIZE: {{ .Values.env.validationValuesByInfo.tileSize | quote}}
+  EXTENT_BUFFER: {{ .Values.env.validationValuesByInfo.extentBuffer | quote}}
   FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION: {{ .Values.env.forbiddenTypesForParallelIngesion | toJson | quote }}
   TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled | quote }}
   {{ if $tracingEnabled }}

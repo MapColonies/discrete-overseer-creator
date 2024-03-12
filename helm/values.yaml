@@ -153,6 +153,7 @@ env:
       min: 0.000000335276
       max: 0.703125
     tileSize : 256
+    extentBuffer: 50
   disableHttpClientLogs: false
   httpRetry:
     attempts: 5

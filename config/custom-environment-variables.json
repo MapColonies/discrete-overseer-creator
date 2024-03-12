@@ -152,6 +152,10 @@
     "tileSize": {
       "__name": "TILE_SIZE",
       "__format": "number"
+    },
+    "extentBuffer": {
+      "__name": "EXTENT_BUFFER",
+      "__format": "number"
     }
   },
   "forbiddenTypesForParallelIngesion": {
