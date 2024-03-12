@@ -532,11 +532,21 @@ export class LayersManager {
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
               const polygon = { type: 'Polygon', coordinates: coords };
-              if (!booleanContains(bufferedExtent as Geometry, polygon as Geometry)) {
+              if (
+                !(
+                  booleanContains(bufferedExtent as Geometry, polygon as Geometry) ||
+                  booleanContains(infoData.footprint as Geometry, polygon as Geometry)
+                )
+              ) {
                 message += `Provided footprint isn't contained in the extent from GeoPackage.`;
               }
             });
-          } else if (!booleanContains(bufferedExtent as Geometry, data.metadata.footprint as Geometry)) {
+          } else if (
+            !(
+              booleanContains(bufferedExtent as Geometry, data.metadata.footprint as Geometry) ||
+              booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)
+            )
+          ) {
             message += `Provided footprint isn't contained in the extent from GeoPackage.`;
           }
           if (message !== '') {
