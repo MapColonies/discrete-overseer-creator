@@ -285,12 +285,29 @@ components:
           pixelSize:
             type: number
           footprint:
-            type: object
+            $ref: ./Schema/geojson.yaml#/components/schemas/Geometry
         required:
           - crs
           - fileFormat
           - pixelSize
           - footprint
+        example:
+          crs: 4326
+          fileFormat: gpkg
+          pixelSize: 0.072
+          footprint:
+            type: Polygon
+            coordinates:
+              - - - -180
+                  - -90
+                - - -180
+                  - 90
+                - - 180
+                  - 90
+                - - 180
+                  - -90
+                - - -180
+                  - -90
     tocResponse:
       type: object
       properties:
