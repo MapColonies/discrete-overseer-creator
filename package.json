@@ -1,6 +1,6 @@
 {
   "name": "discrete-overseer-creator",
-  "version": "4.7.1",
+  "version": "4.7.4",
   "description": "Service that responsible for validating and ingesting discrete layers",
   "main": "./src/index.ts",
   "scripts": {

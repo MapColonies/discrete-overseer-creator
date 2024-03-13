@@ -1,4 +1,4 @@
-import { BBox, bbox, bboxPolygon } from '@turf/turf';
+import { BBox, bbox, bboxPolygon, buffer, Feature } from '@turf/turf';
 import { GeoJSON } from 'geojson';
 
 export const createBBoxString = (footprint: GeoJSON): string => {
@@ -11,4 +11,8 @@ export const bboxToFootprint = (bbox: BBox): GeoJSON => {
   //convert it to Polygon feature
   const footprint = bboxPolygon(bbox);
   return footprint;
+};
+
+export const extentBuffer = (extentBuffer: number, extent: GeoJSON): GeoJSON => {
+  return buffer(extent as Feature, extentBuffer, { units: 'meters' });
 };

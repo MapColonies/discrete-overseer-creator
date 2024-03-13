@@ -86,7 +86,11 @@
   },
   "mapproxy": {
     "cache": {
-      "grids": "MAPPROXY_CACHE_GRIDS"
+      "grids": "MAPPROXY_CACHE_GRIDS",
+      "maxZoom": {
+        "__name": "MAX_CACHE_ZOOM",
+        "__format": "number"
+      }
     }
   },
   "linkTemplatesPath": "LINKS_TEMPLATE_PATH",
@@ -156,11 +160,14 @@
     "resolutionFixedPointTolerance": {
       "__name": "RESOLUTION_FIXED_POINT_TOLERANCE",
       "__format": "number"
+    },
+    "extentBufferInMeters": {
+      "__name": "EXTENT_BUFFER_IN_METERS",
+      "__format": "number"
     }
   },
   "forbiddenTypesForParallelIngesion": {
     "__name": "FORBIDDEN_TYPES_FOR_PARALLEL_INGESTION",
     "__format": "json"
   }
-
 }
