@@ -157,6 +157,10 @@
       "__name": "TILE_SIZE",
       "__format": "number"
     },
+    "resolutionFixedPointTolerance": {
+      "__name": "RESOLUTION_FIXED_POINT_TOLERANCE",
+      "__format": "number"
+    },
     "extentBufferInMeters": {
       "__name": "EXTENT_BUFFER_IN_METERS",
       "__format": "number"

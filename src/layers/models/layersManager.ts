@@ -26,6 +26,7 @@ import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
+import { isPixelSizeValid } from '../../utils/pixelSizeValidate';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
@@ -36,6 +37,7 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
+  private readonly resolutionFixedPointTolerance: number;
   private readonly extentBufferInMeters: number;
 
   //metrics
@@ -63,6 +65,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.resolutionFixedPointTolerance = this.config.get<number>('validationValuesByInfo.resolutionFixedPointTolerance');
     this.extentBufferInMeters = this.config.get<number>('validationValuesByInfo.extentBufferInMeters');
 
     if (registry !== undefined) {
@@ -524,7 +527,8 @@ export class LayersManager {
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.footprint);
           let message = '';
-          if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
+          const isValidPixelSize = isPixelSizeValid(data.metadata.maxResolutionDeg as number, infoData.pixelSize, this.resolutionFixedPointTolerance);
+          if (!isValidPixelSize) {
             message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
               infoData.pixelSize
             } from GeoPackage.`;

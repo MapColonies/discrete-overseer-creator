@@ -97,6 +97,7 @@
       "max": 0.703125
     },
     "tileSize": 256,
+    "resolutionFixedPointTolerance": 12,
     "extentBufferInMeters": 50
   },
   "forbiddenTypesForParallelIngesion": [
