@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.7.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.3...v4.7.4) (2024-03-13)
+
+
+### Bug Fixes
+
+* provide as config the maxZoomToSeed param ([#60](https://github.com/MapColonies/discrete-overseer-creator/issues/60)) ([9af4ab0](https://github.com/MapColonies/discrete-overseer-creator/commit/9af4ab0f4859577ffd5816be11476e1b67fb41e1))
+
 ### [4.7.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.2...v4.7.3) (2024-03-12)
 
 
