@@ -43,6 +43,7 @@ data:
   INGESTION_MERGE_TASK_TYPE: {{ $jobManagement.ingestion.update.mergeTilesTaskType | quote }}
   INGESTION_SWAP_UPDATE_JOB_TYPE: {{ $jobManagement.ingestion.updateSwap.jobType | quote }}
   MAPPROXY_CACHE_GRIDS: {{ .Values.env.mapproxyCache.grids | quote }}
+  MAX_CACHE_ZOOM: {{ .Values.env.mapproxyCache.maxZoom | quote }}
   SEED_JOB_TYPE: {{ $jobManagement.seed.jobType | quote }}
   SEED_TASK_TYPE: {{ $jobManagement.seed.taskType | quote }}
   SUPPORTED_INGESTION_SWAP_TYPES: {{ $jobManagement.ingestion.updateSwap.supportedIngestionSwapTypes | toJson | quote }}

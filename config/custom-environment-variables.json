@@ -86,7 +86,11 @@
   },
   "mapproxy": {
     "cache": {
-      "grids": "MAPPROXY_CACHE_GRIDS"
+      "grids": "MAPPROXY_CACHE_GRIDS",
+      "maxZoom": {
+        "__name": "MAX_CACHE_ZOOM",
+        "__format": "number"
+      }
     }
   },
   "linkTemplatesPath": "LINKS_TEMPLATE_PATH",
