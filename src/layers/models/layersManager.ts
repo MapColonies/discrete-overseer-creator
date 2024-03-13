@@ -37,6 +37,7 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
+  private readonly resolutionFixedPointTolerance: number;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -63,6 +64,7 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.resolutionFixedPointTolerance = this.config.get<number>('validationValuesByInfo.resolutionFixedPointTolerance');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -522,7 +524,7 @@ export class LayersManager {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
           let message = '';
-          const isValidPixelSize = isPixelSizeValid(data.metadata.maxResolutionDeg as number, infoData.pixelSize);
+          const isValidPixelSize = isPixelSizeValid(data.metadata.maxResolutionDeg as number, infoData.pixelSize, this.resolutionFixedPointTolerance);
           if (!isValidPixelSize) {
             message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
               infoData.pixelSize
