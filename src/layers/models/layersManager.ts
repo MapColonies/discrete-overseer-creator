@@ -106,6 +106,7 @@ export class LayersManager {
     if (data.metadata.ingestionDate !== undefined) {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
+    this.validateSourceDate(data.metadata);
     const filesData: SourcesValidationParams = { fileNames: files, originDirectory: originDirectory };
     await this.validateFiles(filesData);
     await this.validateInfoDataToParams(data.fileNames, data.originDirectory, data);
@@ -607,6 +608,31 @@ export class LayersManager {
       return true;
     }
     return false;
+  }
+
+  private validateSourceDate(metaData: LayerMetadata): void {
+    const sourceDateStartStr = metaData.sourceDateStart;
+    const sourceDateEndStr = metaData.sourceDateEnd;
+
+    if (sourceDateStartStr === undefined || sourceDateEndStr === undefined) {
+      throw new BadRequestError('Source date start and end are required fields.');
+    }
+
+    const sourceDateStart = new Date(sourceDateStartStr);
+    const sourceDateEnd = new Date(sourceDateEndStr);
+
+    if (isNaN(sourceDateStart.getTime()) || isNaN(sourceDateEnd.getTime())) {
+      throw new BadRequestError('Invalid source date format. Please provide valid Date strings.');
+    }
+
+    if (sourceDateStart > sourceDateEnd) {
+      throw new BadRequestError('Invalid source date range. Start date must be before or equal to end date.');
+    }
+
+    const currentTimestamp = new Date();
+    if (sourceDateStart > currentTimestamp || sourceDateEnd > currentTimestamp) {
+      throw new BadRequestError('Invalid source dates. Dates cannot be larger than the current time (ingestion time).');
+    }
   }
 
   private setDefaultValues(data: IngestionParams): void {
