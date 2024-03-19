@@ -201,6 +201,79 @@ describe('LayersManager', () => {
       expect(createSplitTilesTasksMock).toHaveBeenCalledTimes(1);
     });
 
+    describe('validateSourceDate', () => {
+      it('should throw an error if sourceDateStart is undefined', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: undefined,
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateEnd is undefined', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: undefined,
+        };
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart is not a valid date', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: 'invalid date' as unknown as Date,
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateEnd is not a valid date', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: 'invalid date' as unknown as Date,
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart is after sourceDateEnd', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-02'),
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart or sourceDateEnd is in the future', () => {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 1);
+
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: futureDate,
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should not throw an error for valid source dates', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: new Date('2022-01-02'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).not.toThrow();
+      });
+    });
+
     it('should create "New" job when footprint provided is between extent and buffer', async function () {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
