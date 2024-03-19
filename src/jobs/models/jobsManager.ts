@@ -396,7 +396,7 @@ export class JobsManager {
       fromZoomLevel: 0, // by design will alway seed\clean from zoom 0
       toZoomLevel: this.mapproxyCacheMaxZoom, // todo - on future should be calculated from mapproxy capabilities
       geometry: geometry,
-      skipUncached: false,
+      skipUncached: true,
       layerId: cacheName,
       refreshBefore,
     };

@@ -476,7 +476,7 @@ describe('JobsManager', () => {
         fromZoomLevel: 0,
         toZoomLevel: maxZoomToSeed,
         geometry: intersectedGeometryNewUpdate,
-        skipUncached: false,
+        skipUncached: true,
         layerId: 'test-redis',
         refreshBefore: '2020-01-01T00:00:00',
       };
@@ -554,7 +554,7 @@ describe('JobsManager', () => {
         fromZoomLevel: 0,
         toZoomLevel: maxZoomToSeed,
         geometry: worldGeometry,
-        skipUncached: false,
+        skipUncached: true,
         layerId: 'test-redis',
         refreshBefore: '2020-01-01T00:00:00',
       };
