@@ -202,7 +202,7 @@ describe('LayersManager', () => {
     });
 
     describe('validateSourceDate', () => {
-      it('should throw an error if sourceDateStart or sourceDateEnd is undefined', () => {
+      it('should throw an error if sourceDateStart is undefined', () => {
         const metaData: LayerMetadata = {
           ...testImageMetadata,
           sourceDateStart: undefined,
@@ -211,11 +211,30 @@ describe('LayersManager', () => {
         expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
       });
 
-      it('should throw an error if sourceDateStart or sourceDateEnd is not a valid date', () => {
+      it('should throw an error if sourceDateEnd is undefined', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: undefined,
+        };
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart is not a valid date', () => {
         const metaData: LayerMetadata = {
           ...testImageMetadata,
           sourceDateStart: 'invalid date' as unknown as Date,
           sourceDateEnd: new Date('2022-01-01'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateEnd is not a valid date', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: 'invalid date' as unknown as Date,
         };
 
         expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
