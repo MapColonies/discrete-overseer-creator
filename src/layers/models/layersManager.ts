@@ -117,7 +117,7 @@ export class LayersManager {
       this.ingestionValidator.validateGpkgFiles(files, originDirectory);
       this.grids = this.ingestionValidator.getGrids(files, originDirectory);
     }
-    
+
     await this.validateJobNotRunning(productId, productType);
     const jobType = await this.validateAndGetJobType(data);
     const taskType = this.getTaskType(jobType, isGpkg);
