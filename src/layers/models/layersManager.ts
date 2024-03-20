@@ -110,8 +110,7 @@ export class LayersManager {
     const filesData: SourcesValidationParams = { fileNames: files, originDirectory: originDirectory };
     await this.validateFiles(filesData);
     await this.validateInfoDataToParams(data.fileNames, data.originDirectory, data);
-
-    await this.validateJobNotRunning(productId, productType);
+    this.validateCorrectProductVersion(data);
 
     const isGpkg = this.ingestionValidator.validateIsGpkg(files);
     if (isGpkg) {
@@ -119,13 +118,12 @@ export class LayersManager {
       this.grids = this.ingestionValidator.getGrids(files, originDirectory);
     }
 
-    const jobType = await this.getJobType(data);
+    await this.validateJobNotRunning(productId, productType);
+    const jobType = await this.validateAndGetJobType(data);
     const taskType = this.getTaskType(jobType, isGpkg);
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
-
-    this.validateCorrectProductVersion(data);
 
     const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
       data.metadata.productId as string
@@ -319,7 +317,7 @@ export class LayersManager {
   }
 
   @withSpanAsyncV4
-  private async getJobType(data: IngestionParams): Promise<JobAction> {
+  private async validateAndGetJobType(data: IngestionParams): Promise<JobAction> {
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
     const productType = data.metadata.productType as ProductType;
