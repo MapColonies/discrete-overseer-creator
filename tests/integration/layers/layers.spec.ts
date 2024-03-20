@@ -630,7 +630,7 @@ describe('layers', function () {
       expect(response).toSatisfyApiSpec();
       //expect(getProjectionMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
-      expect(getJobsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(0);
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(mapExistsMock).toHaveBeenCalledTimes(0);
       expect(catalogExistsMock).toHaveBeenCalledTimes(0);
