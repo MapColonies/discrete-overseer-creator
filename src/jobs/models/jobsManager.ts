@@ -2,7 +2,7 @@ import { inspect } from 'node:util';
 import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, context, propagation } from '@opentelemetry/api';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, Link, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { Footprint, getUTCDate } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
@@ -10,7 +10,7 @@ import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { intersect } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
 import { MapServerCacheType, MapServerCacheSource, MapServerSeedMode } from '../../common/enums';
-import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams } from '../../common/interfaces';
+import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams, ITraceParentContext } from '../../common/interfaces';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../layers/interfaces';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { JobManagerWrapper, TaskResponse } from '../../serviceClients/JobManagerWrapper';
@@ -396,15 +396,18 @@ export class JobsManager {
       fromZoomLevel: 0, // by design will alway seed\clean from zoom 0
       toZoomLevel: this.mapproxyCacheMaxZoom, // todo - on future should be calculated from mapproxy capabilities
       geometry: geometry,
-      skipUncached: false,
+      skipUncached: true,
       layerId: cacheName,
       refreshBefore,
     };
 
+    const traceContext: ITraceParentContext = {};
+    propagation.inject(context.active(), traceContext);
+
     const taskParams: ISeedTaskParams = {
       seedTasks: [seedOption],
       catalogId: data.id as string,
-      spanId: 'TBD',
+      traceParentContext: traceContext,
       cacheType: MapServerCacheType.REDIS,
     };
 
