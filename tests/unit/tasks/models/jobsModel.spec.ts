@@ -484,7 +484,7 @@ describe('JobsManager', () => {
       const expectedSeedTaskParams: ISeedTaskParams = {
         seedTasks: [expectedSeedOption],
         catalogId: catalogRecordId,
-        spanId: 'TBD',
+        traceParentContext: {},
         cacheType: MapServerCacheType.REDIS,
       };
 
@@ -562,7 +562,7 @@ describe('JobsManager', () => {
       const expectedSeedTaskParams: ISeedTaskParams = {
         seedTasks: [expectedSeedOption],
         catalogId: catalogRecordId,
-        spanId: 'TBD',
+        traceParentContext: {},
         cacheType: MapServerCacheType.REDIS,
       };
 
