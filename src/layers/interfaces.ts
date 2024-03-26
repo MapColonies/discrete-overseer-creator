@@ -2,31 +2,31 @@ import { TileOutputFormat } from '@map-colonies/mc-model-types';
 import { BBox } from '@turf/helpers';
 import { InfoData } from '../utils/interfaces';
 
-export interface IPublishMapLayerRequest {
+interface IPublishMapLayerRequest {
   name: string;
   tilesPath: string;
   cacheType: PublishedMapLayerCacheType;
   format: TileOutputFormat;
 }
 
-export interface IGetCacheRequest {
+interface IGetCacheRequest {
   layerName: string;
   cacheType: PublishedMapLayerCacheType;
 }
 
-export interface IGetCacheResponse {
+interface IGetCacheResponse {
   cacheName: string;
   cache: { type: PublishedMapLayerCacheType };
 }
 
-export enum PublishedMapLayerCacheType {
+enum PublishedMapLayerCacheType {
   FS = 'file',
   S3 = 's3',
   GPKG = 'geopackage',
   REDIS = 'redis',
 }
 
-export interface ITaskParameters {
+interface ITaskParameters {
   discreteId: string;
   version: string;
   originDirectory: string;
@@ -36,34 +36,34 @@ export interface ITaskParameters {
   bbox: BBox;
 }
 
-export interface IBBox {
+interface IBBox {
   minX: number;
   minY: number;
   maxX: number;
   maxY: number;
 }
 
-export enum Grid {
+enum Grid {
   TWO_ON_ONE = '2X1',
   ONE_ON_ONE = '1X1',
 }
 
-export interface PixelRange {
+interface PixelRange {
   min: number;
   max: number;
 }
 
-export interface SourcesValidationParams {
+interface SourcesValidationParams {
   fileNames: string[];
   originDirectory: string;
 }
 
-export interface SourcesValidationResponse {
+interface SourcesValidationResponse {
   isValid: boolean;
   reason?: string;
 }
 
-export interface SourcesInfoRequest {
+interface SourcesInfoRequest {
   fileNames: string[];
   originDirectory: string;
 }
@@ -74,3 +74,17 @@ interface SourcesInfoResponse {
 }
 
 export interface SourcesInfoResponses extends Array<SourcesInfoResponse> {}
+
+export {
+  IPublishMapLayerRequest,
+  IGetCacheRequest,
+  IGetCacheResponse,
+  PublishedMapLayerCacheType,
+  ITaskParameters,
+  IBBox,
+  Grid,
+  PixelRange,
+  SourcesValidationParams,
+  SourcesValidationResponse,
+  SourcesInfoRequest,
+};

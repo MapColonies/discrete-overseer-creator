@@ -17,7 +17,6 @@ import { getInfoDataMock } from '../../mocks/gdalUtilitiesMock';
 import { LayersManager } from '../../../src/layers/models/layersManager';
 import { MergeTilesTasker } from '../../../src/merge/mergeTilesTasker';
 import { LayersRequestSender } from './helpers/requestSender';
-import { InfoData } from '../../../src/utils/interfaces';
 
 const validPolygon = {
   type: 'Polygon',
@@ -116,48 +115,6 @@ const invalidFiles = {
 const invalidFileFormat = {
   fileNames: ['test.ecw'],
   originDirectory: '/files',
-};
-const validFilesForInfo = {
-  fileNames: ['blueMarble.gpkg', 'indexed.gpkg'],
-  originDirectory: '/files',
-};
-const ReversedValidFilesForInfo = {
-  fileNames: ['indexed.gpkg', 'blueMarble.gpkg'],
-  originDirectory: '/files',
-};
-const blueMarbleGdalInfo: InfoData = {
-  crs: 4326,
-  fileFormat: 'GPKG',
-  pixelSize: 0.0439453125,
-  footprint: {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [-180, 90],
-        [-180, -90],
-        [180, -90],
-        [180, 90],
-        [-180, 90],
-      ],
-    ],
-  },
-};
-const indexedGdalInfo: InfoData = {
-  crs: 4326,
-  fileFormat: 'GPKG',
-  pixelSize: 0.001373291015625,
-  footprint: {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [34.61517, 34.10156],
-        [34.61517, 32.242124],
-        [36.4361539, 32.242124],
-        [36.4361539, 34.10156],
-        [34.61517, 34.10156],
-      ],
-    ],
-  },
 };
 
 describe('layers', function () {

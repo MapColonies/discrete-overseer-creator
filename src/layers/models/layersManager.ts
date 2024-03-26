@@ -409,41 +409,6 @@ export class LayersManager {
     await this.ingestionValidator.validateGdalInfo(fileNames, originDirectory);
   }
 
-  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
-    const fileNames: string[] = data.fileNames;
-    const originDirectory: string = data.originDirectory;
-    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
-    if (!filesExists) {
-      const message = `Invalid files list, some files are missing`;
-      this.logger.error({
-        fileNames: fileNames,
-        originDirectory: originDirectory,
-        msg: message,
-      });
-      throw new NotFoundError(message);
-    }
-    try {
-      const info: Promise<InfoData[]> = Promise.all(
-        fileNames.map(async (file) => {
-          const filePath = join(this.sourceMount, originDirectory, file);
-          const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
-          if (!infoData) {
-            throw new BadRequestError('Invalid files');
-          }
-          return infoData;
-        })
-      );
-      return await info;
-    } catch (err) {
-      if (err instanceof BadRequestError) {
-        throw new BadRequestError(err.message);
-      } else {
-        const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on files';
-        throw new Error(message);
-      }
-    }
-  }
-
   @withSpanAsyncV4
   private async isExistsInMapProxy(productId: string, productType: ProductType): Promise<boolean> {
     const layerName = getMapServingLayerName(productId, productType);
@@ -594,6 +559,41 @@ export class LayersManager {
           err: err,
         });
         // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
+    }
+  }
+
+  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
+    const fileNames: string[] = data.fileNames;
+    const originDirectory: string = data.originDirectory;
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
+    if (!filesExists) {
+      const message = `Invalid files list, some files are missing`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new NotFoundError(message);
+    }
+    try {
+      const info: Promise<InfoData[]> = Promise.all(
+        fileNames.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
+          if (!infoData) {
+            throw new BadRequestError('Invalid files');
+          }
+          return infoData;
+        })
+      );
+      return await info;
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        throw new BadRequestError(err.message);
+      } else {
+        const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on files';
         throw new Error(message);
       }
     }
