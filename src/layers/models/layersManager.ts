@@ -7,7 +7,7 @@ import client from 'prom-client';
 import { Geometry, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { TilesMimeFormat, lookup as mimeLookup } from '@map-colonies/types';
-import { BadRequestError, ConflictError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError, NotFoundError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getIssues } from '@placemarkio/check-geojson';
@@ -24,7 +24,7 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
+import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse, SourcesInfoRequest } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { isPixelSizeValid } from '../../utils/pixelSizeValidate';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
@@ -575,6 +575,41 @@ export class LayersManager {
           err: err,
         });
         // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        throw new Error(message);
+      }
+    }
+  }
+
+  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
+    const fileNames: string[] = data.fileNames;
+    const originDirectory: string = data.originDirectory;
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
+    if (!filesExists) {
+      const message = `Invalid files list, some files are missing`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new NotFoundError(message);
+    }
+    try {
+      const info: Promise<InfoData[]> = Promise.all(
+        fileNames.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
+          if (!infoData) {
+            throw new BadRequestError('Invalid files');
+          }
+          return infoData;
+        })
+      );
+      return await info;
+    } catch (err) {
+      if (err instanceof BadRequestError) {
+        throw new BadRequestError(err.message);
+      } else {
+        const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on files';
         throw new Error(message);
       }
     }

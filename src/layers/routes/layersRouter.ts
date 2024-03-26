@@ -8,6 +8,7 @@ const layersRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
 
   router.post('/', controller.createLayer.bind(controller));
   router.post('/validateSources', controller.validateSources.bind(controller));
+  router.post('/sourcesInfo', controller.getSourcesGdalInfo.bind(controller));
 
   return router;
 };

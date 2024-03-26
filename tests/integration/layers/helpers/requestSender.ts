@@ -10,4 +10,8 @@ export class LayersRequestSender {
   public async checkFiles(body: Record<string, unknown>): Promise<supertest.Response> {
     return supertest.agent(this.app).post('/layers/validateSources').set('Content-Type', 'application/json').send(body);
   }
+
+  public async getInfo(body: Record<string, unknown>): Promise<supertest.Response> {
+    return supertest.agent(this.app).post('/layers/sourcesInfo').set('Conten-Type', 'application/json').send(body);
+  }
 }
