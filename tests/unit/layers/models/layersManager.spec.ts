@@ -21,10 +21,9 @@ import { ZoomLevelCalculator } from '../../../../src/utils/zoomToResolution';
 import { createSplitTilesTasksMock, generateTasksParametersMock, splitTilesTaskerMock } from '../../../mocks/splitTilesTasker';
 import { createMergeTilesTasksMock, mergeTilesTasker } from '../../../mocks/mergeTilesTasker';
 import { SQLiteClient } from '../../../../src/serviceClients/sqliteClient';
-import { Grid, SourcesInfoRequest } from '../../../../src/layers/interfaces';
+import { Grid } from '../../../../src/layers/interfaces';
 import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilitiesMock';
 import { tracerMock } from '../../../mocks/tracer';
-import { InfoData } from '../../../../src/utils/interfaces';
 
 let layersManager: LayersManager;
 

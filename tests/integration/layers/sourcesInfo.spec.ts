@@ -78,6 +78,7 @@ describe('/layers/sourcesInfo', function () {
     resetContainer();
     jest.resetAllMocks();
   });
+
   describe('Happy path on /layers/sourcesInfo', function () {
     it('should return 200 status code with info in correct order', async function () {
       const response = await requestSender.getInfo(validFilesForInfo);
