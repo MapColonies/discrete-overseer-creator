@@ -347,54 +347,9 @@ export class LayersManager {
             return infoData;
           } catch (err) {
             const message = `failed to get gdal info on file: ${filePath}`;
-            (err as Error).message = message;
-            throw err;
-          }
-        })
-      );
-      return await info;
-    } catch (err) {
-      this.logger.error({
-        msg: `${(err as Error).message}`,
-        err: err,
-      });
-      throw err;
-    }
-  }
-
-  @withSpanAsyncV4
-  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
-    const fileNames: string[] = data.fileNames;
-    const originDirectory: string = data.originDirectory;
-    this.logger.info({
-      fileNames: fileNames,
-      originDirectory: originDirectory,
-      msg: 'Request was made to get files GDAL info',
-    });
-    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
-    if (!filesExists) {
-      const message = `Invalid files list, some files are missing`;
-      this.logger.error({
-        fileNames: fileNames,
-        originDirectory: originDirectory,
-        msg: message,
-      });
-      throw new NotFoundError(message);
-    }
-    try {
-      const info: Promise<InfoData[]> = Promise.all(
-        fileNames.map(async (file) => {
-          const filePath = join(this.sourceMount, originDirectory, file);
-          try {
-            const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
-            if (!infoData) {
-              throw new BadRequestError(`Invalid file: ${file}`);
-            }
-            return infoData;
-          } catch (err) {
-            const message = `failed to get gdal info on file: ${filePath}`;
-            (err as Error).message = message;
-            throw err;
+            let error = err as Error;
+            error = { ...error, message };
+            throw error;
           }
         })
       );
