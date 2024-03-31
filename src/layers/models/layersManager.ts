@@ -335,21 +335,26 @@ export class LayersManager {
       const info: Promise<InfoData[]> = Promise.all(
         fileNames.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
-          const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
-          if (!infoData) {
-            throw new BadRequestError('Invalid files');
+          try {
+            const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
+            if (!infoData) {
+              throw new BadRequestError(`Invalid file: ${file}`);
+            }
+            return infoData;
+          } catch (err) {
+            const message = `failed to get gdal info on file: ${filePath}`;
+            (err as Error).message = message;
+            throw err;
           }
-          return infoData;
         })
       );
       return await info;
     } catch (err) {
-      if (err instanceof BadRequestError) {
-        throw err;
-      } else {
-        const message = err instanceof Error ? `${err.message}` : 'failed to get gdal info on files';
-        throw new Error(message);
-      }
+      this.logger.error({
+        msg: `${(err as Error).message}`,
+        err: err,
+      });
+      throw err;
     }
   }
 

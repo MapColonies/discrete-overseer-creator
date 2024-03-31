@@ -98,7 +98,7 @@ describe('/layers/sourcesInfo', function () {
   describe('Sad path on /layers/sourcesInfo', function () {
     it('should return 404 when given a file that does not exist', async function () {
       const notExistsFile = {
-        fileNames: ['notExists.gpkg'],
+        fileNames: ['blueMarble.gpkg', 'notExists.gpkg'],
         originDirectory: '/files',
       };
       const response = await requestSender.getInfo(notExistsFile);
@@ -112,9 +112,12 @@ describe('/layers/sourcesInfo', function () {
         originDirectory: '/files',
       };
 
+      const invalidDataPath = 'tests/mocks/files/invalidFile.gpkg';
+
       const response = await requestSender.getInfo(invalidData);
       expect(response).toSatisfyApiSpec();
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response.body.message).toEqual(`failed to get gdal info on file: ${invalidDataPath}`);
     });
   });
 });
