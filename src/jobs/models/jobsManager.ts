@@ -2,15 +2,15 @@ import { inspect } from 'node:util';
 import { BadRequestError, InternalServerError } from '@map-colonies/error-types';
 import { Logger } from '@map-colonies/js-logger';
 import { withSpanAsyncV4 } from '@map-colonies/telemetry';
-import { Tracer } from '@opentelemetry/api';
+import { Tracer, context, propagation } from '@opentelemetry/api';
 import { IRasterCatalogUpsertRequestBody, LayerMetadata, Link, ProductType, TileOutputFormat } from '@map-colonies/mc-model-types';
-import { Footprint, degreesPerPixelToZoomLevel, getUTCDate } from '@map-colonies/mc-utils';
+import { Footprint, getUTCDate } from '@map-colonies/mc-utils';
 import { inject, injectable } from 'tsyringe';
 import { OperationStatus } from '@map-colonies/mc-priority-queue';
 import { intersect } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
 import { MapServerCacheType, MapServerCacheSource, MapServerSeedMode } from '../../common/enums';
-import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams } from '../../common/interfaces';
+import { IConfig, IFindResponseRecord, ISeed, ISeedTaskParams, ITraceParentContext } from '../../common/interfaces';
 import { IPublishMapLayerRequest, PublishedMapLayerCacheType } from '../../layers/interfaces';
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { JobManagerWrapper, TaskResponse } from '../../serviceClients/JobManagerWrapper';
@@ -38,6 +38,7 @@ export class JobsManager {
   private readonly seedJobType: string;
   private readonly seedTaskType: string;
   private readonly mapproxyCacheGrid: string;
+  private readonly mapproxyCacheMaxZoom: number;
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
@@ -61,6 +62,7 @@ export class JobsManager {
     this.seedTaskType = config.get<string>('seed.seedTaskType');
     this.cacheType = this.getCacheType(mapServerCacheType);
     this.mapproxyCacheGrid = config.get<string>('mapproxy.cache.grids');
+    this.mapproxyCacheMaxZoom = config.get<number>('mapproxy.cache.maxZoom');
   }
 
   @withSpanAsyncV4
@@ -385,25 +387,27 @@ export class JobsManager {
       jobId: job.id,
       msg: `Generating cache-seeder job-task to refresh cache for layer name: "${layerName}"`,
     });
-    const maxResolutionDeg = previousLayerMetadata.metadata.maxResolutionDeg; // seed\clean depends on the previous resolution (max zoom to seed)
-    const toZoomLevel = degreesPerPixelToZoomLevel(maxResolutionDeg as number);
+
     const refreshBefore = getUTCDate().toISOString().replace(/\..+/, '');
 
     const seedOption: ISeed = {
       mode: seedMode,
       grid: this.mapproxyCacheGrid,
       fromZoomLevel: 0, // by design will alway seed\clean from zoom 0
-      toZoomLevel,
+      toZoomLevel: this.mapproxyCacheMaxZoom, // todo - on future should be calculated from mapproxy capabilities
       geometry: geometry,
-      skipUncached: false,
+      skipUncached: true,
       layerId: cacheName,
       refreshBefore,
     };
 
+    const traceContext: ITraceParentContext = {};
+    propagation.inject(context.active(), traceContext);
+
     const taskParams: ISeedTaskParams = {
       seedTasks: [seedOption],
       catalogId: data.id as string,
-      spanId: 'TBD',
+      traceParentContext: traceContext,
       cacheType: MapServerCacheType.REDIS,
     };
 

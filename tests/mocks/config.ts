@@ -123,6 +123,12 @@ const registerDefaultConfig = (): void => {
       seedJobType: 'TilesSeeding',
       seedTaskType: 'TilesSeeding',
     },
+    mapproxy: {
+      cache: {
+        grids: 'WorldCRS84',
+        maxZoom: 20,
+      },
+    },
     ingestionMergeTiles: {
       mergeBatchSize: 10000,
       tasksBatchSize: 10000,
@@ -131,6 +137,9 @@ const registerDefaultConfig = (): void => {
     ingestionTilesSplittingTiles: {
       bboxSizeTiles: 10000,
       tasksBatchSize: 5,
+    },
+    validationValuesByInfo: {
+      extentBufferInMeters: 10,
     },
   };
   setConfigValues(config);

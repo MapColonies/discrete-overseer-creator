@@ -92,6 +92,11 @@ export interface ISeed {
 export interface ISeedTaskParams {
   seedTasks: ISeed[];
   catalogId: string;
-  spanId: string;
+  traceParentContext?: ITraceParentContext;
   cacheType: MapServerCacheType;
+}
+
+export interface ITraceParentContext {
+  traceparent?: string;
+  tracestate?: string;
 }

@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.8.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.3...v4.8.4) (2024-03-26)
+
+
+### Bug Fixes
+
+* refactor seed generating to support trace providing ([#65](https://github.com/MapColonies/discrete-overseer-creator/issues/65)) ([e278d5f](https://github.com/MapColonies/discrete-overseer-creator/commit/e278d5fe54ffdf5f2b0d449c17b17725dc78f9c0))
+
+### [4.8.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.2...v4.8.3) (2024-03-20)
+
+
+### Bug Fixes
+
+* change validation order ([#64](https://github.com/MapColonies/discrete-overseer-creator/issues/64)) ([d864caa](https://github.com/MapColonies/discrete-overseer-creator/commit/d864caaa922b1f6ef10762b62e34f9e198893030))
+
+### [4.8.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.1...v4.8.2) (2024-03-19)
+
+### [4.8.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.0...v4.8.1) (2024-03-19)
+
+
+### Bug Fixes
+
+* skip-cache for seed should be true ([#62](https://github.com/MapColonies/discrete-overseer-creator/issues/62)) ([45ce92a](https://github.com/MapColonies/discrete-overseer-creator/commit/45ce92a2fdf8033cffb632b011b28ac2e10f9f78))
+
+## [4.8.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.4...v4.8.0) (2024-03-13)
+
+
+### Features
+
+* added resolution tolerance + tests ([#61](https://github.com/MapColonies/discrete-overseer-creator/issues/61)) ([87fc91e](https://github.com/MapColonies/discrete-overseer-creator/commit/87fc91e1ae5a8c5ac01a2f64d5686cf5a72990a8))
+
+### [4.7.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.3...v4.7.4) (2024-03-13)
+
+
+### Bug Fixes
+
+* provide as config the maxZoomToSeed param ([#60](https://github.com/MapColonies/discrete-overseer-creator/issues/60)) ([9af4ab0](https://github.com/MapColonies/discrete-overseer-creator/commit/9af4ab0f4859577ffd5816be11476e1b67fb41e1))
+
+### [4.7.3](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.2...v4.7.3) (2024-03-12)
+
+
+### Bug Fixes
+
+* hot_fix_to_footprint_validation ([#59](https://github.com/MapColonies/discrete-overseer-creator/issues/59)) ([c737bae](https://github.com/MapColonies/discrete-overseer-creator/commit/c737bae89a2775a07d22e3ed646e7ad43b3ece02))
+
+### [4.7.2](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.1...v4.7.2) (2024-03-12)
+
+
+### Bug Fixes
+
+* footprint validation fix (MAPCO-4097) ([#58](https://github.com/MapColonies/discrete-overseer-creator/issues/58)) ([4f40168](https://github.com/MapColonies/discrete-overseer-creator/commit/4f4016833b4c75cef099ca5f7741be846de56baf))
+
 ### [4.7.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.7.0...v4.7.1) (2024-03-10)
 
 

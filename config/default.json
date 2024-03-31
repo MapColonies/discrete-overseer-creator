@@ -72,7 +72,8 @@
   },
   "mapproxy": {
     "cache": {
-      "grids": "WorldCRS84"
+      "grids": "WorldCRS84",
+      "maxZoom": 21
     }
   },
   "ingestionMergeTiles": {
@@ -95,7 +96,9 @@
       "min": 0.000000335276,
       "max": 0.703125
     },
-    "tileSize": 256
+    "tileSize": 256,
+    "resolutionFixedPointTolerance": 12,
+    "extentBufferInMeters": 50
   },
   "forbiddenTypesForParallelIngesion": [
     "Ingestion_New",

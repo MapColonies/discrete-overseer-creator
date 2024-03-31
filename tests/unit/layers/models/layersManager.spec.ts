@@ -26,8 +26,7 @@ import { gdalUtilitiesMock, getInfoDataMock } from '../../../mocks/gdalUtilities
 import { tracerMock } from '../../../mocks/tracer';
 
 let layersManager: LayersManager;
-
-const testImageMetadata = {
+const metadataDetails = {
   productId: 'test',
   productVersion: '3.0',
   productName: 'test name',
@@ -37,18 +36,6 @@ const testImageMetadata = {
   rms: 0.5,
   scale: 3,
   sensors: ['OTHER', 'Test'],
-  footprint: {
-    type: 'Polygon',
-    coordinates: [
-      [
-        [34.91692694458297, 33.952927285465876],
-        [34.90156677832806, 32.42331628696577],
-        [36.23406120090846, 32.410349688281244],
-        [36.237901242471565, 33.96885230417779],
-        [34.91692694458297, 33.952927285465876],
-      ],
-    ],
-  },
   classification: '',
   creationDate: new Date('02/01/2020'),
   producerName: 'testProducer',
@@ -64,7 +51,82 @@ const testImageMetadata = {
   maxResolutionMeter: 0.2,
   productBoundingBox: undefined,
   rawProductData: undefined,
+};
+
+const footprintInExtent = {
+  type: 'Polygon',
+  coordinates: [
+    [
+      [34.91692694458297, 33.952927285465876],
+      [34.90156677832806, 32.42331628696577],
+      [36.23406120090846, 32.410349688281244],
+      [36.237901242471565, 33.96885230417779],
+      [34.91692694458297, 33.952927285465876],
+    ],
+  ],
+};
+
+const footprintBetweenExtentToBuffer = {
+  type: 'MultiPolygon',
+  coordinates: [
+    [
+      [
+        [34.6151695, 32.242123964843749],
+        [34.6151695, 34.10156],
+        [34.61516964644661, 34.101560353553388],
+        [34.61517, 34.1015605],
+        [36.436153886718749, 34.1015605],
+        [36.436154240272138, 34.101560353553388],
+        [36.436154386718748, 34.10156],
+        [36.436154386718748, 32.242123964843749],
+        [36.436154240272138, 32.24212361129036],
+        [36.436153886718749, 32.24212346484375],
+        [34.61517, 32.24212346484375],
+        [34.61516964644661, 32.24212361129036],
+        [34.6151695, 32.242123964843749],
+      ],
+    ],
+  ],
+};
+
+const footprintOverBuffer = {
+  type: 'MultiPolygon',
+  coordinates: [
+    [
+      [
+        [24.61517, 32.242123964843749],
+        [24.61517, 34.10156],
+        [27.544102188134524, 41.172627811865475],
+        [34.61517, 44.10156],
+        [36.436153886718749, 44.10156],
+        [43.507221698584225, 41.172627811865475],
+        [46.436153886718749, 34.10156],
+        [46.436153886718749, 32.242123964843749],
+        [43.507221698584225, 25.171056152978274],
+        [36.436153886718749, 22.242123964843749],
+        [34.61517, 22.242123964843749],
+        [27.544102188134545, 25.171056152978252],
+        [24.61517, 32.242123964843749],
+      ],
+    ],
+  ],
+};
+
+const testImageMetadata = {
+  ...metadataDetails,
+  footprint: footprintInExtent,
 } as unknown as LayerMetadata;
+
+const testImageMetadataExtentFootprint = {
+  ...metadataDetails,
+  footprint: footprintBetweenExtentToBuffer,
+} as unknown as LayerMetadata;
+
+const testImageMetadataWrongFootprint = {
+  ...metadataDetails,
+  footprint: footprintOverBuffer,
+} as unknown as LayerMetadata;
+
 const layerRelativePath = 'test/OrthophotoHistory';
 
 const managerCallbackUrl = 'http://localhostTest';
@@ -118,6 +180,108 @@ describe('LayersManager', () => {
       const testData: IngestionParams = {
         fileNames: ['indexed.gpkg'],
         metadata: { ...testImageMetadata },
+        originDirectory: '/files',
+      };
+
+      getHighestLayerVersionMock.mockResolvedValue(undefined);
+      mapExistsMock.mockResolvedValue(false);
+      catalogExistsMock.mockResolvedValue(false);
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      validateSourceDirectoryMock.mockResolvedValue(true);
+      validateNotWatchDirMock.mockResolvedValue(true);
+      getJobsMock.mockResolvedValue([]);
+      createLayerJobMock.mockResolvedValue('testJobId');
+      createSplitTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(false);
+
+      await layersManager.createLayer(testData, managerCallbackUrl);
+      expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(1);
+      expect(fileValidatorValidateExistsMock).toHaveBeenCalledTimes(1);
+      expect(getJobsMock).toHaveBeenCalledTimes(2);
+      expect(createSplitTilesTasksMock).toHaveBeenCalledTimes(1);
+    });
+
+    describe('validateSourceDate', () => {
+      it('should throw an error if sourceDateStart is undefined', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: undefined,
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateEnd is undefined', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: undefined,
+        };
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart is not a valid date', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: 'invalid date' as unknown as Date,
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateEnd is not a valid date', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: 'invalid date' as unknown as Date,
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart is after sourceDateEnd', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-02'),
+          sourceDateEnd: new Date('2022-01-01'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should throw an error if sourceDateStart or sourceDateEnd is in the future', () => {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 1);
+
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: futureDate,
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).toThrow(BadRequestError);
+      });
+
+      it('should not throw an error for valid source dates', () => {
+        const metaData: LayerMetadata = {
+          ...testImageMetadata,
+          sourceDateStart: new Date('2022-01-01'),
+          sourceDateEnd: new Date('2022-01-02'),
+        };
+
+        expect(() => layersManager['validateSourceDate'](metaData)).not.toThrow();
+      });
+    });
+
+    it('should create "New" job when footprint provided is between extent and buffer', async function () {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
+      setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      setValue('layerSourceDir', 'tests/mocks');
+      const testData: IngestionParams = {
+        fileNames: ['indexed.gpkg'],
+        metadata: { ...testImageMetadataExtentFootprint },
         originDirectory: '/files',
       };
 
@@ -369,6 +533,35 @@ describe('LayersManager', () => {
       expect(getHighestLayerVersionMock).toHaveBeenCalledTimes(0);
       expect(getJobsMock).toHaveBeenCalledTimes(0);
       expect(createSplitTilesTasksMock).toHaveBeenCalledTimes(0);
+    });
+
+    it('should throw error when footprint is over the bufferedExtent', async function () {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      setValue({ 'tiling.zoomGroups': ['1', '2-3'] });
+      setValue('ingestionTilesSplittingTiles.tasksBatchSize', 2);
+      setValue('layerSourceDir', 'tests/mocks');
+      const testData: IngestionParams = {
+        fileNames: ['indexed.gpkg'],
+        metadata: { ...testImageMetadataWrongFootprint },
+        originDirectory: '/files',
+      };
+
+      getHighestLayerVersionMock.mockResolvedValue(undefined);
+      mapExistsMock.mockResolvedValue(false);
+      catalogExistsMock.mockResolvedValue(false);
+      fileValidatorValidateExistsMock.mockResolvedValue(true);
+      validateSourceDirectoryMock.mockResolvedValue(true);
+      validateNotWatchDirMock.mockResolvedValue(true);
+      getJobsMock.mockResolvedValue([]);
+      createLayerJobMock.mockResolvedValue('testJobId');
+      createSplitTilesTasksMock.mockResolvedValue(undefined);
+      validateIsGpkgMock.mockReturnValue(false);
+
+      const action = async () => {
+        await layersManager.createLayer(testData, managerCallbackUrl);
+      };
+
+      await expect(action).rejects.toThrow(BadRequestError);
     });
 
     // TODO: Handle test when update is supported for other formats

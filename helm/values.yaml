@@ -153,6 +153,8 @@ env:
       min: 0.000000335276
       max: 0.703125
     tileSize : 256
+    resolutionFixedPointTolerance: 12
+    extentBufferInMeters: 50
   disableHttpClientLogs: false
   httpRetry:
     attempts: 5
@@ -163,6 +165,7 @@ env:
     fileName: linkTemplates.template
   mapproxyCache:
     grids: WorldCRS84
+    maxZoom: 21
   tracing:
     enabled: false
     url: http://localhost:55681/v1/trace

@@ -18,7 +18,7 @@ import { getMapServingLayerName } from '../../utils/layerNameGenerator';
 import { SERVICES } from '../../common/constants';
 import { IConfig, IMergeTaskParams, IRecordIds, ISupportedIngestionSwapTypes } from '../../common/interfaces';
 import { JobAction, TaskAction } from '../../common/enums';
-import { createBBoxString } from '../../utils/bbox';
+import { createBBoxString, extentBuffer } from '../../utils/bbox';
 import { ZoomLevelCalculator } from '../../utils/zoomToResolution';
 import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerWrapper';
 import { CatalogClient } from '../../serviceClients/catalogClient';
@@ -26,6 +26,7 @@ import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
 import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse, SourcesInfoRequest } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
+import { isPixelSizeValid } from '../../utils/pixelSizeValidate';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
 import { IngestionValidator } from './ingestionValidator';
 import { SplitTilesTasker } from './splitTilesTasker';
@@ -36,6 +37,8 @@ export class LayersManager {
   private readonly tileMergeTask: string;
   private readonly useNewTargetFlagInUpdateTasks: boolean;
   private readonly sourceMount: string;
+  private readonly resolutionFixedPointTolerance: number;
+  private readonly extentBufferInMeters: number;
 
   //metrics
   private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
@@ -62,6 +65,8 @@ export class LayersManager {
     this.tileSplitTask = this.config.get<string>('ingestionTaskType.tileSplitTask');
     this.tileMergeTask = this.config.get<string>('ingestionTaskType.tileMergeTask');
     this.useNewTargetFlagInUpdateTasks = this.config.get<boolean>('ingestionMergeTiles.useNewTargetFlagInUpdateTasks');
+    this.resolutionFixedPointTolerance = this.config.get<number>('validationValuesByInfo.resolutionFixedPointTolerance');
+    this.extentBufferInMeters = this.config.get<number>('validationValuesByInfo.extentBufferInMeters');
 
     if (registry !== undefined) {
       this.requestCreateLayerCounter = new client.Counter({
@@ -101,11 +106,11 @@ export class LayersManager {
     if (data.metadata.ingestionDate !== undefined) {
       throw new BadRequestError(`Received invalid field ingestionDate`);
     }
+    this.validateSourceDate(data.metadata);
     const filesData: SourcesValidationParams = { fileNames: files, originDirectory: originDirectory };
     await this.validateFiles(filesData);
     await this.validateInfoDataToParams(data.fileNames, data.originDirectory, data);
-
-    await this.validateJobNotRunning(productId, productType);
+    this.validateCorrectProductVersion(data);
 
     const isGpkg = this.ingestionValidator.validateIsGpkg(files);
     if (isGpkg) {
@@ -113,13 +118,12 @@ export class LayersManager {
       this.grids = this.ingestionValidator.getGrids(files, originDirectory);
     }
 
-    const jobType = await this.getJobType(data);
+    await this.validateJobNotRunning(productId, productType);
+    const jobType = await this.validateAndGetJobType(data);
     const taskType = this.getTaskType(jobType, isGpkg);
     const fetchTimerTotalJobsEnd = this.createJobTasksHistogram?.startTimer({ requestType: 'CreateLayer', jobType, taskType });
 
     const existsInMapProxy = await this.isExistsInMapProxy(productId, productType);
-
-    this.validateCorrectProductVersion(data);
 
     const message = `Creating job, job type: '${jobType}', tasks type: '${taskType}' for productId: ${
       data.metadata.productId as string
@@ -359,7 +363,53 @@ export class LayersManager {
   }
 
   @withSpanAsyncV4
-  private async getJobType(data: IngestionParams): Promise<JobAction> {
+  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
+    const fileNames: string[] = data.fileNames;
+    const originDirectory: string = data.originDirectory;
+    this.logger.info({
+      fileNames: fileNames,
+      originDirectory: originDirectory,
+      msg: 'Request was made to get files GDAL info',
+    });
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
+    if (!filesExists) {
+      const message = `Invalid files list, some files are missing`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new NotFoundError(message);
+    }
+    try {
+      const info: Promise<InfoData[]> = Promise.all(
+        fileNames.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          try {
+            const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
+            if (!infoData) {
+              throw new BadRequestError(`Invalid file: ${file}`);
+            }
+            return infoData;
+          } catch (err) {
+            const message = `failed to get gdal info on file: ${filePath}`;
+            (err as Error).message = message;
+            throw err;
+          }
+        })
+      );
+      return await info;
+    } catch (err) {
+      this.logger.error({
+        msg: `${(err as Error).message}`,
+        err: err,
+      });
+      throw err;
+    }
+  }
+
+  @withSpanAsyncV4
+  private async validateAndGetJobType(data: IngestionParams): Promise<JobAction> {
     const productId = data.metadata.productId as string;
     const version = data.metadata.productVersion as string;
     const productType = data.metadata.productType as ProductType;
@@ -566,8 +616,10 @@ export class LayersManager {
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
+          const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.footprint);
           let message = '';
-          if ((data.metadata.maxResolutionDeg as number) < infoData.pixelSize) {
+          const isValidPixelSize = isPixelSizeValid(data.metadata.maxResolutionDeg as number, infoData.pixelSize, this.resolutionFixedPointTolerance);
+          if (!isValidPixelSize) {
             message += `Provided ResolutionDegree: ${data.metadata.maxResolutionDeg as number} is smaller than pixel size: ${
               infoData.pixelSize
             } from GeoPackage.`;
@@ -575,11 +627,21 @@ export class LayersManager {
           if (data.metadata.footprint?.type === 'MultiPolygon') {
             data.metadata.footprint.coordinates.forEach((coords) => {
               const polygon = { type: 'Polygon', coordinates: coords };
-              if (!booleanContains(infoData.footprint as Geometry, polygon as Geometry)) {
+              if (
+                !(
+                  booleanContains(bufferedExtent as Geometry, polygon as Geometry) ||
+                  booleanContains(infoData.footprint as Geometry, polygon as Geometry)
+                )
+              ) {
                 message += `Provided footprint isn't contained in the extent from GeoPackage.`;
               }
             });
-          } else if (!booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)) {
+          } else if (
+            !(
+              booleanContains(bufferedExtent as Geometry, data.metadata.footprint as Geometry) ||
+              booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)
+            )
+          ) {
             message += `Provided footprint isn't contained in the extent from GeoPackage.`;
           }
           if (message !== '') {
@@ -638,6 +700,31 @@ export class LayersManager {
       return true;
     }
     return false;
+  }
+
+  private validateSourceDate(metaData: LayerMetadata): void {
+    const sourceDateStartStr = metaData.sourceDateStart;
+    const sourceDateEndStr = metaData.sourceDateEnd;
+
+    if (sourceDateStartStr === undefined || sourceDateEndStr === undefined) {
+      throw new BadRequestError('Source date start and end are required fields.');
+    }
+
+    const sourceDateStart = new Date(sourceDateStartStr);
+    const sourceDateEnd = new Date(sourceDateEndStr);
+
+    if (isNaN(sourceDateStart.getTime()) || isNaN(sourceDateEnd.getTime())) {
+      throw new BadRequestError('Invalid source date format. Please provide valid Date strings.');
+    }
+
+    if (sourceDateStart > sourceDateEnd) {
+      throw new BadRequestError('Invalid source date range. Start date must be before or equal to end date.');
+    }
+
+    const currentTimestamp = new Date();
+    if (sourceDateStart > currentTimestamp || sourceDateEnd > currentTimestamp) {
+      throw new BadRequestError('Invalid source dates. Dates cannot be larger than the current time (ingestion time).');
+    }
   }
 
   private setDefaultValues(data: IngestionParams): void {
