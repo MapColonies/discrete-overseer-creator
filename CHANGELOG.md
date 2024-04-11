@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.9.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.4...v4.9.0) (2024-04-11)
+
+
+### Features
+
+* added sourcesInfo route to get gdalInfo on source files (MAPCO-3981) ([#57](https://github.com/MapColonies/discrete-overseer-creator/issues/57)) ([ffc396f](https://github.com/MapColonies/discrete-overseer-creator/commit/ffc396fe11ce41c3040a912bd2ef6464825eb5f5))
+
 ### [4.8.4](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.3...v4.8.4) (2024-03-26)
 
 
