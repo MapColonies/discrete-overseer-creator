@@ -7,7 +7,7 @@ import client from 'prom-client';
 import { Geometry, bbox } from '@turf/turf';
 import { IngestionParams, LayerMetadata, ProductType, Transparency, TileOutputFormat } from '@map-colonies/mc-model-types';
 import { TilesMimeFormat, lookup as mimeLookup } from '@map-colonies/types';
-import { BadRequestError, ConflictError } from '@map-colonies/error-types';
+import { BadRequestError, ConflictError, NotFoundError } from '@map-colonies/error-types';
 import { inject, injectable } from 'tsyringe';
 import { IFindJobsRequest, OperationStatus } from '@map-colonies/mc-priority-queue';
 import { getIssues } from '@placemarkio/check-geojson';
@@ -24,7 +24,7 @@ import { JobResponse, JobManagerWrapper } from '../../serviceClients/JobManagerW
 import { CatalogClient } from '../../serviceClients/catalogClient';
 import { MapPublisherClient } from '../../serviceClients/mapPublisher';
 import { MergeTilesTasker } from '../../merge/mergeTilesTasker';
-import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse } from '../interfaces';
+import { SourcesValidationParams, Grid, ITaskParameters, SourcesValidationResponse, SourcesInfoRequest } from '../interfaces';
 import { InfoData } from '../../utils/interfaces';
 import { isPixelSizeValid } from '../../utils/pixelSizeValidate';
 import { GdalUtilities } from '../../utils/GDAL/gdalUtilities';
@@ -313,6 +313,53 @@ export class LayersManager {
       } else {
         throw err;
       }
+    }
+  }
+
+  @withSpanAsyncV4
+  public async getFilesInfo(data: SourcesInfoRequest): Promise<InfoData[]> {
+    const fileNames: string[] = data.fileNames;
+    const originDirectory: string = data.originDirectory;
+    this.logger.info({
+      fileNames: fileNames,
+      originDirectory: originDirectory,
+      msg: 'Request was made to get files GDAL info',
+    });
+    const filesExists = await this.ingestionValidator.validateExists(originDirectory, fileNames);
+    if (!filesExists) {
+      const message = `Invalid files list, some files are missing`;
+      this.logger.error({
+        fileNames: fileNames,
+        originDirectory: originDirectory,
+        msg: message,
+      });
+      throw new NotFoundError(message);
+    }
+    try {
+      const info: Promise<InfoData[]> = Promise.all(
+        fileNames.map(async (file) => {
+          const filePath = join(this.sourceMount, originDirectory, file);
+          try {
+            const infoData: InfoData | undefined = await this.gdalUtilities.getInfoData(filePath);
+            if (!infoData) {
+              throw new BadRequestError(`Invalid file: ${file}`);
+            }
+            return infoData;
+          } catch (err) {
+            const message = `failed to get gdal info on file: ${filePath}`;
+            let error = err as Error;
+            error = { ...error, message };
+            throw error;
+          }
+        })
+      );
+      return await info;
+    } catch (err) {
+      this.logger.error({
+        msg: `${(err as Error).message}`,
+        err: err,
+      });
+      throw err;
     }
   }
 

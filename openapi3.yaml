@@ -97,6 +97,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/errorMessage'
+  /layers/sourcesInfo:
+    post:
+      operationId: getGdalInfo
+      tags:
+        - layers
+      summary: returns the GDAL info for the provided source files
+      requestBody:
+        description: A json object containing array of files and origin source path
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                originDirectory:
+                  type: string
+                  description: layer source directory
+                fileNames:
+                  type: array
+                  description: layer sources
+                  items:
+                    type: string
+                    pattern: ^.+\.[Gg][Pp][Kk][Gg]$
+              required:
+                - originDirectory
+                - fileNames
+            example:
+              originDirectory: string
+              fileNames:
+                - example.gpkg
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/filesInfoResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+        '404':
+          description: Files not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorMessage'
+
   /jobs/{jobId}/{taskId}/completed:
     post:
       operationId: completeJob
@@ -217,6 +273,41 @@ components:
           type: string
       required:
         - isValid
+    filesInfoResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          crs:
+            type: number
+          fileFormat:
+            type: string
+          pixelSize:
+            type: number
+          footprint:
+            $ref: ./Schema/geojson.yaml#/components/schemas/Geometry
+        required:
+          - crs
+          - fileFormat
+          - pixelSize
+          - footprint
+        example:
+          crs: 4326
+          fileFormat: gpkg
+          pixelSize: 0.072
+          footprint:
+            type: Polygon
+            coordinates:
+              - - - -180
+                  - -90
+                - - -180
+                  - 90
+                - - 180
+                  - 90
+                - - 180
+                  - -90
+                - - -180
+                  - -90
     tocResponse:
       type: object
       properties:
