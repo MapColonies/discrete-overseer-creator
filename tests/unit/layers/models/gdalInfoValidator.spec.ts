@@ -25,7 +25,7 @@ describe('GdalInfoValidator', () => {
         crs: 4326,
         fileFormat: 'GPKG',
         pixelSize: 0.001373291015625,
-        footprint: {
+        extentPolygon: {
           type: 'Polygon',
           coordinates: [
             [

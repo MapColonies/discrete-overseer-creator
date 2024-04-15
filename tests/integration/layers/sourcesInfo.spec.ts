@@ -22,7 +22,7 @@ const blueMarbleGdalInfo: InfoData = {
   crs: 4326,
   fileFormat: 'GPKG',
   pixelSize: 0.0439453125,
-  footprint: {
+  extentPolygon: {
     type: 'Polygon',
     coordinates: [
       [
@@ -39,7 +39,7 @@ const indexedGdalInfo: InfoData = {
   crs: 4326,
   fileFormat: 'GPKG',
   pixelSize: 0.001373291015625,
-  footprint: {
+  extentPolygon: {
     type: 'Polygon',
     coordinates: [
       [
