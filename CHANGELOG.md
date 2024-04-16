@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.10.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.9.0...v4.10.0) (2024-04-16)
+
+
+### Features
+
+* change sourcesInfo response footprint field to extentPolygon ([#66](https://github.com/MapColonies/discrete-overseer-creator/issues/66)) ([2dfd02f](https://github.com/MapColonies/discrete-overseer-creator/commit/2dfd02f45ca48fd30c69ad98e66c540b18c3b7af))
+
 ## [4.9.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.8.4...v4.9.0) (2024-04-11)
 
 
