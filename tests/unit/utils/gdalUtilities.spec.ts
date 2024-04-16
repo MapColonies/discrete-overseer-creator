@@ -22,7 +22,7 @@ describe('gdalUtilities', () => {
         crs: 4326,
         fileFormat: 'GPKG',
         pixelSize: 0.001373291015625,
-        footprint: {
+        extentPolygon: {
           type: 'Polygon',
           coordinates: [
             [
@@ -45,7 +45,7 @@ describe('gdalUtilities', () => {
         crs: 4326,
         fileFormat: 'GTiff',
         pixelSize: 0.0333333333333333,
-        footprint: {
+        extentPolygon: {
           type: 'Polygon',
           coordinates: [
             [

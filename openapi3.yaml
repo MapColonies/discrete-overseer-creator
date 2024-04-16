@@ -283,18 +283,18 @@ components:
             type: string
           pixelSize:
             type: number
-          footprint:
+          extentPolygon:
             $ref: ./Schema/geojson.yaml#/components/schemas/Geometry
         required:
           - crs
           - fileFormat
           - pixelSize
-          - footprint
+          - extentPolygon
         example:
           crs: 4326
           fileFormat: gpkg
           pixelSize: 0.072
-          footprint:
+          extentPolygon:
             type: Polygon
             coordinates:
               - - - -180

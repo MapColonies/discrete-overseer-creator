@@ -571,7 +571,7 @@ export class LayersManager {
         files.map(async (file) => {
           const filePath = join(this.sourceMount, originDirectory, file);
           const infoData = (await this.gdalUtilities.getInfoData(filePath)) as InfoData;
-          const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.footprint);
+          const bufferedExtent = extentBuffer(this.extentBufferInMeters, infoData.extentPolygon);
           let message = '';
           const isValidPixelSize = isPixelSizeValid(data.metadata.maxResolutionDeg as number, infoData.pixelSize, this.resolutionFixedPointTolerance);
           if (!isValidPixelSize) {
@@ -585,7 +585,7 @@ export class LayersManager {
               if (
                 !(
                   booleanContains(bufferedExtent as Geometry, polygon as Geometry) ||
-                  booleanContains(infoData.footprint as Geometry, polygon as Geometry)
+                  booleanContains(infoData.extentPolygon as Geometry, polygon as Geometry)
                 )
               ) {
                 message += `Provided footprint isn't contained in the extent from GeoPackage.`;
@@ -594,7 +594,7 @@ export class LayersManager {
           } else if (
             !(
               booleanContains(bufferedExtent as Geometry, data.metadata.footprint as Geometry) ||
-              booleanContains(infoData.footprint as Geometry, data.metadata.footprint as Geometry)
+              booleanContains(infoData.extentPolygon as Geometry, data.metadata.footprint as Geometry)
             )
           ) {
             message += `Provided footprint isn't contained in the extent from GeoPackage.`;

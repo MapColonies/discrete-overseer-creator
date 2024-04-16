@@ -20,15 +20,16 @@ export class GdalUtilities {
       const jsonString = await gdal.infoAsync(dataset, ['-json']);
       //eslint-disable-next-line @typescript-eslint/naming-convention
       const data = JSON.parse(jsonString) as { stac: { 'proj:epsg': number }; geoTransform: number[]; driverShortName: string; wgs84Extent: GeoJSON };
+
       const crs: number = data.stac['proj:epsg'];
       const fileFormat: string = data.driverShortName;
       const pixelSize: number = data.geoTransform[1];
-      const footprint: GeoJSON = data.wgs84Extent;
+      const extentPolygon: GeoJSON = data.wgs84Extent;
       const infoData: InfoData = {
         crs: crs,
         fileFormat: fileFormat,
         pixelSize: pixelSize,
-        footprint: footprint,
+        extentPolygon: extentPolygon,
       };
       // Best practice is to close the data set after use -> https://mmomtchev.github.io/node-gdal-async/
       dataset.close();
