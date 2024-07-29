@@ -16,11 +16,11 @@ global:
   jobManagement:
     jobDomain: RASTER
     ingestion:
-      new: 
+      new:
         jobType: ""
         splitTilesTaskType: ""
         mergeTilesTaskType: ""
-      update: 
+      update:
         jobType: ""
         mergeTilesTaskType: ""
       updateSwap:
@@ -28,11 +28,11 @@ global:
         supportedIngestionSwapTypes: {}
         # - productType: ""
         #   productSubType: ""
-    seed: 
+    seed:
       jobType: ""
       taskType: ""
-    
-      
+
+
   storage:
     tilesStorageProvider: ""
     fs:
@@ -56,11 +56,11 @@ serviceUrls:
 jobManagement:
   jobDomain: ""
   ingestion:
-    new: 
+    new:
       jobType: ""
       splitTilesTaskType: ""
       mergeTilesTaskType: ""
-    update: 
+    update:
       jobType: ""
       mergeTilesTaskType: ""
     updateSwap:
@@ -68,10 +68,10 @@ jobManagement:
       supportedIngestionSwapTypes: {}
       # - productType: ""
       #   productSubType: ""
-  seed: 
+  seed:
     jobType: ""
     taskType: ""
-    
+
 storage:
   tilesStorageProvider: ""
   fs:
@@ -105,15 +105,15 @@ enableWMS: true
 # add pod annotations
 # example:
 # podAnnotations:
-  # annotation1: annotation-value-1
-  # annotation2: annotation-value-2
+# annotation1: annotation-value-1
+# annotation2: annotation-value-2
 podAnnotations: {}
 
 env:
   forbiddenTypesForParallelIngesion:
-    - Ingestion_New
-    - Ingestion_Update
-    - Ingestion_Swap_Update
+  - Ingestion_New
+  - Ingestion_Update
+  - Ingestion_Swap_Update
   port: 80
   targetPort: 8080
   protocol: TCP
@@ -137,7 +137,7 @@ env:
   shouldSync: true
   layerSourceDir: '/layerSources'
   displayNameDir: "\\layerSources"
-  validFileExtensions: 
+  validFileExtensions:
   - 'gpkg'
   bboxSizeTiles: 10000
   mergeBatchSize: 10000
@@ -145,14 +145,14 @@ env:
   splitterTasksBatchSize: 100
   mergerTasksBatchSize: 100
   validationValuesByInfo:
-    crs: 
+    crs:
     - 4326
-    fileFormat: 
+    fileFormat:
     - 'GPKG'
     pixelSizeRange:
       min: 0.000000335276
       max: 0.703125
-    tileSize : 256
+    tileSize: 256
     resolutionFixedPointTolerance: 12
     extentBufferInMeters: 50
   disableHttpClientLogs: false
@@ -166,31 +166,32 @@ env:
   mapproxyCache:
     grids: WorldCRS84
     maxZoom: 21
-  tracing:
-    enabled: false
-    url: http://localhost:55681/v1/trace
-  metrics:
-    prometheus:
-      scrape: true
-      port: 8080
-    enabled: false
-    url: http://localhost:55681/v1/metrics
-    buckets:
-    - 0.005
-    - 0.01
-    - 0.025
-    - 0.05
-    - 0.1
-    - 0.25
-    - 0.5
-    - 1
-    - 2.5
-    - 5
-    - 10
-    - 15
-    - 50
-    - 250
-    - 500
+
+tracing:
+  enabled: false
+  url: http://localhost:55681/v1/trace
+metrics:
+  prometheus:
+    scrape: true
+    port: 8080
+  enabled: false
+  url: http://localhost:55681/v1/metrics
+  buckets:
+  - 0.005
+  - 0.01
+  - 0.025
+  - 0.05
+  - 0.1
+  - 0.25
+  - 0.5
+  - 1
+  - 2.5
+  - 5
+  - 10
+  - 15
+  - 50
+  - 250
+  - 500
 
 resources:
   enabled: true
