@@ -20,7 +20,7 @@ export class FileValidator {
         msg: message,
       });
       return false;
-    } else if (srcDir === "/") {
+    } else if (srcDir === '/') {
       const message = `"originDirectory" cant be right under the nfs main folder`;
       this.logger.info({
         sourceDirectory: srcDir,
