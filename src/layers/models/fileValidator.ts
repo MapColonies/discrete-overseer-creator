@@ -21,7 +21,7 @@ export class FileValidator {
       });
       return false;
     } else if (srcDir === '/') {
-      const message = `"originDirectory" cant be right under the nfs main folder`;
+      const message = `"originDirectory" value can not be defined as the base directory`;
       this.logger.info({
         sourceDirectory: srcDir,
         msg: message,
