@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.10.1](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.10.0...v4.10.1) (2024-08-26)
+
+
+### Bug Fixes
+
+* files must be stored inside a directory(MAPCO-4562) ([#69](https://github.com/MapColonies/discrete-overseer-creator/issues/69)) ([ba4c979](https://github.com/MapColonies/discrete-overseer-creator/commit/ba4c979b393a88e76b485c324924318d3aed443a))
+* fix helm tracing and metrics hirarchey ([#67](https://github.com/MapColonies/discrete-overseer-creator/issues/67)) ([72e764b](https://github.com/MapColonies/discrete-overseer-creator/commit/72e764b486461406d2cc558ce57ddba805dda6f4))
+
 ## [4.10.0](https://github.com/MapColonies/discrete-overseer-creator/compare/v4.9.0...v4.10.0) (2024-04-16)
 
 
