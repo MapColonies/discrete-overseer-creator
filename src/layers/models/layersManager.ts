@@ -441,7 +441,7 @@ export class LayersManager {
     }
     const originDirectoryExists = this.ingestionValidator.validateSourceDirectory(originDirectory);
     if (!originDirectoryExists) {
-      throw new BadRequestError(`"originDirectory" is empty, files should be stored on specific directory`);
+      throw new BadRequestError(`"originDirectory" is invalid, files should be stored on specific directory`);
     }
     const originDirectoryNotWatch = this.ingestionValidator.validateNotWatchDir(originDirectory);
     if (!originDirectoryNotWatch) {

@@ -24,6 +24,12 @@ describe('FileValidator', () => {
       expect(result).toBe(false);
     });
 
+    it('should return false if sourceDir is /', function () {
+      const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }));
+      const result = fileValidator.validateSourceDirectory('/');
+      expect(result).toBe(false);
+    });
+
     it('should return true if sourceDir is not empty', function () {
       setValue({ layerSourceDir: 'tests/mocks' });
       const fileValidator = new FileValidator(configMock, jsLogger({ enabled: false }));

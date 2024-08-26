@@ -20,6 +20,13 @@ export class FileValidator {
         msg: message,
       });
       return false;
+    } else if (srcDir === '/') {
+      const message = `"originDirectory" value can not be defined as the base directory`;
+      this.logger.info({
+        sourceDirectory: srcDir,
+        msg: message,
+      });
+      return false;
     } else {
       return true;
     }
